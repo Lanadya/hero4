@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF0BE60E2D8893D400F9BB2C /* ColumnMappingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0BE60D2D8893D400F9BB2C /* ColumnMappingView.swift */; };
+		AF0BE6102D88942400F9BB2C /* ImportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0BE60F2D88942400F9BB2C /* ImportManager.swift */; };
 		AF6A0D1B2D80A6B200FBD63C /* Class.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1A2D80A6B200FBD63C /* Class.swift */; };
 		AF6A0D1D2D80A6F100FBD63C /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1C2D80A6F100FBD63C /* DataStore.swift */; };
 		AF6A0D1F2D80A72000FBD63C /* TimetableViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1E2D80A71F00FBD63C /* TimetableViewModel.swift */; };
@@ -41,6 +43,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AF0BE60D2D8893D400F9BB2C /* ColumnMappingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColumnMappingView.swift; sourceTree = "<group>"; };
+		AF0BE60F2D88942400F9BB2C /* ImportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportManager.swift; sourceTree = "<group>"; };
 		AF6A0CE92D809A6900FBD63C /* hero4.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = hero4.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF6A0CF92D809A6A00FBD63C /* hero4Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hero4Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF6A0D032D809A6A00FBD63C /* hero4UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hero4UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -103,6 +107,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AF0BE6112D88967700F9BB2C /* StudenLists */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = StudenLists;
+			sourceTree = "<group>";
+		};
 		AF6A0CE02D809A6900FBD63C = {
 			isa = PBXGroup;
 			children = (
@@ -161,9 +172,12 @@
 				AF6A0D272D80A7BB00FBD63C /* ClassesView.swift */,
 				AF6A0D232D80A77E00FBD63C /* AddClassView.swift */,
 				AF6A0D252D80A7A200FBD63C /* EditClassView.swift */,
+				AF0BE6112D88967700F9BB2C /* StudenLists */,
 				AF6A0D312D80B2C800FBD63C /* StudentsListView.swift */,
 				AF6A0D332D80B2EE00FBD63C /* AddStudentView.swift */,
 				AF6A0D352D80B31300FBD63C /* EditStudentView.swift */,
+				AF0BE60F2D88942400F9BB2C /* ImportManager.swift */,
+				AF0BE60D2D8893D400F9BB2C /* ColumnMappingView.swift */,
 				AF6A0D202D80A73D00FBD63C /* Components */,
 			);
 			path = Views;
@@ -326,10 +340,12 @@
 				AF6A0D302D80B29B00FBD63C /* StudentsViewModel.swift in Sources */,
 				AF6A0D242D80A77E00FBD63C /* AddClassView.swift in Sources */,
 				AF6A0D2C2D80B23400FBD63C /* Student.swift in Sources */,
+				AF0BE60E2D8893D400F9BB2C /* ColumnMappingView.swift in Sources */,
 				AF6A0D2E2D80B24D00FBD63C /* SeatingPosition.swift in Sources */,
 				AF6A0D282D80A7BB00FBD63C /* ClassesView.swift in Sources */,
 				AF6A0D342D80B2EE00FBD63C /* AddStudentView.swift in Sources */,
 				AF6A0D362D80B31300FBD63C /* EditStudentView.swift in Sources */,
+				AF0BE6102D88942400F9BB2C /* ImportManager.swift in Sources */,
 				AF6A0D1F2D80A72000FBD63C /* TimetableViewModel.swift in Sources */,
 				AF6A0D222D80A75700FBD63C /* GridComponent.swift in Sources */,
 				AF6A0D262D80A7A200FBD63C /* EditClassView.swift in Sources */,

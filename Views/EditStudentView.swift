@@ -12,6 +12,7 @@ struct EditStudentView: View {
     @State private var validationErrorMessage: String = ""
     @State private var showingDeleteConfirmation = false
     @State private var isSaving: Bool = false
+    @State private var showClassChangeModal = false
 
     init(student: Student, viewModel: StudentsViewModel, isPresented: Binding<Bool>) {
         self.student = student
@@ -77,6 +78,46 @@ struct EditStudentView: View {
                             .foregroundColor(.gray)
                     }
                     .padding(.vertical, 4)
+                }
+
+                // Klassen-Sektion
+                Section(header: Text("Klasse")) {
+                    if let classObj = viewModel.dataStore.getClass(id: student.classId) {
+                        HStack {
+                            Text("Aktuelle Klasse:")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            Text(classObj.name)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                                .padding(.leading, 8)
+
+                            Spacer()
+                        }
+                        .padding(.vertical, 4)
+
+                        // Button zum Wechseln der Klasse
+                        if viewModel.classes.count > 1 {
+                            Button(action: {
+                                showClassChangeModal = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.right.circle")
+                                    Text("In andere Klasse verschieben")
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.vertical, 8)
+                            }
+                            .foregroundColor(.blue)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                            .padding(.top, 4)
+                        }
+                    } else {
+                        Text("Klasse nicht gefunden")
+                            .foregroundColor(.red)
+                    }
                 }
 
                 if showValidationError {
@@ -178,6 +219,13 @@ struct EditStudentView: View {
                     secondaryButton: .cancel(Text("Abbrechen"))
                 )
             }
+            .sheet(isPresented: $showClassChangeModal) {
+                ClassChangeView(
+                    student: student,
+                    viewModel: viewModel,
+                    isPresented: $showClassChangeModal
+                )
+            }
         }
     }
 
@@ -240,5 +288,127 @@ struct EditStudentView: View {
         formatter.timeStyle = .short
         formatter.locale = Locale(identifier: "de_DE")
         return formatter.string(from: date)
+    }
+}
+
+struct ClassChangeView: View {
+    let student: Student
+    @ObservedObject var viewModel: StudentsViewModel
+    @Binding var isPresented: Bool
+    @State private var selectedClassId: UUID?
+    @State private var isProcessing = false
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Schüler in andere Klasse verschieben")) {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(student.fullName)
+                                .font(.headline)
+
+                            if let currentClass = viewModel.dataStore.getClass(id: student.classId) {
+                                Text("Aktuelle Klasse: \(currentClass.name)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "person.fill")
+                            .font(.title)
+                            .foregroundColor(.blue)
+                            .padding()
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    .padding(.vertical, 8)
+
+                    Divider()
+
+                    if viewModel.classes.count <= 1 {
+                        Text("Es sind keine anderen Klassen verfügbar.")
+                            .foregroundColor(.gray)
+                            .padding(.vertical, 8)
+                    } else {
+                        Text("Wählen Sie die neue Klasse:")
+                            .font(.headline)
+                            .padding(.top, 8)
+
+                        Picker("Neue Klasse", selection: $selectedClassId) {
+                            Text("Bitte wählen").tag(nil as UUID?)
+                            ForEach(viewModel.classes.filter { $0.id != student.classId }) { classObj in
+                                Text(classObj.name)
+                                    .tag(classObj.id as UUID?)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        .padding(.vertical, 8)
+                    }
+                }
+
+                if viewModel.classes.count > 1 {
+                    Section {
+                        Button(action: {
+                            if let newClassId = selectedClassId {
+                                isProcessing = true
+
+                                // Verzögerung für bessere UX
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    viewModel.moveStudentToClass(studentId: student.id, newClassId: newClassId)
+
+                                    // Kurze Verzögerung vor dem Schließen
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        isProcessing = false
+                                        isPresented = false
+                                    }
+                                }
+                            } else {
+                                viewModel.showError(message: "Bitte wählen Sie eine Klasse aus.")
+                            }
+                        }) {
+                            if isProcessing {
+                                HStack {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle())
+                                        .padding(.trailing, 8)
+                                    Text("Verschiebe...")
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            } else {
+                                Text("Verschieben")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .padding(.vertical, 12)
+                        .background(selectedClassId != nil ? Color.blue : Color.gray)
+                        .cornerRadius(10)
+                        .disabled(selectedClassId == nil || isProcessing)
+                    }
+                }
+
+                Section {
+                    Button("Abbrechen") {
+                        isPresented = false
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .foregroundColor(.red)
+                    .padding(.vertical, 8)
+                    .disabled(isProcessing)
+                }
+            }
+            .navigationTitle("Klasse wechseln")
+            .navigationBarItems(trailing: Button("Schließen") {
+                isPresented = false
+            })
+            .onAppear {
+                // Wähle standardmäßig die erste verfügbare Klasse
+                if let firstClass = viewModel.classes.first(where: { $0.id != student.classId }) {
+                    selectedClassId = firstClass.id
+                }
+            }
+        }
     }
 }

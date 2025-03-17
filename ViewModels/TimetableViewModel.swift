@@ -65,13 +65,17 @@ class TimetableViewModel: ObservableObject {
             var updatedClass = `class`
             updatedClass.modifiedAt = Date()
 
-            // Neues oder bestehendes Objekt?
-            let isNewClass = updatedClass.id == UUID()
+            // KORREKTUR: Der kritische Fehler war hier - wir prüfen, ob eine Klasse mit dieser ID bereits existiert
+            // statt einen unsinnigen Vergleich mit einer neuen UUID durchzuführen
+            let existingClassIndex = dataStore.classes.firstIndex(where: { $0.id == updatedClass.id })
+            let isNewClass = existingClassIndex == nil
+
+            print("DEBUG ViewModel: \(isNewClass ? "Neue Klasse anlegen" : "Bestehende Klasse aktualisieren")")
 
             if isNewClass {
                 // Neue Klasse
                 dataStore.addClass(updatedClass)
-                print("DEBUG ViewModel: Neue Klasse hinzugefügt: \(updatedClass.name)")
+                print("DEBUG ViewModel: Neue Klasse hinzugefügt: \(updatedClass.name) mit ID \(updatedClass.id)")
             } else {
                 // Bestehende Klasse aktualisieren
                 dataStore.updateClass(updatedClass)

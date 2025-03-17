@@ -5,13 +5,13 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            ClassesView()
+            ClassesView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Klassen", systemImage: "calendar")
                 }
                 .tag(0)
 
-            StudentsListView()
+            StudentsListView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Schüler", systemImage: "person.3")
                 }
@@ -34,6 +34,17 @@ struct MainTabView: View {
                     Label("Archiv", systemImage: "archivebox")
                 }
                 .tag(4)
+        }
+        .onAppear {
+            // Prüfen, ob wir von einer Klassen-Erstellung kommen und zur Schülerliste wechseln sollen
+            if let navigateToStudents = UserDefaults.standard.object(forKey: "navigateToStudentsTab") as? Bool,
+               navigateToStudents == true {
+                // Verzögerung für bessere Animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    selectedTab = 1 // Zur Schülerliste wechseln
+                    UserDefaults.standard.removeObject(forKey: "navigateToStudentsTab")
+                }
+            }
         }
     }
 }

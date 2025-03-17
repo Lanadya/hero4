@@ -5,13 +5,13 @@ struct AddClassView: View {
     let column: Int
     @ObservedObject var viewModel: TimetableViewModel
     @Binding var isPresented: Bool
+    @Binding var selectedTab: Int
 
     @State private var className: String = ""
     @State private var classNote: String = ""
     @State private var showValidationError: Bool = false
     @State private var validationErrorMessage: String = ""
-    @State private var navigateToStudentsList: Bool = false
-    @State private var savedClassId: UUID?
+    @State private var isSaving: Bool = false
 
     // Bestimme Wochentag anhand der Spalte
     private var weekday: String {
@@ -86,25 +86,37 @@ struct AddClassView: View {
                         saveClass(navigateToStudents: false)
                     }) {
                         HStack {
-                            Image(systemName: "checkmark.circle.fill")
+                            if isSaving {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            } else {
+                                Image(systemName: "checkmark.circle.fill")
+                            }
                             Text("Speichern und zurück")
                         }
                     }
                     .foregroundColor(.blue)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 6)
+                    .disabled(isSaving)
 
                     Button(action: {
                         saveClass(navigateToStudents: true)
                     }) {
                         HStack {
-                            Image(systemName: "person.3.fill")
+                            if isSaving {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            } else {
+                                Image(systemName: "person.3.fill")
+                            }
                             Text("Speichern und zur Schülerliste")
                         }
                     }
                     .foregroundColor(.blue)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 6)
+                    .disabled(isSaving)
                 }
 
                 Section {
@@ -119,6 +131,7 @@ struct AddClassView: View {
                         .padding(.vertical, 6)
                     }
                     .foregroundColor(.red)
+                    .disabled(isSaving)
                 }
             }
             .navigationBarTitle("Klasse hinzufügen", displayMode: .inline)
@@ -127,46 +140,60 @@ struct AddClassView: View {
             }) {
                 Text("Schließen")
             })
-            .background(
-                NavigationLink(
-                    destination: StudentsListView(),
-                    isActive: $navigateToStudentsList
-                ) { EmptyView() }
-            )
         }
+        .disabled(isSaving)
     }
 
     private func saveClass(navigateToStudents: Bool) {
         guard validateInputs() else { return }
 
+        // Verhindere doppeltes Speichern
+        isSaving = true
+
         print("DEBUG: Speichere Klasse an Position: Reihe \(row), Spalte \(column)")
 
+        // Erstelle eine neue Klasse mit einer neuen eindeutigen ID
+        let classId = UUID()
         let newClass = Class(
+            id: classId,
             name: className,
             note: classNote.isEmpty ? nil : classNote,
             row: row,
             column: column
         )
 
+        print("DEBUG: Erstelle neue Klasse mit ID: \(classId)")
+
+        // Speichere die Klasse
         viewModel.saveClass(newClass)
 
-        // Speichere die ID der neuen Klasse für die Navigation
-        if let id = viewModel.getClassAt(row: row, column: column)?.id {
-            savedClassId = id
+        // Speichere die ID in UserDefaults für andere Views
+        UserDefaults.standard.set(classId.uuidString, forKey: "lastCreatedClassId")
 
-            // Aktualisiere die UI, damit die neue Klasse sichtbar ist
-            viewModel.loadClasses()
+        // Wenn zur Schülerliste navigiert werden soll, setze ein Flag in UserDefaults
+        if navigateToStudents {
+            UserDefaults.standard.set(true, forKey: "navigateToStudentsTab")
+        }
 
-            // Navigiere nach einer kurzen Verzögerung, damit die UI Zeit hat sich zu aktualisieren
+        // Erzwinge eine Synchronisierung von UserDefaults
+        UserDefaults.standard.synchronize()
+
+        // Lade die Klassen neu
+        viewModel.loadClasses()
+
+        // Kurze Verzögerung für die UI
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // Modal schließen
+            self.isPresented = false
+
+            // Bei Bedarf zur Schülerliste navigieren (TabBar wird von MainTabView behandelt)
             if navigateToStudents {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self.navigateToStudentsList = true
+                    self.selectedTab = 1 // Zur Schülerliste wechseln
                 }
-            } else {
-                isPresented = false
             }
-        } else {
-            isPresented = false
+
+            self.isSaving = false
         }
     }
 

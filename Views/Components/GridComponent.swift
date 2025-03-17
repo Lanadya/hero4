@@ -26,6 +26,7 @@ struct GridCellData {
 
 struct GridComponent: View {
     @ObservedObject var viewModel: TimetableViewModel
+    @Binding var selectedTab: Int
     @State private var selectedCellRow: Int = 0
     @State private var selectedCellColumn: Int = 0
     @State private var selectedClass: Class?
@@ -38,6 +39,11 @@ struct GridComponent: View {
 
     private let weekdays = ["", "Mo", "Di", "Mi", "Do", "Fr"]
 
+    init(viewModel: TimetableViewModel, selectedTab: Binding<Int> = .constant(0)) {
+        self.viewModel = viewModel
+        self._selectedTab = selectedTab
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView([.horizontal, .vertical], showsIndicators: true) {
@@ -46,6 +52,7 @@ struct GridComponent: View {
             }
 
             // Debug-Info über aktuelle Klassen
+            #if DEBUG
             VStack(alignment: .leading) {
                 Text("DEBUG: Aktive Klassen: \(viewModel.classes.count)")
                     .font(.caption)
@@ -60,6 +67,7 @@ struct GridComponent: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
             .padding(.bottom, 4)
+            #endif
 
             // Fehleranzeige
             if viewModel.showError, let errorMessage = viewModel.errorMessage {
@@ -85,7 +93,8 @@ struct GridComponent: View {
                 row: validRow,
                 column: validColumn,
                 viewModel: viewModel,
-                isPresented: $showAddClassModal
+                isPresented: $showAddClassModal,
+                selectedTab: $selectedTab
             )
         }
         .sheet(isPresented: $showEditClassModal) {
@@ -231,11 +240,16 @@ struct GridCell: View {
             .padding(5)
         }
         .overlay(
-            // Debug-Anzeige der Koordinaten in der unteren rechten Ecke
-            Text("\(data.row),\(data.column)")
-                .font(.system(size: 8))
-                .foregroundColor(.gray)
-                .padding(2),
+            Group {
+                #if DEBUG
+                Text("\(data.row),\(data.column)")
+                    .font(.system(size: 8))
+                    .foregroundColor(.gray)
+                    .padding(2)
+                #else
+                EmptyView()
+                #endif
+            },
             alignment: .bottomTrailing
         )
     }

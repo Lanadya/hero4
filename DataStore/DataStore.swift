@@ -28,8 +28,17 @@ class DataStore: ObservableObject {
         if let data = UserDefaults.standard.data(forKey: classesKey) {
             do {
                 let decoder = JSONDecoder()
+                // Wichtig: Für das korrekte Decodieren von Date müssen wir die Datumsstrategie setzen
+                decoder.dateDecodingStrategy = .iso8601
                 classes = try decoder.decode([Class].self, from: data)
                 print("DEBUG DataStore: Klassen geladen: \(classes.count)")
+
+                // Zusätzliche Debug-Informationen
+                if !classes.isEmpty {
+                    for (index, classObj) in classes.enumerated() {
+                        print("DEBUG DataStore: Geladene Klasse \(index): \(classObj.name) an (\(classObj.row), \(classObj.column)) mit ID \(classObj.id)")
+                    }
+                }
             } catch {
                 print("FEHLER DataStore: Fehler beim Laden der Klassen: \(error)")
                 classes = []
@@ -46,6 +55,7 @@ class DataStore: ObservableObject {
         if let data = UserDefaults.standard.data(forKey: studentsKey) {
             do {
                 let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
                 students = try decoder.decode([Student].self, from: data)
                 print("DEBUG DataStore: Schüler geladen: \(students.count)")
             } catch {
@@ -81,9 +91,23 @@ class DataStore: ObservableObject {
     private func saveClasses() {
         do {
             let encoder = JSONEncoder()
+            // Wichtig: Für das korrekte Encodieren von Date müssen wir die Datumsstrategie setzen
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+
             let data = try encoder.encode(classes)
+
+            // Debug: Zeige die JSON-Repräsentation der Klassen an
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("DEBUG DataStore: JSON für Klassen: \(jsonString)")
+            }
+
             UserDefaults.standard.set(data, forKey: classesKey)
             print("DEBUG DataStore: Klassen gespeichert: \(classes.count)")
+
+            // Erzwingen Sie, dass UserDefaults sofort synchronisiert werden
+            UserDefaults.standard.synchronize()
+
             objectWillChange.send()
         } catch {
             print("FEHLER DataStore: Fehler beim Speichern der Klassen: \(error)")
@@ -93,8 +117,10 @@ class DataStore: ObservableObject {
     private func saveStudents() {
         do {
             let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
             let data = try encoder.encode(students)
             UserDefaults.standard.set(data, forKey: studentsKey)
+            UserDefaults.standard.synchronize()
             print("DEBUG DataStore: Schüler gespeichert: \(students.count)")
             objectWillChange.send()
         } catch {
@@ -107,6 +133,7 @@ class DataStore: ObservableObject {
             let encoder = JSONEncoder()
             let data = try encoder.encode(seatingPositions)
             UserDefaults.standard.set(data, forKey: seatingPositionsKey)
+            UserDefaults.standard.synchronize()
             print("DEBUG DataStore: Sitzpositionen gespeichert: \(seatingPositions.count)")
             objectWillChange.send()
         } catch {
@@ -136,6 +163,8 @@ class DataStore: ObservableObject {
 
         // Hinzufügen und speichern
         classes.append(newClass)
+
+        // Wichtig: Speichern Sie die Klassen direkt nach dem Hinzufügen
         saveClasses()
 
         // Kontrolle, ob die Klasse korrekt hinzugefügt wurde
@@ -143,6 +172,25 @@ class DataStore: ObservableObject {
             print("DEBUG DataStore: Klasse wurde erfolgreich hinzugefügt: \(addedClass.name)")
         } else {
             print("FEHLER DataStore: Klasse wurde nicht korrekt hinzugefügt!")
+        }
+
+        // Nachprüfung, ob die Daten tatsächlich gespeichert wurden
+        verifyClassesSaved()
+    }
+
+    // Hilfsmethode zur Überprüfung, ob Klassen tatsächlich gespeichert wurden
+    private func verifyClassesSaved() {
+        if let data = UserDefaults.standard.data(forKey: classesKey) {
+            do {
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
+                let savedClasses = try decoder.decode([Class].self, from: data)
+                print("DEBUG DataStore: Verifikation - \(savedClasses.count) Klassen in UserDefaults gefunden")
+            } catch {
+                print("FEHLER DataStore: Verifikation fehlgeschlagen: \(error)")
+            }
+        } else {
+            print("FEHLER DataStore: Verifikation fehlgeschlagen - Keine Daten in UserDefaults")
         }
     }
 
@@ -422,43 +470,51 @@ class DataStore: ObservableObject {
             }
         }
 
-        // Nur wenn wir tatsächlich Klassen haben, fügen wir auch Beispielschüler hinzu
+        // Füge Beispielschüler zu jeder Klasse hinzu
         if !classes.isEmpty {
-            addSampleStudents()
+            for classObj in classes {
+                addSampleStudentsToClass(classId: classObj.id, count: 15)
+            }
         }
 
         print("DEBUG DataStore: Beispieldaten hinzugefügt.")
     }
 
-    func addSampleStudents() {
-        // Nehmen wir die erste Klasse als Beispiel
-        if let firstClass = classes.first {
-            let sampleStudents = [
-                Student(firstName: "Max", lastName: "Mustermann", classId: firstClass.id),
-                Student(firstName: "Anna", lastName: "Schmidt", classId: firstClass.id),
-                Student(firstName: "Paul", lastName: "Meyer", classId: firstClass.id),
-                Student(firstName: "Sophie", lastName: "Müller", classId: firstClass.id),
-                Student(firstName: "Tom", lastName: "Schulz", classId: firstClass.id)
-            ]
+    func addSampleStudentsToClass(classId: UUID, count: Int = 15) {
+        let firstNames = ["Max", "Anna", "Paul", "Sophie", "Tom", "Lisa", "Felix", "Sarah", "Lukas", "Lena",
+                        "Jonas", "Laura", "David", "Julia", "Niklas", "Emma", "Alexander", "Mia", "Leon", "Hannah"]
+        let lastNames = ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Meyer", "Wagner", "Becker", "Hoffmann", "Schulz",
+                       "Bauer", "Koch", "Richter", "Klein", "Wolf", "Schröder", "Neumann", "Schwarz", "Zimmermann", "Braun"]
 
-            for student in sampleStudents {
-                addStudent(student)
+        // Zufällige Auswahl von verschiedenen Namen
+        for i in 0..<min(count, 40) {
+            let firstName = firstNames[Int.random(in: 0..<firstNames.count)]
+            let lastName = lastNames[Int.random(in: 0..<lastNames.count)]
+            let note = Int.random(in: 0...5) == 0 ? "Sprachförderung" : nil  // Nur manchmal Notizen
 
-                // Auch eine zufällige Sitzposition hinzufügen
-                let xPos = Int.random(in: 1...5)
-                let yPos = Int.random(in: 1...5)
+            let student = Student(
+                firstName: firstName,
+                lastName: lastName,
+                classId: classId,
+                notes: note
+            )
 
-                let position = SeatingPosition(
-                    studentId: student.id,
-                    classId: firstClass.id,
-                    xPos: xPos,
-                    yPos: yPos
-                )
+            addStudent(student)
 
-                addSeatingPosition(position)
-            }
+            // Optional: auch eine zufällige Sitzposition hinzufügen
+            let xPos = Int.random(in: 1...5)
+            let yPos = Int.random(in: 1...5)
 
-            print("DEBUG DataStore: \(sampleStudents.count) Beispielschüler und Sitzpositionen für Klasse \(firstClass.name) hinzugefügt.")
+            let position = SeatingPosition(
+                studentId: student.id,
+                classId: classId,
+                xPos: xPos,
+                yPos: yPos
+            )
+
+            addSeatingPosition(position)
         }
+
+        print("DEBUG DataStore: \(count) Beispielschüler zur Klasse mit ID \(classId) hinzugefügt")
     }
 }

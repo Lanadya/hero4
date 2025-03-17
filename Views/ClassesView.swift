@@ -3,6 +3,12 @@ import SwiftUI
 struct ClassesView: View {
     @StateObject private var viewModel = TimetableViewModel()
     @State private var showingInfoAlert = false
+    @Binding var selectedTab: Int
+
+    // Optionaler Parameter für selectedTab
+    init(selectedTab: Binding<Int> = .constant(0)) {
+        self._selectedTab = selectedTab
+    }
 
     var body: some View {
         NavigationView {
@@ -11,7 +17,7 @@ struct ClassesView: View {
                     .font(.title)
                     .padding(.top)
 
-                GridComponent(viewModel: viewModel)
+                GridComponent(viewModel: viewModel, selectedTab: $selectedTab)
                     .padding()
 
                 // Debug-Buttons während der Entwicklung
@@ -73,5 +79,8 @@ struct ClassesView: View {
             .navigationBarHidden(true)
         }
         .navigationViewStyle(StackNavigationViewStyle())
+        .onAppear {
+            viewModel.loadClasses()
+        }
     }
 }
