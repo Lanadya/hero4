@@ -17,7 +17,8 @@ struct MainTabView: View {
                 }
                 .tag(1)
 
-            Text("Sitzplan (Wird noch implementiert)")
+            // Verwendung der neuen, einfachen View
+            SimpleSeatingView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Sitzplan", systemImage: "rectangle.grid.2x2")
                 }

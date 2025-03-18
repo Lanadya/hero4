@@ -1,3 +1,4 @@
+
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -14,6 +15,7 @@ struct StudentsListView: View {
     @State private var editMode: EditMode = .inactive
     @State private var selectedStudents = Set<UUID>()
     @State private var confirmDeleteMultipleStudents = false
+    @State private var showMoveClassForSelectedStudents = false
 
     // Für den Datei-Import
     @State private var showFileImporter = false
@@ -276,6 +278,15 @@ struct StudentsListView: View {
                     )
                 }
             }
+            .sheet(isPresented: $showMoveClassForSelectedStudents) {
+                if let student = selectedStudent {
+                    ClassChangeView(
+                        student: student,
+                        viewModel: viewModel,
+                        isPresented: $showMoveClassForSelectedStudents
+                    )
+                }
+            }
             .sheet(isPresented: $showColumnMappingView) {
                 ColumnMappingView(
                     importManager: importManager,
@@ -402,7 +413,7 @@ struct StudentsListView: View {
 
     private func studentListContent(for classItem: Class) -> some View {
         VStack {
-            // Header mit Klassenname
+            // Header mit Klassenname und Kontrollen
             HStack {
                 Text("Klasse: \(classItem.name)")
                     .font(.headline)
@@ -415,13 +426,31 @@ struct StudentsListView: View {
 
                 Spacer()
 
+                // Multi-Select Kontrolle
+                if !viewModel.students.isEmpty {
+                    Button(action: {
+                        editMode = editMode.isEditing ? .inactive : .active
+                        if editMode == .inactive {
+                            selectedStudents.removeAll()
+                        }
+                    }) {
+                        Text(editMode.isEditing ? "Fertig" : "Auswählen")
+                            .font(.subheadline)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    .padding(.horizontal, 4)
+                }
+
                 // Anzeige der Schüleranzahl mit Limit
                 Text("\(viewModel.students.count)/40 Schüler")
                     .font(.caption)
                     .foregroundColor(viewModel.students.count >= 40 ? .red : .gray)
                     .padding(.trailing, 8)
 
-                // Import-Button neben dem Plus-Button
+                // Import-Button
                 Button(action: {
                     showImportSheet = true
                 }) {
@@ -453,7 +482,7 @@ struct StudentsListView: View {
                 emptyStudentListView
             } else {
                 // Verbesserte tabellarische Schülerliste
-                List {
+                VStack {
                     // Header-Zeile für die Tabelle
                     HStack {
                         if editMode == .active {
@@ -484,68 +513,164 @@ struct StudentsListView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.vertical, 8)
+                    .padding(.horizontal, 10)
                     .background(Color(.systemGray6))
-                    .listRowInsets(EdgeInsets())
+                    .cornerRadius(8)
 
-                    // Schülerzeilen mit Multi-Select
-                    ForEach(viewModel.students) { student in
-                        HStack {
-                            if editMode == .active {
-                                Button(action: {
-                                    if selectedStudents.contains(student.id) {
-                                        selectedStudents.remove(student.id)
-                                    } else {
-                                        selectedStudents.insert(student.id)
-                                    }
-                                }) {
-                                    Image(systemName: selectedStudents.contains(student.id) ? "checkmark.circle.fill" : "circle")
-                                        .foregroundColor(selectedStudents.contains(student.id) ? .blue : .gray)
-                                        .frame(width: 30, alignment: .center)
+                    // Schülerliste mit verbessertem Multi-Select
+                    List {
+                        ForEach(viewModel.students) { student in
+                            studentRow(student: student)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                        }
+                        .onDelete { indexSet in
+                            if editMode == .inactive {
+                                for index in indexSet {
+                                    let student = viewModel.students[index]
+                                    viewModel.deleteStudent(id: student.id)
                                 }
                             }
+                        }
+                    }
+                    .listStyle(PlainListStyle())
+                    .environment(\.editMode, $editMode)
+                }
 
+                // Multi-Select Aktionsleiste am unteren Bildschirmrand
+                if editMode == .active {
+                    VStack {
+                        Divider()
+
+                        HStack(spacing: 16) {
+                            // Löschen-Button
                             Button(action: {
-                                if editMode == .inactive {
-                                    selectedStudent = student
-                                    showEditStudentModal = true
-                                } else {
-                                    if selectedStudents.contains(student.id) {
-                                        selectedStudents.remove(student.id)
-                                    } else {
-                                        selectedStudents.insert(student.id)
-                                    }
+                                if !selectedStudents.isEmpty {
+                                    confirmDeleteMultipleStudents = true
                                 }
                             }) {
-                                HStack {
-                                    Text(student.lastName)
-                                        .frame(width: 130, alignment: .leading)
-                                    Text(student.firstName)
-                                        .frame(width: 130, alignment: .leading)
-                                    if let notes = student.notes, !notes.isEmpty {
-                                        Text(notes)
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                            .lineLimit(1)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                    } else {
-                                        Spacer()
-                                    }
+                                VStack {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 18))
+                                    Text("Löschen")
+                                        .font(.caption)
                                 }
-                                .padding(.vertical, 8)
+                                .frame(minWidth: 60)
+                                .foregroundColor(selectedStudents.isEmpty ? .gray : .red)
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .disabled(selectedStudents.isEmpty)
+
+                            // Archivieren-Button
+                            Button(action: {
+                                archiveSelectedStudents()
+                            }) {
+                                VStack {
+                                    Image(systemName: "archivebox")
+                                        .font(.system(size: 18))
+                                    Text("Archivieren")
+                                        .font(.caption)
+                                }
+                                .frame(minWidth: 60)
+                                .foregroundColor(selectedStudents.isEmpty ? .gray : .orange)
+                            }
+                            .disabled(selectedStudents.isEmpty)
+
+                            // Klasse-wechseln-Button (nur aktiv wenn genau ein Student ausgewählt)
+                            Button(action: {
+                                if selectedStudents.count == 1,
+                                   let studentId = selectedStudents.first,
+                                   let student = viewModel.dataStore.getStudent(id: studentId) {
+                                    selectedStudent = student
+                                    showMoveClassForSelectedStudents = true
+                                }
+                            }) {
+                                VStack {
+                                    Image(systemName: "arrow.right.circle")
+                                        .font(.system(size: 18))
+                                    Text("Klasse ändern")
+                                        .font(.caption)
+                                }
+                                .frame(minWidth: 60)
+                                .foregroundColor(selectedStudents.count == 1 ? .blue : .gray)
+                            }
+                            .disabled(selectedStudents.count != 1)
+
+                            Spacer()
+
+                            // Ausgewählte Anzahl anzeigen
+                            Text("\(selectedStudents.count) ausgewählt")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .padding(.trailing, 8)
+
+                            // Beenden-Button
+                            Button(action: {
+                                editMode = .inactive
+                                selectedStudents.removeAll()
+                            }) {
+                                Text("Fertig")
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.blue)
+                            }
                         }
-                    }
-                    .onDelete { indexSet in
-                        for index in indexSet {
-                            let student = viewModel.students[index]
-                            viewModel.deleteStudent(id: student.id)
-                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(Color(.systemBackground))
                     }
                 }
-                .listStyle(InsetGroupedListStyle())
-                .environment(\.editMode, $editMode)
             }
+        }
+    }
+
+    // Hilfsfunktion für die Anzeige einer Schülerzeile
+    private func studentRow(student: Student) -> some View {
+        HStack {
+            if editMode == .active {
+                Button(action: {
+                    if selectedStudents.contains(student.id) {
+                        selectedStudents.remove(student.id)
+                    } else {
+                        selectedStudents.insert(student.id)
+                    }
+                }) {
+                    Image(systemName: selectedStudents.contains(student.id) ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(selectedStudents.contains(student.id) ? .blue : .gray)
+                        .frame(width: 30, alignment: .center)
+                }
+            }
+
+            Button(action: {
+                if editMode == .inactive {
+                    selectedStudent = student
+                    showEditStudentModal = true
+                } else {
+                    if selectedStudents.contains(student.id) {
+                        selectedStudents.remove(student.id)
+                    } else {
+                        selectedStudents.insert(student.id)
+                    }
+                }
+            }) {
+                HStack {
+                    Text(student.lastName)
+                        .frame(width: 130, alignment: .leading)
+                    Text(student.firstName)
+                        .frame(width: 130, alignment: .leading)
+                    if let notes = student.notes, !notes.isEmpty {
+                        Text(notes)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Spacer()
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .contentShape(Rectangle()) // Macht den gesamten Bereich anklickbar
+            .background(selectedStudents.contains(student.id) ? Color.blue.opacity(0.1) : Color.clear)
+            .cornerRadius(6)
         }
     }
 
@@ -606,5 +731,22 @@ struct StudentsListView: View {
 
             Spacer()
         }
+    }
+
+    // Funktion zum Archivieren ausgewählter Schüler
+    private func archiveSelectedStudents() {
+        guard !selectedStudents.isEmpty else { return }
+
+        // In einer vollständigen Implementierung würde hier ein Alert für die Bestätigung angezeigt
+
+        for studentId in selectedStudents {
+            if let student = viewModel.dataStore.getStudent(id: studentId) {
+                viewModel.archiveStudent(student)
+            }
+        }
+
+        // Zurücksetzen nach Archivierung
+        selectedStudents.removeAll()
+        editMode = .inactive
     }
 }

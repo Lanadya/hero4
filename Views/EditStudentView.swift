@@ -5,14 +5,19 @@ struct EditStudentView: View {
     @ObservedObject var viewModel: StudentsViewModel
     @Binding var isPresented: Bool
 
+    // State-Variablen
     @State private var firstName: String
     @State private var lastName: String
     @State private var notes: String
     @State private var showValidationError: Bool = false
     @State private var validationErrorMessage: String = ""
     @State private var showingDeleteConfirmation = false
+    @State private var showingArchiveConfirmation = false
     @State private var isSaving: Bool = false
     @State private var showClassChangeModal = false
+
+    // Umgebungsvariablen
+    @Environment(\.presentationMode) var presentationMode
 
     init(student: Student, viewModel: StudentsViewModel, isPresented: Binding<Bool>) {
         self.student = student
@@ -26,110 +31,114 @@ struct EditStudentView: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Schüler bearbeiten")) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Vorname:")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        TextField("Vorname", text: $firstName)
-                            .padding(10)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .disableAutocorrection(true)
-                    }
-                    .padding(.vertical, 8)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Nachname:")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        TextField("Nachname", text: $lastName)
-                            .padding(10)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .disableAutocorrection(true)
-                    }
-                    .padding(.vertical, 8)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Notizen (optional):")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        TextEditor(text: $notes)
-                            .frame(height: 100)
-                            .padding(5)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .foregroundColor(.primary)
-                    }
-                    .padding(.vertical, 8)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Erfasst am:")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        Text(formatDate(student.entryDate))
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                // Klassen-Sektion
-                Section(header: Text("Klasse")) {
-                    if let classObj = viewModel.dataStore.getClass(id: student.classId) {
-                        HStack {
-                            Text("Aktuelle Klasse:")
+            VStack {
+                Form {
+                    Section(header: Text("Schüler bearbeiten")) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Vorname:")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
 
-                            Text(classObj.name)
-                                .font(.body)
-                                .foregroundColor(.primary)
-                                .padding(.leading, 8)
+                            TextField("Vorname", text: $firstName)
+                                .padding(10)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .disableAutocorrection(true)
+                        }
+                        .padding(.vertical, 8)
 
-                            Spacer()
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Nachname:")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            TextField("Nachname", text: $lastName)
+                                .padding(10)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .disableAutocorrection(true)
+                        }
+                        .padding(.vertical, 8)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Notizen (optional):")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            TextEditor(text: $notes)
+                                .frame(height: 80)
+                                .padding(5)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .foregroundColor(.primary)
+                        }
+                        .padding(.vertical, 8)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Erfasst am:")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            Text(formatDate(student.entryDate))
+                                .font(.caption)
+                                .foregroundColor(.gray)
                         }
                         .padding(.vertical, 4)
+                    }
 
-                        // Button zum Wechseln der Klasse
-                        if viewModel.classes.count > 1 {
-                            Button(action: {
-                                showClassChangeModal = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.right.circle")
-                                    Text("In andere Klasse verschieben")
-                                }
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.vertical, 8)
+                    // Klassen-Sektion
+                    Section(header: Text("Klasse")) {
+                        if let classObj = viewModel.dataStore.getClass(id: student.classId) {
+                            HStack {
+                                Text("Aktuelle Klasse:")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+
+                                Text(classObj.name)
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                                    .padding(.leading, 8)
+
+                                Spacer()
                             }
-                            .foregroundColor(.blue)
-                            .background(Color.blue.opacity(0.1))
-                            .cornerRadius(8)
-                            .padding(.top, 4)
+                            .padding(.vertical, 4)
+
+                            // Button zum Wechseln der Klasse
+                            if viewModel.classes.count > 1 {
+                                Button(action: {
+                                    showClassChangeModal = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.right.circle")
+                                        Text("In andere Klasse verschieben")
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.vertical, 8)
+                                }
+                                .foregroundColor(.blue)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(8)
+                                .padding(.top, 4)
+                            }
+                        } else {
+                            Text("Klasse nicht gefunden")
+                                .foregroundColor(.red)
                         }
-                    } else {
-                        Text("Klasse nicht gefunden")
-                            .foregroundColor(.red)
+                    }
+
+                    if showValidationError {
+                        Section {
+                            Text(validationErrorMessage)
+                                .foregroundColor(.red)
+                                .padding(.vertical, 6)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                 }
 
-                if showValidationError {
-                    Section {
-                        Text(validationErrorMessage)
-                            .foregroundColor(.red)
-                            .padding(.vertical, 6)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-
-                Section {
+                // Buttons am unteren Rand - außerhalb des ScrollViews, damit sie immer sichtbar sind
+                VStack(spacing: 12) {
+                    // Speichern-Button
                     Button(action: {
                         saveStudent()
                     }) {
@@ -142,42 +151,51 @@ struct EditStudentView: View {
                                 Image(systemName: "checkmark.circle.fill")
                             }
                             Text("Speichern")
-                            .frame(maxWidth: .infinity, alignment: .center)
+                                .fontWeight(.semibold)
                         }
-                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                     }
                     .disabled(isSaving)
-                }
 
-                Section {
-                    Button(action: {
-                        archiveStudent()
-                    }) {
-                        HStack {
-                            Image(systemName: "archivebox.fill")
-                            Text("Archivieren")
+                    HStack(spacing: 12) {
+                        // Archivieren-Button
+                        Button(action: {
+                            showingArchiveConfirmation = true
+                        }) {
+                            HStack {
+                                Image(systemName: "archivebox.fill")
+                                Text("Archivieren")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.orange.opacity(0.9))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 6)
-                    }
-                    .foregroundColor(.orange)
-                    .disabled(isSaving)
+                        .disabled(isSaving)
 
-                    Button(action: {
-                        showingDeleteConfirmation = true
-                    }) {
-                        HStack {
-                            Image(systemName: "trash.fill")
-                            Text("Löschen")
+                        // Löschen-Button
+                        Button(action: {
+                            showingDeleteConfirmation = true
+                        }) {
+                            HStack {
+                                Image(systemName: "trash.fill")
+                                Text("Löschen")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.red.opacity(0.9))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 6)
+                        .disabled(isSaving)
                     }
-                    .foregroundColor(.red)
-                    .disabled(isSaving)
-                }
 
-                Section {
+                    // Abbrechen-Button
                     Button(action: {
                         isPresented = false
                     }) {
@@ -185,28 +203,25 @@ struct EditStudentView: View {
                             Image(systemName: "xmark.circle.fill")
                             Text("Abbrechen")
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.gray.opacity(0.3))
+                        .foregroundColor(.primary)
+                        .cornerRadius(10)
                     }
-                    .foregroundColor(.gray)
                     .disabled(isSaving)
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 20) // Extra Abstand zum unteren Rand
             }
-            .navigationBarTitle("Schüler: \(student.fullName)", displayMode: .inline)
+            .navigationBarTitle("Schüler bearbeiten", displayMode: .inline)
+            .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(
                 leading: Button(action: {
                     isPresented = false
                 }) {
                     Text("Abbrechen")
                         .foregroundColor(.red)
-                }.disabled(isSaving),
-
-                trailing: Button(action: {
-                    saveStudent()
-                }) {
-                    Text("Speichern")
-                        .fontWeight(.bold)
-                        .foregroundColor(.blue)
                 }.disabled(isSaving)
             )
             .alert(isPresented: $showingDeleteConfirmation) {
@@ -226,7 +241,18 @@ struct EditStudentView: View {
                     isPresented: $showClassChangeModal
                 )
             }
+            .alert(isPresented: $showingArchiveConfirmation) {
+                Alert(
+                    title: Text("Schüler archivieren"),
+                    message: Text("Möchten Sie den Schüler \(student.fullName) wirklich archivieren?"),
+                    primaryButton: .default(Text("Archivieren")) {
+                        archiveStudent()
+                    },
+                    secondaryButton: .cancel(Text("Abbrechen"))
+                )
+            }
         }
+        .presentationDetents([.large]) // Erzwingt volle Höhe
     }
 
     private func saveStudent() {
@@ -410,5 +436,6 @@ struct ClassChangeView: View {
                 }
             }
         }
+        .presentationDetents([.medium]) // Erzwingt mittlere Höhe
     }
 }
