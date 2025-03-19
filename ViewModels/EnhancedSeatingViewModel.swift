@@ -8,11 +8,12 @@ class EnhancedSeatingViewModel: ObservableObject {
     @Published var selectedClassId: UUID?
     @Published var selectedClass: Class?
     @Published var seatingPositions: [SeatingPosition] = []
+    @Published var absentStudents: Set<UUID> = [] // Neue Variable für abwesende Schüler
     @Published var errorMessage: String?
     @Published var showError: Bool = false
 
     // DataStore-Referenz
-    private let dataStore = DataStore.shared
+    let dataStore = DataStore.shared
     private var cancellables = Set<AnyCancellable>()
 
     init() {
@@ -62,6 +63,8 @@ class EnhancedSeatingViewModel: ObservableObject {
         updateSelectedClass()
         loadStudentsForSelectedClass()
         loadSeatingPositionsForSelectedClass()
+        // Abwesenheitsstatus zurücksetzen bei Klassenwechsel
+        absentStudents.removeAll()
     }
 
     private func updateSelectedClass() {
@@ -89,6 +92,37 @@ class EnhancedSeatingViewModel: ObservableObject {
         print("DEBUG: \(students.count) Schüler für Klasse geladen")
     }
 
+    // Neue Methode: Anwesenheitsstatus aktualisieren
+    func updateStudentAbsenceStatus(studentId: UUID, isAbsent: Bool) {
+        if isAbsent {
+            absentStudents.insert(studentId)
+        } else {
+            absentStudents.remove(studentId)
+        }
+
+        // Hier könnte man später den Status in der Datenbank speichern
+        // z.B. in einer separaten Tabelle für Anwesenheiten
+        print("DEBUG: Schüler \(studentId) ist \(isAbsent ? "abwesend" : "anwesend")")
+    }
+
+    // Neue Methode: Notizen aktualisieren
+    func updateStudentNotes(studentId: UUID, notes: String) {
+        if let index = students.firstIndex(where: { $0.id == studentId }) {
+            var updatedStudent = students[index]
+            updatedStudent.notes = notes.isEmpty ? nil : notes
+
+            // Schüler in der Datenbank aktualisieren
+            dataStore.updateStudent(updatedStudent)
+
+            print("DEBUG: Notizen für Schüler \(studentId) aktualisiert")
+        }
+    }
+
+    // Methode, um Abwesenheitsstatus zu prüfen
+    func isStudentAbsent(_ studentId: UUID) -> Bool {
+        return absentStudents.contains(studentId)
+    }
+
     // MARK: - Sitzposition-Operationen
 
     private func loadSeatingPositionsForSelectedClass() {
@@ -110,6 +144,13 @@ class EnhancedSeatingViewModel: ObservableObject {
                 dataStore.addSeatingPosition(defaultPosition)
             }
         }
+    }
+
+    // MARK: - Öffentliche Zugriffsmethoden
+
+    /// Lädt die Sitzpositionen für die aktuell ausgewählte Klasse neu
+    func reloadSeatingPositions() {
+        loadSeatingPositionsForSelectedClass()
     }
 
     // Erstellt eine Standardposition für einen Schüler
@@ -194,5 +235,38 @@ class EnhancedSeatingViewModel: ObservableObject {
         errorMessage = message
         showError = true
         print("ERROR: \(message)")
+    }
+}
+
+
+// Diese Methoden zum EnhancedSeatingViewModel hinzufügen
+
+// MARK: - Zusätzliche Schüler-Verwaltungsfunktionen
+
+extension EnhancedSeatingViewModel {
+    // Schüler archivieren
+    func archiveStudent(_ student: Student) {
+        print("Archiviere Schüler: \(student.fullName)")
+        var updatedStudent = student
+        updatedStudent.isArchived = true
+        dataStore.updateStudent(updatedStudent)
+
+        // Liste aktualisieren
+        loadStudentsForSelectedClass()
+    }
+
+    // Schüler löschen
+    func deleteStudent(id: UUID) {
+        print("Lösche Schüler mit ID: \(id)")
+        dataStore.deleteStudent(id: id)
+
+        // Liste aktualisieren
+        loadStudentsForSelectedClass()
+
+        // Entferne auch entsprechende Sitzposition und Abwesenheitsstatus
+        if let positionIndex = seatingPositions.firstIndex(where: { $0.studentId == id }) {
+            seatingPositions.remove(at: positionIndex)
+        }
+        absentStudents.remove(id)
     }
 }
