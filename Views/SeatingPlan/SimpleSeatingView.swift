@@ -483,22 +483,7 @@ struct ClassPickerSheet: View {
     }
 }
 
-// Bewertungswerte
-enum RatingValue {
-    case doublePlus
-    case plus
-    case minus
-    case doubleMinus
 
-    var stringValue: String {
-        switch self {
-        case .doublePlus: return "++"
-        case .plus: return "+"
-        case .minus: return "-"
-        case .doubleMinus: return "--"
-        }
-    }
-}
 
 // Einfaches ViewModel ohne komplexe Abhängigkeiten
 class SimpleSeatingViewModel: ObservableObject {

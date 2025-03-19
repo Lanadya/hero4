@@ -482,9 +482,9 @@ class DataStore: ObservableObject {
 
     func addSampleStudentsToClass(classId: UUID, count: Int = 15) {
         let firstNames = ["Max", "Anna", "Paul", "Sophie", "Tom", "Lisa", "Felix", "Sarah", "Lukas", "Lena",
-                        "Jonas", "Laura", "David", "Julia", "Niklas", "Emma", "Alexander", "Mia", "Leon", "Hannah"]
+                          "Jonas", "Laura", "David", "Julia", "Niklas", "Emma", "Alexander", "Mia", "Leon", "Hannah"]
         let lastNames = ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Meyer", "Wagner", "Becker", "Hoffmann", "Schulz",
-                       "Bauer", "Koch", "Richter", "Klein", "Wolf", "Schröder", "Neumann", "Schwarz", "Zimmermann", "Braun"]
+                         "Bauer", "Koch", "Richter", "Klein", "Wolf", "Schröder", "Neumann", "Schwarz", "Zimmermann", "Braun"]
 
         // Zufällige Auswahl von verschiedenen Namen
         for i in 0..<min(count, 40) {
@@ -516,5 +516,60 @@ class DataStore: ObservableObject {
         }
 
         print("DEBUG DataStore: \(count) Beispielschüler zur Klasse mit ID \(classId) hinzugefügt")
+    }
+
+
+    // Diese Methoden zur DataStore.swift-Klasse hinzufügen:
+
+    func updateSeatingPositionsInBatch(_ positions: [SeatingPosition]) {
+        for position in positions {
+            if let index = seatingPositions.firstIndex(where: { $0.id == position.id }) {
+                seatingPositions[index] = position
+            } else {
+                seatingPositions.append(position)
+            }
+        }
+        saveSeatingPositions()
+    }
+
+    func resetSeatingPositionsForClass(classId: UUID) {
+        // Löscht alle Sitzpositionen für eine Klasse
+        let positionsToDelete = seatingPositions.filter { $0.classId == classId }
+
+        for position in positionsToDelete {
+            if let index = seatingPositions.firstIndex(where: { $0.id == position.id }) {
+                seatingPositions.remove(at: index)
+            }
+        }
+
+        saveSeatingPositions()
+    }
+
+    func arrangeSeatingPositionsInGrid(classId: UUID, columns: Int) {
+        // Ordnet Schüler automatisch in einem Raster an
+        let studentsForClass = getStudentsForClass(classId: classId)
+        var updatedPositions: [SeatingPosition] = []
+
+        // Bestehende Positionen löschen
+        resetSeatingPositionsForClass(classId: classId)
+
+        // Neue Positionen in einem Raster anordnen
+        for (index, student) in studentsForClass.enumerated() {
+            let row = index / columns
+            let col = index % columns
+
+            let position = SeatingPosition(
+                studentId: student.id,
+                classId: classId,
+                xPos: col,
+                yPos: row,
+                isCustomPosition: false
+            )
+
+            updatedPositions.append(position)
+        }
+
+        // Alle neuen Positionen in einem Rutsch speichern
+        updateSeatingPositionsInBatch(updatedPositions)
     }
 }

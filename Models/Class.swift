@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Foundation
+
 
 struct Class: Identifiable, Codable, Equatable, Hashable {
     var id: UUID

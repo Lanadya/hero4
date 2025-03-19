@@ -17,8 +17,8 @@ struct MainTabView: View {
                 }
                 .tag(1)
 
-            // Verwendung der neuen, einfachen View
-            SimpleSeatingView(selectedTab: $selectedTab)
+            // Hier verwenden wir jetzt die neue, verbesserte EnhancedSeatingView
+            EnhancedSeatingView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Sitzplan", systemImage: "rectangle.grid.2x2")
                 }
@@ -37,14 +37,18 @@ struct MainTabView: View {
                 .tag(4)
         }
         .onAppear {
-            // Prüfen, ob wir von einer Klassen-Erstellung kommen und zur Schülerliste wechseln sollen
-            if let navigateToStudents = UserDefaults.standard.object(forKey: "navigateToStudentsTab") as? Bool,
-               navigateToStudents == true {
-                // Verzögerung für bessere Animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    selectedTab = 1 // Zur Schülerliste wechseln
-                    UserDefaults.standard.removeObject(forKey: "navigateToStudentsTab")
-                }
+            checkForNavigationRequests()
+        }
+    }
+
+    private func checkForNavigationRequests() {
+        // Prüfen, ob wir von einer Klassen-Erstellung kommen und zur Schülerliste wechseln sollen
+        if let navigateToStudents = UserDefaults.standard.object(forKey: "navigateToStudentsTab") as? Bool,
+           navigateToStudents == true {
+            // Verzögerung für bessere Animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                selectedTab = 1 // Zur Schülerliste wechseln
+                UserDefaults.standard.removeObject(forKey: "navigateToStudentsTab")
             }
         }
     }
