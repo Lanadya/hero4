@@ -92,17 +92,14 @@ class EnhancedSeatingViewModel: ObservableObject {
         print("DEBUG: \(students.count) Schüler für Klasse geladen")
     }
 
-    // Neue Methode: Anwesenheitsstatus aktualisieren
-    func updateStudentAbsenceStatus(studentId: UUID, isAbsent: Bool) {
-        if isAbsent {
-            absentStudents.insert(studentId)
-        } else {
-            absentStudents.remove(studentId)
-        }
 
-        // Hier könnte man später den Status in der Datenbank speichern
-        // z.B. in einer separaten Tabelle für Anwesenheiten
-        print("DEBUG: Schüler \(studentId) ist \(isAbsent ? "abwesend" : "anwesend")")
+    // Abwesenheitsstatus verwalten
+    func updateStudentAbsenceStatus(studentId: UUID, isAbsent: Bool) {
+        dataStore.updateStudentAbsenceStatus(studentId: studentId, isAbsent: isAbsent)
+    }
+
+    func isStudentAbsent(_ studentId: UUID) -> Bool {
+        return dataStore.isStudentAbsent(studentId)
     }
 
     // Neue Methode: Notizen aktualisieren
@@ -116,11 +113,6 @@ class EnhancedSeatingViewModel: ObservableObject {
 
             print("DEBUG: Notizen für Schüler \(studentId) aktualisiert")
         }
-    }
-
-    // Methode, um Abwesenheitsstatus zu prüfen
-    func isStudentAbsent(_ studentId: UUID) -> Bool {
-        return absentStudents.contains(studentId)
     }
 
     // MARK: - Sitzposition-Operationen
@@ -236,6 +228,23 @@ class EnhancedSeatingViewModel: ObservableObject {
         showError = true
         print("ERROR: \(message)")
     }
+
+    // Im EnhancedSeatingViewModel
+    func addRatingForStudent(studentId: UUID, value: RatingValue) {
+        guard let classId = selectedClassId else { return }
+
+        // Neue Bewertung erstellen
+        let newRating = Rating(
+            studentId: studentId,
+            classId: classId,
+            value: value
+        )
+
+        // Zum DataStore hinzufügen
+        dataStore.addRating(newRating)
+    }
+
+
 }
 
 

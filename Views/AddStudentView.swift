@@ -154,6 +154,50 @@ struct AddStudentView: View {
         }
     }
 
+    // 5. Schließlich aktualisieren wir die AddStudentView, um die Überprüfung auf doppelte Namen zu verbessern:
+
+
+//    private func saveStudent() {
+//        guard validateInputs() else { return }
+//
+//        isSaving = true
+//
+//        // Prüfen ob Klassenlimit erreicht ist
+//        let currentStudentCount = viewModel.getStudentCountForClass(classId: classId)
+//        if currentStudentCount >= 40 {
+//            showError("Diese Klasse hat bereits 40 Schüler. Mehr können nicht hinzugefügt werden.")
+//            isSaving = false
+//            return
+//        }
+//
+//        // Validierung auf doppelte Namen erfolgt im ViewModel
+//
+//        print("DEBUG: Speichere Schüler: \(firstName) \(lastName) in Klasse \(className)")
+//
+//        let newStudent = Student(
+//            firstName: firstName,
+//            lastName: lastName,
+//            classId: classId,
+//            notes: notes.isEmpty ? nil : notes
+//        )
+//
+//        // Leichte Verzögerung, um sicherzustellen, dass die UI aktualisiert wird
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+//            // Die eigentliche Validierung auf doppelte Namen erfolgt im ViewModel
+//            // Wenn ein Fehler auftritt, wird die showError-Methode des ViewModels aufgerufen
+//            self.viewModel.addStudent(newStudent)
+//
+//            // Wir prüfen, ob ein Fehler angezeigt wird
+//            if self.viewModel.showError {
+//                self.isSaving = false
+//                // Die Fehlermeldung wird bereits im ViewModel angezeigt, also müssen wir hier nichts tun
+//            } else {
+//                self.isSaving = false
+//                self.isPresented = false
+//            }
+//        }
+//    }
+
     private func saveStudent() {
         guard validateInputs() else { return }
 
@@ -178,9 +222,14 @@ struct AddStudentView: View {
 
         // Leichte Verzögerung, um sicherzustellen, dass die UI aktualisiert wird
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            viewModel.addStudent(newStudent)
-            isSaving = false
-            isPresented = false
+            // Wenn der Schüler erfolgreich hinzugefügt wurde, schließe das Modal
+            if self.viewModel.addStudent(newStudent) {
+                self.isSaving = false
+                self.isPresented = false
+            } else {
+                // Wenn nicht, bleibt das Modal offen und zeigt den Fehler
+                self.isSaving = false
+            }
         }
     }
 

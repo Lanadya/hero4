@@ -10,11 +10,13 @@
 		AF0BE60E2D8893D400F9BB2C /* ColumnMappingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0BE60D2D8893D400F9BB2C /* ColumnMappingView.swift */; };
 		AF0BE6102D88942400F9BB2C /* ImportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0BE60F2D88942400F9BB2C /* ImportManager.swift */; };
 		AF4AA91F2D8A125100BCFEED /* SeatingPlanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA91E2D8A125100BCFEED /* SeatingPlanViewModel.swift */; };
-		AF4AA9232D8A131A00BCFEED /* RatingValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9222D8A131A00BCFEED /* RatingValue.swift */; };
 		AF4AA9252D8A14F900BCFEED /* SharedTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9242D8A14F900BCFEED /* SharedTypes.swift */; };
 		AF4AA9292D8AC3EF00BCFEED /* EnhancedSeatingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9282D8AC3EF00BCFEED /* EnhancedSeatingViewModel.swift */; };
 		AF4AA93D2D8B1F1D00BCFEED /* EnhancedSeatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA93C2D8B1F1D00BCFEED /* EnhancedSeatingView.swift */; };
 		AF4AA93F2D8B1F4800BCFEED /* SP_Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA93E2D8B1F4800BCFEED /* SP_Components.swift */; };
+		AF4AA9412D8C7A5600BCFEED /* Rating.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9402D8C7A5600BCFEED /* Rating.swift */; };
+		AF4AA9432D8C7A7700BCFEED /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9422D8C7A7700BCFEED /* ResultsView.swift */; };
+		AF4AA9462D8C7ACA00BCFEED /* ResultsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9452D8C7ACA00BCFEED /* ResultsViewModel.swift */; };
 		AF6A0D1B2D80A6B200FBD63C /* Class.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1A2D80A6B200FBD63C /* Class.swift */; };
 		AF6A0D1D2D80A6F100FBD63C /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1C2D80A6F100FBD63C /* DataStore.swift */; };
 		AF6A0D1F2D80A72000FBD63C /* TimetableViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1E2D80A71F00FBD63C /* TimetableViewModel.swift */; };
@@ -52,11 +54,13 @@
 		AF0BE60D2D8893D400F9BB2C /* ColumnMappingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColumnMappingView.swift; sourceTree = "<group>"; };
 		AF0BE60F2D88942400F9BB2C /* ImportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportManager.swift; sourceTree = "<group>"; };
 		AF4AA91E2D8A125100BCFEED /* SeatingPlanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeatingPlanViewModel.swift; sourceTree = "<group>"; };
-		AF4AA9222D8A131A00BCFEED /* RatingValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingValue.swift; sourceTree = "<group>"; };
 		AF4AA9242D8A14F900BCFEED /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
 		AF4AA9282D8AC3EF00BCFEED /* EnhancedSeatingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedSeatingViewModel.swift; sourceTree = "<group>"; };
 		AF4AA93C2D8B1F1D00BCFEED /* EnhancedSeatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedSeatingView.swift; sourceTree = "<group>"; };
 		AF4AA93E2D8B1F4800BCFEED /* SP_Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SP_Components.swift; sourceTree = "<group>"; };
+		AF4AA9402D8C7A5600BCFEED /* Rating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rating.swift; sourceTree = "<group>"; };
+		AF4AA9422D8C7A7700BCFEED /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
+		AF4AA9452D8C7ACA00BCFEED /* ResultsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsViewModel.swift; sourceTree = "<group>"; };
 		AF6A0CE92D809A6900FBD63C /* hero4.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = hero4.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF6A0CF92D809A6A00FBD63C /* hero4Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hero4Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF6A0D032D809A6A00FBD63C /* hero4UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hero4UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -135,6 +139,14 @@
 			path = SeatingPlan;
 			sourceTree = "<group>";
 		};
+		AF4AA9442D8C7A9F00BCFEED /* Results */ = {
+			isa = PBXGroup;
+			children = (
+				AF4AA9422D8C7A7700BCFEED /* ResultsView.swift */,
+			);
+			path = Results;
+			sourceTree = "<group>";
+		};
 		AF6A0CE02D809A6900FBD63C = {
 			isa = PBXGroup;
 			children = (
@@ -166,6 +178,7 @@
 				AF6A0D2F2D80B29B00FBD63C /* StudentsViewModel.swift */,
 				AF4AA91E2D8A125100BCFEED /* SeatingPlanViewModel.swift */,
 				AF4AA9282D8AC3EF00BCFEED /* EnhancedSeatingViewModel.swift */,
+				AF4AA9452D8C7ACA00BCFEED /* ResultsViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -184,8 +197,8 @@
 				AF6A0D1A2D80A6B200FBD63C /* Class.swift */,
 				AF6A0D2B2D80B23400FBD63C /* Student.swift */,
 				AF6A0D2D2D80B24D00FBD63C /* SeatingPosition.swift */,
-				AF4AA9222D8A131A00BCFEED /* RatingValue.swift */,
 				AF4AA9242D8A14F900BCFEED /* SharedTypes.swift */,
+				AF4AA9402D8C7A5600BCFEED /* Rating.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -204,6 +217,7 @@
 				AF0BE60F2D88942400F9BB2C /* ImportManager.swift */,
 				AF0BE60D2D8893D400F9BB2C /* ColumnMappingView.swift */,
 				AF0BE6162D88A9BF00F9BB2C /* SeatingPlan */,
+				AF4AA9442D8C7A9F00BCFEED /* Results */,
 				AF6A0D202D80A73D00FBD63C /* Components */,
 			);
 			path = Views;
@@ -363,15 +377,16 @@
 			files = (
 				AF6A0D1B2D80A6B200FBD63C /* Class.swift in Sources */,
 				AF6A0D1D2D80A6F100FBD63C /* DataStore.swift in Sources */,
-				AF4AA9232D8A131A00BCFEED /* RatingValue.swift in Sources */,
 				AF6A0D302D80B29B00FBD63C /* StudentsViewModel.swift in Sources */,
 				AF4AA93D2D8B1F1D00BCFEED /* EnhancedSeatingView.swift in Sources */,
 				AF6A0D242D80A77E00FBD63C /* AddClassView.swift in Sources */,
 				AF4AA9292D8AC3EF00BCFEED /* EnhancedSeatingViewModel.swift in Sources */,
 				AF6A0D2C2D80B23400FBD63C /* Student.swift in Sources */,
 				AF0BE60E2D8893D400F9BB2C /* ColumnMappingView.swift in Sources */,
+				AF4AA9432D8C7A7700BCFEED /* ResultsView.swift in Sources */,
 				AF6A0D2E2D80B24D00FBD63C /* SeatingPosition.swift in Sources */,
 				AF4AA91F2D8A125100BCFEED /* SeatingPlanViewModel.swift in Sources */,
+				AF4AA9412D8C7A5600BCFEED /* Rating.swift in Sources */,
 				AF6A0D282D80A7BB00FBD63C /* ClassesView.swift in Sources */,
 				AF6A0D342D80B2EE00FBD63C /* AddStudentView.swift in Sources */,
 				AF6A0D362D80B31300FBD63C /* EditStudentView.swift in Sources */,
@@ -381,6 +396,7 @@
 				AF4AA9252D8A14F900BCFEED /* SharedTypes.swift in Sources */,
 				AF6A0D262D80A7A200FBD63C /* EditClassView.swift in Sources */,
 				AF6A0D322D80B2C800FBD63C /* StudentsListView.swift in Sources */,
+				AF4AA9462D8C7ACA00BCFEED /* ResultsViewModel.swift in Sources */,
 				AF4AA93F2D8B1F4800BCFEED /* SP_Components.swift in Sources */,
 				AF6A0D2A2D80A7D000FBD63C /* MainTabView.swift in Sources */,
 			);

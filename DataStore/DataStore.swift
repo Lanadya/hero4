@@ -7,10 +7,15 @@ class DataStore: ObservableObject {
     @Published var classes: [Class] = []
     @Published var students: [Student] = []
     @Published var seatingPositions: [SeatingPosition] = []
+    @Published var absenceStatuses: [UUID: Bool] = [:] // Neue Property für Abwesenheitsstatus
+    @Published var ratings: [Rating] = []
 
     private let classesKey = "hero4_classes"
     private let studentsKey = "hero4_students"
     private let seatingPositionsKey = "hero4_seating_positions"
+    private let absenceStatusesKey = "hero4_absence_statuses" // Neuer Key für Speicherung
+    private let ratingsKey = "hero4_ratings"
+
 
     private init() {
         loadAllData()
@@ -22,6 +27,8 @@ class DataStore: ObservableObject {
         loadClasses()
         loadStudents()
         loadSeatingPositions()
+        loadAbsenceStatuses()
+        loadRatings()
     }
 
     func loadClasses() {
@@ -88,6 +95,25 @@ class DataStore: ObservableObject {
         objectWillChange.send()
     }
 
+    // Neue Funktion zum Laden der Abwesenheitsstatus
+    func loadAbsenceStatuses() {
+        if let data = UserDefaults.standard.data(forKey: absenceStatusesKey) {
+            do {
+                let decoder = JSONDecoder()
+                absenceStatuses = try decoder.decode([UUID: Bool].self, from: data)
+                print("DEBUG DataStore: Abwesenheitsstatus geladen: \(absenceStatuses.count)")
+            } catch {
+                print("FEHLER DataStore: Fehler beim Laden der Abwesenheitsstatus: \(error)")
+                absenceStatuses = [:]
+            }
+        } else {
+            print("DEBUG DataStore: Keine gespeicherten Abwesenheitsstatus gefunden.")
+            absenceStatuses = [:]
+        }
+
+        objectWillChange.send()
+    }
+
     private func saveClasses() {
         do {
             let encoder = JSONEncoder()
@@ -138,6 +164,20 @@ class DataStore: ObservableObject {
             objectWillChange.send()
         } catch {
             print("FEHLER DataStore: Fehler beim Speichern der Sitzpositionen: \(error)")
+        }
+    }
+
+    // Neue Funktion zum Speichern der Abwesenheitsstatus
+    private func saveAbsenceStatuses() {
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(absenceStatuses)
+            UserDefaults.standard.set(data, forKey: absenceStatusesKey)
+            UserDefaults.standard.synchronize()
+            print("DEBUG DataStore: Abwesenheitsstatus gespeichert: \(absenceStatuses.count)")
+            objectWillChange.send()
+        } catch {
+            print("FEHLER DataStore: Fehler beim Speichern der Abwesenheitsstatus: \(error)")
         }
     }
 
@@ -294,6 +334,37 @@ class DataStore: ObservableObject {
         }.map { $0.name }
     }
 
+    // MARK: - Validierung für doppelte Schülernamen
+
+    /// Prüft, ob der Name eines Schülers bereits in der Klasse existiert
+    func isStudentNameUnique(firstName: String, lastName: String, classId: UUID, exceptStudentId: UUID? = nil) -> Bool {
+        // Normalisiere die Namen für den Vergleich
+        let normalizedFirstName = firstName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let normalizedLastName = lastName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        // Suche nach Schülern mit gleichem Namen in der gleichen Klasse
+        let duplicates = students.filter { student in
+            // Ignoriere den angegebenen Schüler selbst (für Edit-Fälle)
+            if let exceptId = exceptStudentId, student.id == exceptId {
+                return false
+            }
+
+            // Gleiche Klasse?
+            if student.classId != classId || student.isArchived {
+                return false
+            }
+
+            // Vergleiche normalisierte Namen
+            let studentFirstName = student.firstName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            let studentLastName = student.lastName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+            return studentFirstName == normalizedFirstName && studentLastName == normalizedLastName
+        }
+
+        // Wenn keine Duplikate gefunden wurden, ist der Name eindeutig
+        return duplicates.isEmpty
+    }
+
     // MARK: - Schüler-Operationen
 
     func addStudent(_ student: Student) {
@@ -321,6 +392,12 @@ class DataStore: ObservableObject {
 
             // Auch alle Sitzpositionen für diesen Schüler löschen
             deleteSeatingPositionsForStudent(studentId: id)
+
+            // Abwesenheitsstatus löschen
+            if absenceStatuses[id] != nil {
+                absenceStatuses.removeValue(forKey: id)
+                saveAbsenceStatuses()
+            }
         } else {
             print("FEHLER DataStore: Konnte Schüler mit ID \(id) nicht zum Löschen finden.")
         }
@@ -353,6 +430,18 @@ class DataStore: ObservableObject {
         updatedStudent.isArchived = true
         print("DEBUG DataStore: Archiviere Schüler: \(updatedStudent.fullName)")
         updateStudent(updatedStudent)
+    }
+
+    // MARK: - Abwesenheitsstatus-Operationen
+
+    func updateStudentAbsenceStatus(studentId: UUID, isAbsent: Bool) {
+        absenceStatuses[studentId] = isAbsent
+        saveAbsenceStatuses()
+        print("DEBUG DataStore: Abwesenheitsstatus für Schüler \(studentId) auf \(isAbsent) gesetzt")
+    }
+
+    func isStudentAbsent(_ studentId: UUID) -> Bool {
+        return absenceStatuses[studentId] ?? false
     }
 
     // MARK: - Sitzpositionen-Operationen
@@ -447,11 +536,15 @@ class DataStore: ObservableObject {
         classes = []
         students = []
         seatingPositions = []
+        absenceStatuses = [:]
+        ratings = []
 
         saveClasses()
         saveStudents()
         saveSeatingPositions()
-
+        saveAbsenceStatuses()
+        saveRatings()
+        
         print("DEBUG DataStore: Alle Daten zurückgesetzt.")
     }
 
@@ -572,4 +665,95 @@ class DataStore: ObservableObject {
         // Alle neuen Positionen in einem Rutsch speichern
         updateSeatingPositionsInBatch(updatedPositions)
     }
+
+    // Lade-/Speicher-Methoden
+    func loadRatings() {
+        if let data = UserDefaults.standard.data(forKey: ratingsKey) {
+            do {
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
+                ratings = try decoder.decode([Rating].self, from: data)
+                print("DEBUG DataStore: Bewertungen geladen: \(ratings.count)")
+            } catch {
+                print("FEHLER DataStore: Fehler beim Laden der Bewertungen: \(error)")
+                ratings = []
+            }
+        } else {
+            print("DEBUG DataStore: Keine gespeicherten Bewertungen gefunden.")
+            ratings = []
+        }
+
+        objectWillChange.send()
+    }
+
+    private func saveRatings() {
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(ratings)
+            UserDefaults.standard.set(data, forKey: ratingsKey)
+            UserDefaults.standard.synchronize()
+            print("DEBUG DataStore: Bewertungen gespeichert: \(ratings.count)")
+            objectWillChange.send()
+        } catch {
+            print("FEHLER DataStore: Fehler beim Speichern der Bewertungen: \(error)")
+        }
+    }
+
+    // Rating-Operationen
+    func addRating(_ rating: Rating) {
+        ratings.append(rating)
+        saveRatings()
+        print("DEBUG DataStore: Bewertung hinzugefügt für Schüler \(rating.studentId)")
+    }
+
+    func updateRating(_ rating: Rating) {
+        if let index = ratings.firstIndex(where: { $0.id == rating.id }) {
+            ratings[index] = rating
+            saveRatings()
+            print("DEBUG DataStore: Bewertung aktualisiert für Schüler \(rating.studentId)")
+        } else {
+            print("FEHLER DataStore: Konnte Bewertung mit ID \(rating.id) nicht finden.")
+        }
+    }
+
+    func deleteRating(id: UUID) {
+        if let index = ratings.firstIndex(where: { $0.id == id }) {
+            let ratingToDelete = ratings[index]
+            ratings.remove(at: index)
+            saveRatings()
+            print("DEBUG DataStore: Bewertung gelöscht für Schüler \(ratingToDelete.studentId)")
+        } else {
+            print("FEHLER DataStore: Konnte Bewertung mit ID \(id) nicht zum Löschen finden.")
+        }
+    }
+
+    func archiveRating(_ rating: Rating) {
+        var updatedRating = rating
+        updatedRating.isArchived = true
+        updateRating(updatedRating)
+        print("DEBUG DataStore: Bewertung archiviert für Schüler \(rating.studentId)")
+    }
+
+    func getRating(id: UUID) -> Rating? {
+        return ratings.first { $0.id == id }
+    }
+
+    func getRatingsForStudent(studentId: UUID) -> [Rating] {
+        return ratings.filter { $0.studentId == studentId && !$0.isArchived }
+    }
+
+    func getRatingsForClass(classId: UUID, includeArchived: Bool = false) -> [Rating] {
+        return ratings.filter {
+            $0.classId == classId && (includeArchived || !$0.isArchived)
+        }
+    }
+
+
+
 }
+
+
+
+
+

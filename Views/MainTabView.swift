@@ -24,7 +24,8 @@ struct MainTabView: View {
                 }
                 .tag(2)
 
-            Text("Ergebnisse (Wird noch implementiert)")
+            // In MainTabView.swift, ersetze den Tab für "Ergebnisse":
+            ResultsView()
                 .tabItem {
                     Label("Noten", systemImage: "list.bullet")
                 }

@@ -255,6 +255,9 @@ struct EditStudentView: View {
         .presentationDetents([.large]) // Erzwingt volle Höhe
     }
 
+    // 6. Und schließlich aktualisieren wir EditStudentView:
+
+    // In EditStudentView.swift, aktualisiere die saveStudent-Methode:
     private func saveStudent() {
         guard validateInputs() else { return }
 
@@ -267,9 +270,17 @@ struct EditStudentView: View {
 
         // Leichte Verzögerung, um die Benutzererfahrung zu verbessern
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Die Validierung auf doppelte Namen erfolgt im ViewModel
             self.viewModel.updateStudent(updatedStudent)
-            self.isSaving = false
-            self.isPresented = false
+
+            // Wir prüfen, ob ein Fehler angezeigt wird
+            if self.viewModel.showError {
+                self.isSaving = false
+                // Fehler wird im ViewModel angezeigt
+            } else {
+                self.isSaving = false
+                self.isPresented = false
+            }
         }
     }
 

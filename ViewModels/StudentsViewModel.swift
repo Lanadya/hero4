@@ -141,7 +141,35 @@ class StudentsViewModel: ObservableObject {
         return dataStore.getStudentsForClass(classId: classId).count
     }
 
-    func addStudent(_ student: Student) {
+    // In StudentsViewModel.swift, ersetze die bestehende addStudent-Methode mit dieser:
+
+//    func addStudent(_ student: Student) {
+//        do {
+//            try student.validate()
+//
+//            // Prüfen, ob das Limit von 40 Schülern pro Klasse erreicht ist
+//            let currentCount = getStudentCountForClass(classId: student.classId)
+//            if currentCount >= 40 {
+//                showError(message: "Diese Klasse hat bereits 40 Schüler. Mehr können nicht hinzugefügt werden.")
+//                return
+//            }
+//
+//            // Prüfen auf doppelte Namen
+//            if !dataStore.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: student.classId) {
+//                showError(message: "Ein Schüler mit dem Namen '\(student.firstName) \(student.lastName)' existiert bereits in dieser Klasse.")
+//                return
+//            }
+//
+//            dataStore.addStudent(student)
+//            loadStudentsForSelectedClass()
+//        } catch Student.ValidationError.noName {
+//            showError(message: "Bitte geben Sie mindestens einen Vor- oder Nachnamen ein.")
+//        } catch {
+//            showError(message: "Fehler beim Speichern des Schülers: \(error.localizedDescription)")
+//        }
+//    }
+    // Im StudentsViewModel:
+    func addStudent(_ student: Student) -> Bool {
         do {
             try student.validate()
 
@@ -149,21 +177,37 @@ class StudentsViewModel: ObservableObject {
             let currentCount = getStudentCountForClass(classId: student.classId)
             if currentCount >= 40 {
                 showError(message: "Diese Klasse hat bereits 40 Schüler. Mehr können nicht hinzugefügt werden.")
-                return
+                return false
+            }
+
+            // Prüfen auf doppelte Namen
+            if !dataStore.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: student.classId) {
+                showError(message: "Ein Schüler mit dem Namen '\(student.firstName) \(student.lastName)' existiert bereits in dieser Klasse.")
+                return false
             }
 
             dataStore.addStudent(student)
             loadStudentsForSelectedClass()
+            return true
         } catch Student.ValidationError.noName {
             showError(message: "Bitte geben Sie mindestens einen Vor- oder Nachnamen ein.")
+            return false
         } catch {
             showError(message: "Fehler beim Speichern des Schülers: \(error.localizedDescription)")
+            return false
         }
     }
 
     func updateStudent(_ student: Student) {
         do {
             try student.validate()
+
+            // Prüfen auf doppelte Namen (aber den aktuellen Schüler selbst ausschließen)
+            if !dataStore.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: student.classId, exceptStudentId: student.id) {
+                showError(message: "Ein Schüler mit dem Namen '\(student.firstName) \(student.lastName)' existiert bereits in dieser Klasse.")
+                return
+            }
+
             dataStore.updateStudent(student)
             loadStudentsForSelectedClass()
         } catch Student.ValidationError.noName {
@@ -238,7 +282,7 @@ class StudentsViewModel: ObservableObject {
         // Durchsuche alle nicht-archivierten Schüler
         for student in allStudents {
             if student.firstName.lowercased().contains(searchTextLower) ||
-               student.lastName.lowercased().contains(searchTextLower) {
+                student.lastName.lowercased().contains(searchTextLower) {
 
                 // Klasse für den Schüler finden
                 if let classObj = dataStore.getClass(id: student.classId) {
@@ -300,5 +344,13 @@ class StudentsViewModel: ObservableObject {
         print("FEHLER: \(message)")
         errorMessage = message
         showError = true
+    }
+
+
+    // 2. Nun aktualisieren wir die StudentsViewModel-Klasse mit der Validierungsmethode:
+
+    // In StudentsViewModel.swift füge diese Methode hinzu:
+    func isStudentNameUnique(firstName: String, lastName: String, classId: UUID, exceptStudentId: UUID? = nil) -> Bool {
+        return dataStore.isStudentNameUnique(firstName: firstName, lastName: lastName, classId: classId, exceptStudentId: exceptStudentId)
     }
 }

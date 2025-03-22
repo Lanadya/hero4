@@ -15,4 +15,14 @@ enum RatingValue: Int, Codable {
         case .doubleMinus: return "--"
         }
     }
+
+    // Diese Eigenschaft hinzufügen
+        var numericValue: Double {
+            switch self {
+            case .doublePlus: return 1.0  // Beste Note
+            case .plus: return 2.0
+            case .minus: return 3.0
+            case .doubleMinus: return 4.0  // Schlechteste Note
+            }
+        }
 }
