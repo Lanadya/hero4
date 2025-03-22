@@ -136,7 +136,7 @@ struct EditStudentView: View {
                     }
                 }
 
-                // Buttons am unteren Rand - außerhalb des ScrollViews, damit sie immer sichtbar sind
+                // Buttons am unteren Rand
                 VStack(spacing: 12) {
                     // Speichern-Button
                     Button(action: {
@@ -212,10 +212,9 @@ struct EditStudentView: View {
                     .disabled(isSaving)
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 20) // Extra Abstand zum unteren Rand
+                .padding(.bottom, 20)
             }
             .navigationBarTitle("Schüler bearbeiten", displayMode: .inline)
-            .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(
                 leading: Button(action: {
                     isPresented = false
@@ -252,12 +251,9 @@ struct EditStudentView: View {
                 )
             }
         }
-        .presentationDetents([.large]) // Erzwingt volle Höhe
+        .presentationDetents([.large])
     }
 
-    // 6. Und schließlich aktualisieren wir EditStudentView:
-
-    // In EditStudentView.swift, aktualisiere die saveStudent-Methode:
     private func saveStudent() {
         guard validateInputs() else { return }
 
@@ -268,15 +264,10 @@ struct EditStudentView: View {
         updatedStudent.lastName = lastName
         updatedStudent.notes = notes.isEmpty ? nil : notes
 
-        // Leichte Verzögerung, um die Benutzererfahrung zu verbessern
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            // Die Validierung auf doppelte Namen erfolgt im ViewModel
             self.viewModel.updateStudent(updatedStudent)
-
-            // Wir prüfen, ob ein Fehler angezeigt wird
             if self.viewModel.showError {
                 self.isSaving = false
-                // Fehler wird im ViewModel angezeigt
             } else {
                 self.isSaving = false
                 self.isPresented = false
@@ -305,12 +296,10 @@ struct EditStudentView: View {
     }
 
     private func validateInputs() -> Bool {
-        // Mindestens ein Namensfeld muss ausgefüllt sein
         if firstName.isEmpty && lastName.isEmpty {
             showError("Bitte geben Sie mindestens einen Vor- oder Nachnamen ein.")
             return false
         }
-
         return true
     }
 
@@ -334,6 +323,7 @@ struct ClassChangeView: View {
     @Binding var isPresented: Bool
     @State private var selectedClassId: UUID?
     @State private var isProcessing = false
+    @State private var showArchiveAlert = false
 
     var body: some View {
         NavigationView {
@@ -388,19 +378,8 @@ struct ClassChangeView: View {
                 if viewModel.classes.count > 1 {
                     Section {
                         Button(action: {
-                            if let newClassId = selectedClassId {
-                                isProcessing = true
-
-                                // Verzögerung für bessere UX
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    viewModel.moveStudentToClass(studentId: student.id, newClassId: newClassId)
-
-                                    // Kurze Verzögerung vor dem Schließen
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                        isProcessing = false
-                                        isPresented = false
-                                    }
-                                }
+                            if selectedClassId != nil {
+                                showArchiveAlert = true
                             } else {
                                 viewModel.showError(message: "Bitte wählen Sie eine Klasse aus.")
                             }
@@ -441,12 +420,30 @@ struct ClassChangeView: View {
                 isPresented = false
             })
             .onAppear {
-                // Wähle standardmäßig die erste verfügbare Klasse
                 if let firstClass = viewModel.classes.first(where: { $0.id != student.classId }) {
                     selectedClassId = firstClass.id
                 }
             }
+            .alert(isPresented: $showArchiveAlert) {
+                Alert(
+                    title: Text("Klassenwechsel bestätigen"),
+                    message: Text("Die bisherigen Noten des Schülers werden archiviert und sind in der neuen Klasse nicht mehr sichtbar. Sie können im Archiv-Tab eingesehen werden."),
+                    primaryButton: .default(Text("Bestätigen")) {
+                        isProcessing = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            viewModel.moveStudentToClass(studentId: student.id, newClassId: selectedClassId!)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isProcessing = false
+                                isPresented = false
+                            }
+                        }
+                    },
+                    secondaryButton: .cancel(Text("Abbrechen")) {
+                        showArchiveAlert = false
+                    }
+                )
+            }
         }
-        .presentationDetents([.medium]) // Erzwingt mittlere Höhe
+        .presentationDetents([.medium])
     }
 }

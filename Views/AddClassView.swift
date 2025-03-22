@@ -144,15 +144,64 @@ struct AddClassView: View {
         .disabled(isSaving)
     }
 
+//    private func saveClass(navigateToStudents: Bool) {
+//        guard validateInputs() else { return }
+//
+//        // Prevent double-saving
+//        isSaving = true
+//
+//        print("DEBUG: Saving class at position: Row \(row), Column \(column)")
+//
+//        // Create a new class with a unique ID
+//        let classId = UUID()
+//        let newClass = Class(
+//            id: classId,
+//            name: className,
+//            note: classNote.isEmpty ? nil : classNote,
+//            row: row,
+//            column: column
+//        )
+//
+//        print("DEBUG: Creating new class with ID: \(classId)")
+//
+//        // Save the class
+//        viewModel.saveClass(newClass)
+//
+//        // IMPORTANT: Store the class ID in our global AppState
+//        AppState.shared.didCreateClass(classId)
+//
+//        // If we should navigate to the student list
+//        if navigateToStudents {
+//            // This will trigger the navigation in MainTabView
+//            AppState.shared.shouldNavigateToStudentsList = true
+//        }
+//
+//        // Force class reload
+//        viewModel.loadClasses()
+//
+//        // Brief delay for UI
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//            // Close modal
+//            self.isPresented = false
+//
+//            // If needed, navigate to student list (TabBar handled by MainTabView)
+//            if navigateToStudents {
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+//                    self.selectedTab = 1 // Switch to student list
+//                }
+//            }
+//
+//            self.isSaving = false
+//        }
+//    }
+
     private func saveClass(navigateToStudents: Bool) {
+        // Prüfe, ob die Eingaben gültig sind
         guard validateInputs() else { return }
 
-        // Verhindere doppeltes Speichern
         isSaving = true
 
-        print("DEBUG: Speichere Klasse an Position: Reihe \(row), Spalte \(column)")
-
-        // Erstelle eine neue Klasse mit einer neuen eindeutigen ID
+        // Erstelle eine neue Klasse mit einer eindeutigen ID
         let classId = UUID()
         let newClass = Class(
             id: classId,
@@ -162,39 +211,23 @@ struct AddClassView: View {
             column: column
         )
 
-        print("DEBUG: Erstelle neue Klasse mit ID: \(classId)")
-
-        // Speichere die Klasse
+        // Speichere die Klasse im ViewModel
         viewModel.saveClass(newClass)
 
-        // Speichere die ID in UserDefaults für andere Views
-        UserDefaults.standard.set(classId.uuidString, forKey: "lastCreatedClassId")
-
-        // Wenn zur Schülerliste navigiert werden soll, setze ein Flag in UserDefaults
+        // Wenn der Nutzer zur Schülerliste navigieren will
         if navigateToStudents {
-            UserDefaults.standard.set(true, forKey: "navigateToStudentsTab")
-        }
+            // Speichere die ID der neuen Klasse in UserDefaults
+            UserDefaults.standard.set(classId.uuidString, forKey: "selectedClassForStudentsList")
 
-        // Erzwinge eine Synchronisierung von UserDefaults
-        UserDefaults.standard.synchronize()
-
-        // Lade die Klassen neu
-        viewModel.loadClasses()
-
-        // Kurze Verzögerung für die UI
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Modal schließen
-            self.isPresented = false
-
-            // Bei Bedarf zur Schülerliste navigieren (TabBar wird von MainTabView behandelt)
-            if navigateToStudents {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self.selectedTab = 1 // Zur Schülerliste wechseln
-                }
+            // Wechsle zur Schülerliste (Tab 1)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.selectedTab = 1
             }
-
-            self.isSaving = false
         }
+
+        // Schließe das Modal
+        self.isPresented = false
+        self.isSaving = false
     }
 
     private func validateInputs() -> Bool {

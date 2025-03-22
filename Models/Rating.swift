@@ -5,10 +5,11 @@ struct Rating: Identifiable, Codable, Equatable, Hashable {
     var studentId: UUID
     var classId: UUID
     var date: Date
-    var value: RatingValue?  // Optional, falls keine Bewertung (aber anwesend)
-    var isAbsent: Bool       // Markiert Abwesenheit
+    var value: RatingValue?
+    var isAbsent: Bool
     var isArchived: Bool
     var createdAt: Date
+    var schoolYear: String  // Neues Feld für das Schuljahr
 
     init(id: UUID = UUID(),
          studentId: UUID,
@@ -17,7 +18,8 @@ struct Rating: Identifiable, Codable, Equatable, Hashable {
          value: RatingValue? = nil,
          isAbsent: Bool = false,
          isArchived: Bool = false,
-         createdAt: Date = Date()) {
+         createdAt: Date = Date(),
+         schoolYear: String) {  // Konstruktor mit schoolYear erweitern
 
         self.id = id
         self.studentId = studentId
@@ -27,5 +29,6 @@ struct Rating: Identifiable, Codable, Equatable, Hashable {
         self.isAbsent = isAbsent
         self.isArchived = isArchived
         self.createdAt = createdAt
+        self.schoolYear = schoolYear
     }
 }

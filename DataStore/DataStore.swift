@@ -702,9 +702,13 @@ class DataStore: ObservableObject {
 
     // Rating-Operationen
     func addRating(_ rating: Rating) {
-        ratings.append(rating)
+        var newRating = rating
+        if newRating.schoolYear.isEmpty {
+            newRating.schoolYear = currentSchoolYear()
+        }
+        ratings.append(newRating)
         saveRatings()
-        print("DEBUG DataStore: Bewertung hinzugefügt für Schüler \(rating.studentId)")
+        print("Neue Note für Schüler \(newRating.studentId) im Schuljahr \(newRating.schoolYear) hinzugefügt")
     }
 
     func updateRating(_ rating: Rating) {

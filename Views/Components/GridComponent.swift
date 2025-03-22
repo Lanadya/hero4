@@ -193,9 +193,17 @@ struct GridComponent: View {
             if let classObj = cellData.classObject {
                 selectedClass = classObj
 
-                print("DEBUG GridComponent: Öffne EditClassModal für Klasse: \(classObj.name)")
+                // Statt EditClassModal zu öffnen, zum Sitzplan wechseln
+                print("DEBUG GridComponent: Wechsle zum Sitzplan für Klasse: \(classObj.name)")
 
-                showEditClassModal = true
+                // Klassen-ID für Sitzplan in UserDefaults speichern
+                UserDefaults.standard.set(classObj.id.uuidString, forKey: "selectedClassForSeatingPlan")
+
+                // Zum Sitzplan-Tab wechseln
+                selectedTab = 2 // 2 ist der Index für den Sitzplan-Tab
+
+                // NICHT mehr das Modal öffnen:
+                // showEditClassModal = true
             }
         }
     }
@@ -229,15 +237,22 @@ struct GridCell: View {
                         .font(.system(size: getFontSize()))
                         .fontWeight(getFontWeight())
                         .foregroundColor(textColor)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(width: cellWidth - 10, alignment: .center) // Feste Breite minus Padding
                 }
 
                 if !data.secondaryText.isEmpty {
                     Text(data.secondaryText)
                         .font(.system(size: 10))
                         .foregroundColor(textColor.opacity(0.8))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(width: cellWidth - 10, alignment: .center) // Feste Breite minus Padding
                 }
             }
             .padding(5)
+            .frame(width: cellWidth, height: cellHeight) // Wichtig: Die gesamte VStack auf feste Größe beschränken
         }
         .overlay(
             Group {

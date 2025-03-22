@@ -175,7 +175,8 @@ class ResultsViewModel: ObservableObject {
                 classId: classId,
                 date: startOfDay,
                 value: value,
-                isAbsent: false
+                isAbsent: false,
+                schoolYear: currentSchoolYear()
             )
 
             dataStore.addRating(newRating)
@@ -210,7 +211,8 @@ class ResultsViewModel: ObservableObject {
                 classId: classId,
                 date: startOfDay,
                 value: nil,
-                isAbsent: true
+                isAbsent: true,
+                schoolYear: currentSchoolYear()
             )
 
             dataStore.addRating(newRating)

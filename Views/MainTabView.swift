@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab = 0
+    @ObservedObject private var appState = AppState.shared
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -24,7 +25,7 @@ struct MainTabView: View {
                 }
                 .tag(2)
 
-            // In MainTabView.swift, ersetze den Tab für "Ergebnisse":
+            // Die implementierte ResultsView verwenden
             ResultsView()
                 .tabItem {
                     Label("Noten", systemImage: "list.bullet")
@@ -36,6 +37,14 @@ struct MainTabView: View {
                     Label("Archiv", systemImage: "archivebox")
                 }
                 .tag(4)
+        }
+        .onChange(of: appState.shouldNavigateToStudentsList) { shouldNavigate in
+            if shouldNavigate {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    selectedTab = 1 // Zur Schülerliste navigieren
+                    appState.shouldNavigateToStudentsList = false
+                }
+            }
         }
         .onAppear {
             checkForNavigationRequests()

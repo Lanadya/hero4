@@ -237,7 +237,8 @@ class EnhancedSeatingViewModel: ObservableObject {
         let newRating = Rating(
             studentId: studentId,
             classId: classId,
-            value: value
+            value: value,
+            schoolYear: currentSchoolYear()
         )
 
         // Zum DataStore hinzufügen

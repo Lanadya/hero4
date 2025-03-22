@@ -3,6 +3,8 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct StudentsListView: View {
+
+    @ObservedObject private var appState = AppState.shared
     // Initialen Parameter für die Klassenauswahl hinzufügen
     @StateObject private var viewModel: StudentsViewModel
     @State private var showAddStudentModal = false
@@ -179,64 +181,46 @@ struct StudentsListView: View {
                 }
             }
             .navigationBarTitle("Schülerverwaltung", displayMode: .inline)
-            .navigationBarItems(
-                trailing: Button(action: {
-                    if viewModel.selectedClassId != nil {
-                        navigateToSeatingPlan = true
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "rectangle.grid.2x2")
-                        Text("Zum Sitzplan")
-                    }
-                }
-                .disabled(viewModel.selectedClassId == nil)
-            )
-            .toolbar {
-                // Edit-Button für die Schülerliste
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    if viewModel.selectedClass != nil && !viewModel.students.isEmpty {
-                        EditButton()
-                            .padding(.trailing, 8)
-                    }
-                }
 
-                // Bottom-Toolbar für Löschen-Aktion
-                ToolbarItem(placement: .bottomBar) {
-                    if editMode == .active && !selectedStudents.isEmpty {
-                        HStack {
-                            Button(action: {
-                                // Bestätigungsdialog anzeigen
-                                confirmDeleteMultipleStudents = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "trash")
-                                    Text("\(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen")
-                                }
-                            }
-                            .foregroundColor(.red)
-
-                            Spacer()
-
-                            Button(action: {
-                                // Bearbeitungsmodus verlassen
-                                editMode = .inactive
-                                selectedStudents.removeAll()
-                            }) {
-                                Text("Fertig")
-                            }
-                            .foregroundColor(.blue)
-                        }
-                        .padding(.horizontal)
-                    }
-                }
-            }
-            .background(
-                NavigationLink(
-                    destination: Text("Sitzplan (kommt bald)"),
-                    isActive: $navigateToSeatingPlan
-                ) { EmptyView() }
-            )
+//            .toolbar {
+//                // Edit-Button für die Schülerliste
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    if viewModel.selectedClass != nil && !viewModel.students.isEmpty {
+//                        EditButton()
+//                            .padding(.trailing, 8)
+//                    }
+//                }
+//
+//                // Bottom-Toolbar für Löschen-Aktion
+//                ToolbarItem(placement: .bottomBar) {
+//                    if editMode == .active && !selectedStudents.isEmpty {
+//                        HStack {
+//                            Button(action: {
+//                                // Bestätigungsdialog anzeigen
+//                                confirmDeleteMultipleStudents = true
+//                            }) {
+//                                HStack {
+//                                    Image(systemName: "trash")
+//                                    Text("\(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen")
+//                                }
+//                            }
+//                            .foregroundColor(.red)
+//
+//                            Spacer()
+//
+//                            Button(action: {
+//                                // Bearbeitungsmodus verlassen
+//                                editMode = .inactive
+//                                selectedStudents.removeAll()
+//                            }) {
+//                                Text("Fertig")
+//                            }
+//                            .foregroundColor(.blue)
+//                        }
+//                        .padding(.horizontal)
+//                    }
+//                }
+//            }
             .alert(isPresented: $viewModel.showError) {
                 Alert(
                     title: Text("Fehler"),
@@ -333,15 +317,36 @@ struct StudentsListView: View {
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
-        .onAppear {
-            // Bei Erscheinen der View die Daten aktualisieren
-            viewModel.loadStudentsForSelectedClass()
+//        .onAppear {
+//            // Load data for the selected class
+//            viewModel.loadStudentsForSelectedClass()
+//
+//            // If we should select a specific class (from class creation)
+//            if appState.shouldSelectClassInStudentsList,
+//               let classId = appState.lastCreatedClassId {
+//                print("DEBUG: Selecting newly created class in student list: \(classId)")
+//                viewModel.selectClass(id: classId)
+//                appState.didSelectClassInStudentsList() // Mark as handled
+//
+//                // Update the ImportManager's selected class ID
+//                importManager.selectedClassId = classId
+//            }
+//        }
 
-            // Aktualisiere die ausgewählte Klassen-ID im ImportManager
-            if let classId = viewModel.selectedClassId {
-                importManager.selectedClassId = classId
-            }
-        }
+        .onAppear {
+                    // Lade die Schüler für die aktuell ausgewählte Klasse
+                    viewModel.loadStudentsForSelectedClass()
+
+                    // Prüfe, ob eine Klasse aus UserDefaults geladen werden soll
+                    if let classIdString = UserDefaults.standard.string(forKey: "selectedClassForStudentsList"),
+                       let classId = UUID(uuidString: classIdString) {
+                        // Wähle die Klasse im ViewModel aus
+                        viewModel.selectClass(id: classId)
+                        // Entferne den Eintrag aus UserDefaults, damit er nicht erneut verwendet wird
+                        UserDefaults.standard.removeObject(forKey: "selectedClassForStudentsList")
+                    }
+                }
+
         .onDisappear {
             // Beim Verlassen der View die Suche zurücksetzen
             viewModel.clearGlobalSearch()
@@ -434,7 +439,7 @@ struct StudentsListView: View {
                             selectedStudents.removeAll()
                         }
                     }) {
-                        Text(editMode.isEditing ? "Fertig" : "Auswählen")
+                        Text(editMode.isEditing ? "Auswahl beenden" : "Mehrere Schüler auswählen")
                             .font(.subheadline)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
@@ -592,7 +597,7 @@ struct StudentsListView: View {
                                 .frame(minWidth: 60)
                                 .foregroundColor(selectedStudents.count == 1 ? .blue : .gray)
                             }
-                            .disabled(selectedStudents.count != 1)
+                            .disabled(selectedStudents.isEmpty)
 
                             Spacer()
 
@@ -607,7 +612,7 @@ struct StudentsListView: View {
                                 editMode = .inactive
                                 selectedStudents.removeAll()
                             }) {
-                                Text("Fertig")
+                                Text("Beenden")
                                     .fontWeight(.medium)
                                     .foregroundColor(.blue)
                             }
