@@ -175,17 +175,19 @@ class ImportManager: ObservableObject {
         throw ImportError.parseError("Excel-Import wird in einer späteren Version implementiert.")
     }
 
+    // In ImportManager.swift - Finden Sie diese Funktion und ersetzen Sie sie
     private func parseCSVRow(_ row: String) -> [String] {
-        // Einfache CSV-Parsing-Logik (für robustere Verarbeitung eine Bibliothek verwenden)
-        // Beachtet Anführungszeichen und Kommas innerhalb von Anführungszeichen
         var fields: [String] = []
         var currentField = ""
         var inQuotes = false
 
+        // Trennzeichen automatisch erkennen (Komma oder Semikolon)
+        let delimiter: Character = row.contains(";") ? ";" : ","
+
         for char in row {
             if char == "\"" {
                 inQuotes = !inQuotes
-            } else if char == "," && !inQuotes {
+            } else if char == delimiter && !inQuotes {
                 fields.append(currentField.trimmingCharacters(in: .whitespaces))
                 currentField = ""
             } else {
@@ -193,10 +195,18 @@ class ImportManager: ObservableObject {
             }
         }
 
-        // Letztes Feld nicht vergessen
+        // Letztes Feld hinzufügen
         fields.append(currentField.trimmingCharacters(in: .whitespaces))
 
-        return fields
+        // Entferne Anführungszeichen um die Feldwerte, wenn vorhanden
+        return fields.map { field in
+            var processed = field
+            if processed.hasPrefix("\"") && processed.hasSuffix("\"") && processed.count >= 2 {
+                processed.removeFirst()
+                processed.removeLast()
+            }
+            return processed
+        }
     }
 
     private func autoMapColumns() {
@@ -238,7 +248,7 @@ class ImportManager: ObservableObject {
         // Nur so viele Schüler importieren, wie Platz ist
         let rowsToProcess = Array(allRows.prefix(remainingSlots))
 
-        for row in rowsToProcess {
+        for (rowIndex, row) in rowsToProcess.enumerated() {
             do {
                 // Index der Spalten finden
                 guard let firstNameIndex = columnHeaders.firstIndex(of: firstNameCol),
@@ -282,10 +292,11 @@ class ImportManager: ObservableObject {
                 successCount += 1
 
             } catch ImportError.duplicateEntry(let name) {
-                print("Duplikat gefunden: \(name)")
+                print("Duplikat gefunden in Zeile \(rowIndex + 2): \(name)")
                 failureCount += 1
                 continue
             } catch {
+                print("Fehler in Zeile \(rowIndex + 2): \(error.localizedDescription)")
                 failureCount += 1
                 continue
             }

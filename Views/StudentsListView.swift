@@ -25,6 +25,7 @@ struct StudentsListView: View {
     @State private var showColumnMappingView = false
     @State private var refreshStudentList = false
     @StateObject private var importManager: ImportManager
+    @State private var showImportHelp = false
 
     // Für die TabView-Integration
     @Binding var selectedTab: Int
@@ -318,17 +319,13 @@ struct StudentsListView: View {
             .actionSheet(isPresented: $showImportSheet) {
                 ActionSheet(
                     title: Text("Schülerliste importieren"),
-                    message: Text("Wählen Sie das Format der zu importierenden Datei"),
+                    message: Text("Wählen Sie eine CSV-Datei zum Importieren"),
                     buttons: [
                         .default(Text("CSV-Datei (.csv)")) {
+                            print("DEBUG: CSV-Option wurde ausgewählt")
                             importFileType = .csv
                             importManager.selectedFileType = .csv
-                            showFileImporter = true
-                        },
-                        .default(Text("Excel-Datei (.xlsx)")) {
-                            importFileType = .excel
-                            importManager.selectedFileType = .excel
-                            showFileImporter = true
+                            showFileImporter = true  // Dies öffnet den Datei-Picker
                         },
                         .cancel(Text("Abbrechen"))
                     ]
@@ -339,9 +336,14 @@ struct StudentsListView: View {
                 allowedContentTypes: importFileType.allowedContentTypes,
                 allowsMultipleSelection: false
             ) { result in
+                print("DEBUG: Datei-Importer wurde geöffnet")
                 do {
-                    guard let selectedFile = try result.get().first else { return }
+                    guard let selectedFile = try result.get().first else {
+                        print("DEBUG: Keine Datei ausgewählt")
+                        return
+                    }
 
+                    print("DEBUG: Datei ausgewählt: \(selectedFile.lastPathComponent)")
                     // Starte den Import-Prozess
                     importManager.processSelectedFile(selectedFile)
 
@@ -349,6 +351,7 @@ struct StudentsListView: View {
                     showColumnMappingView = true
 
                 } catch {
+                    print("DEBUG: Fehler beim Auswählen der Datei: \(error.localizedDescription)")
                     viewModel.showError(message: "Fehler beim Auswählen der Datei: \(error.localizedDescription)")
                 }
             }
@@ -407,6 +410,42 @@ struct StudentsListView: View {
             if newSelection.isEmpty && editMode == .active {
                 editMode = .inactive
             }
+        }
+        .popover(isPresented: $showImportHelp) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("CSV-Import Hilfe")
+                    .font(.headline)
+                    .padding(.bottom, 4)
+
+                Text("So erstellen Sie eine CSV-Datei für den Import:")
+                    .font(.subheadline)
+                    .padding(.bottom, 4)
+
+                Text("1. Öffnen Sie Excel oder ein anderes Tabellenkalkulationsprogramm")
+                Text("2. Erstellen Sie mindestens folgende Spalten:")
+                Text("   • Vorname")
+                Text("   • Nachname")
+                Text("   • Notizen (optional)")
+                Text("3. Wählen Sie 'Datei' → 'Speichern unter...'")
+                Text("4. Als Format wählen Sie 'CSV (Trennzeichen-getrennt)'")
+
+                Divider()
+                    .padding(.vertical, 8)
+
+                Text("Hinweise:")
+                    .fontWeight(.bold)
+                Text("• Die erste Zeile muss Spaltenüberschriften enthalten")
+                Text("• Maximal 40 Schüler pro Klasse")
+                Text("• Schüler mit identischen Namen können nicht importiert werden")
+
+                Button("Verstanden") {
+                    showImportHelp = false
+                }
+                .padding(.top, 12)
+                .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .padding()
+            .frame(width: 350)
         }
     }
 
@@ -495,13 +534,35 @@ struct StudentsListView: View {
 
                 // Import-Button
                 Button(action: {
-                    showImportSheet = true
+                    print("DEBUG: Import-Button geklickt")
+                    // Prüfen, ob das Klassenlimit bereits erreicht ist
+                    let currentStudentCount = viewModel.getStudentCountForClass(classId: viewModel.selectedClassId ?? UUID())
+                    if currentStudentCount >= 40 {
+                        viewModel.showError(message: "Diese Klasse hat bereits 40 Schüler. Es können keine weiteren Schüler hinzugefügt werden.")
+                        return
+                    }
+
+                    // Direkt die CSV-Import-Option wählen und Datei-Auswahl öffnen
+                    importFileType = .csv
+                    importManager.selectedFileType = .csv
+                    showFileImporter = true
                 }) {
                     Image(systemName: "square.and.arrow.down")
                         .font(.title3)
                 }
                 .padding(.trailing, 8)
                 .disabled(viewModel.students.count >= 40)
+
+                // Neuer Info-Button für Hilfe
+                   Button(action: {
+                       showImportHelp = true
+                   }) {
+                       Image(systemName: "info.circle")
+                           .font(.caption)
+                           .foregroundColor(.blue)
+                   }
+               }
+               .padding(.trailing, 8)
 
                 // Schüler hinzufügen Button
                 Button(action: {
@@ -669,7 +730,7 @@ struct StudentsListView: View {
                 }
             }
         }
-    }
+
 
     // Hilfsfunktion für die Anzeige einer Schülerzeile
     private func studentRow(student: Student) -> some View {
