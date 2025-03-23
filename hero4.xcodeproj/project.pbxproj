@@ -35,6 +35,7 @@
 		AF8BBF4D2D8EE08D00F9E8DD /* ArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF4C2D8EE08D00F9E8DD /* ArchiveView.swift */; };
 		AF8BBF4F2D8F0A5800F9E8DD /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF4E2D8F0A5800F9E8DD /* Utils.swift */; };
 		AF8BBF512D8F20E200F9E8DD /* ClassSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */; };
+		AF8BBF532D909A6B00F9E8DD /* ClassChangeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF522D909A6B00F9E8DD /* ClassChangeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +87,7 @@
 		AF8BBF4C2D8EE08D00F9E8DD /* ArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveView.swift; sourceTree = "<group>"; };
 		AF8BBF4E2D8F0A5800F9E8DD /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionView.swift; sourceTree = "<group>"; };
+		AF8BBF522D909A6B00F9E8DD /* ClassChangeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassChangeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -221,6 +223,7 @@
 				AF6A0D232D80A77E00FBD63C /* AddClassView.swift */,
 				AF6A0D252D80A7A200FBD63C /* EditClassView.swift */,
 				AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */,
+				AF8BBF522D909A6B00F9E8DD /* ClassChangeView.swift */,
 				AF0BE6112D88967700F9BB2C /* StudenLists */,
 				AF6A0D312D80B2C800FBD63C /* StudentsListView.swift */,
 				AF6A0D332D80B2EE00FBD63C /* AddStudentView.swift */,
@@ -404,6 +407,7 @@
 				AF4AA9292D8AC3EF00BCFEED /* EnhancedSeatingViewModel.swift in Sources */,
 				AF6A0D2C2D80B23400FBD63C /* Student.swift in Sources */,
 				AF8BBF4F2D8F0A5800F9E8DD /* Utils.swift in Sources */,
+				AF8BBF532D909A6B00F9E8DD /* ClassChangeView.swift in Sources */,
 				AF0BE60E2D8893D400F9BB2C /* ColumnMappingView.swift in Sources */,
 				AF4AA9432D8C7A7700BCFEED /* ResultsView.swift in Sources */,
 				AF6A0D2E2D80B24D00FBD63C /* SeatingPosition.swift in Sources */,
