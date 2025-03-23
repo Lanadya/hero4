@@ -12,6 +12,7 @@ struct StudentsListView: View {
     @State private var selectedStudent: Student?
     @State private var navigateToSeatingPlan = false
     @State private var showImportSheet = false
+    @State private var showClassChangeForSelectedStudents = false
 
     // Für Multi-Select und Löschen
     @State private var editMode: EditMode = .inactive
@@ -180,47 +181,29 @@ struct StudentsListView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showClassChangeForSelectedStudents) {
+                ClassSelectionView(
+                    classes: viewModel.classes, // Liste der Klassen aus deinem ViewModel
+                    onClassSelected: { selectedClassId in
+                        // Logik zum Verschieben der Schüler in die neue Klasse
+                        for studentId in selectedStudents {
+                            if let student = viewModel.dataStore.getStudent(id: studentId) {
+                                var updatedStudent = student
+                                updatedStudent.classId = selectedClassId
+                                viewModel.dataStore.updateStudent(updatedStudent)
+                            }
+                        }
+                        // Aktualisiere die Schülerliste und setze den State zurück
+                        viewModel.loadStudentsForSelectedClass()
+                        selectedStudents.removeAll()
+                        editMode = .inactive
+                        showClassChangeForSelectedStudents = false
+                    }
+                )
+            }
+
             .navigationBarTitle("Schülerverwaltung", displayMode: .inline)
 
-//            .toolbar {
-//                // Edit-Button für die Schülerliste
-//                ToolbarItem(placement: .navigationBarTrailing) {
-//                    if viewModel.selectedClass != nil && !viewModel.students.isEmpty {
-//                        EditButton()
-//                            .padding(.trailing, 8)
-//                    }
-//                }
-//
-//                // Bottom-Toolbar für Löschen-Aktion
-//                ToolbarItem(placement: .bottomBar) {
-//                    if editMode == .active && !selectedStudents.isEmpty {
-//                        HStack {
-//                            Button(action: {
-//                                // Bestätigungsdialog anzeigen
-//                                confirmDeleteMultipleStudents = true
-//                            }) {
-//                                HStack {
-//                                    Image(systemName: "trash")
-//                                    Text("\(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen")
-//                                }
-//                            }
-//                            .foregroundColor(.red)
-//
-//                            Spacer()
-//
-//                            Button(action: {
-//                                // Bearbeitungsmodus verlassen
-//                                editMode = .inactive
-//                                selectedStudents.removeAll()
-//                            }) {
-//                                Text("Fertig")
-//                            }
-//                            .foregroundColor(.blue)
-//                        }
-//                        .padding(.horizontal)
-//                    }
-//                }
-//            }
             .alert(isPresented: $viewModel.showError) {
                 Alert(
                     title: Text("Fehler"),
@@ -317,21 +300,6 @@ struct StudentsListView: View {
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
-//        .onAppear {
-//            // Load data for the selected class
-//            viewModel.loadStudentsForSelectedClass()
-//
-//            // If we should select a specific class (from class creation)
-//            if appState.shouldSelectClassInStudentsList,
-//               let classId = appState.lastCreatedClassId {
-//                print("DEBUG: Selecting newly created class in student list: \(classId)")
-//                viewModel.selectClass(id: classId)
-//                appState.didSelectClassInStudentsList() // Mark as handled
-//
-//                // Update the ImportManager's selected class ID
-//                importManager.selectedClassId = classId
-//            }
-//        }
 
         .onAppear {
                     // Lade die Schüler für die aktuell ausgewählte Klasse
@@ -579,13 +547,10 @@ struct StudentsListView: View {
                             }
                             .disabled(selectedStudents.isEmpty)
 
-                            // Klasse-wechseln-Button (nur aktiv wenn genau ein Student ausgewählt)
+                            // Klasse-wechseln-Button
                             Button(action: {
-                                if selectedStudents.count == 1,
-                                   let studentId = selectedStudents.first,
-                                   let student = viewModel.dataStore.getStudent(id: studentId) {
-                                    selectedStudent = student
-                                    showMoveClassForSelectedStudents = true
+                                if !selectedStudents.isEmpty {
+                                    showClassChangeForSelectedStudents = true
                                 }
                             }) {
                                 VStack {
@@ -595,7 +560,7 @@ struct StudentsListView: View {
                                         .font(.caption)
                                 }
                                 .frame(minWidth: 60)
-                                .foregroundColor(selectedStudents.count == 1 ? .blue : .gray)
+                                .foregroundColor(selectedStudents.isEmpty ? .gray : .blue)
                             }
                             .disabled(selectedStudents.isEmpty)
 

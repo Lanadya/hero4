@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Combine
 
 class StudentsViewModel: ObservableObject {
@@ -281,6 +282,12 @@ class StudentsViewModel: ObservableObject {
         let studentsInTargetClass = getStudentCountForClass(classId: newClassId)
         if studentsInTargetClass >= 40 {
             showError(message: "Die Zielklasse hat bereits 40 Schüler.")
+            return
+        }
+
+        // Prüfen, ob der Schülername in der Zielklasse bereits existiert
+        if !dataStore.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: newClassId) {
+            showError(message: "Ein Schüler mit diesem Namen existiert bereits in der Zielklasse.")
             return
         }
 

@@ -34,6 +34,7 @@
 		AF8BBF482D8EDC8300F9E8DD /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF472D8EDC8300F9E8DD /* AppState.swift */; };
 		AF8BBF4D2D8EE08D00F9E8DD /* ArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF4C2D8EE08D00F9E8DD /* ArchiveView.swift */; };
 		AF8BBF4F2D8F0A5800F9E8DD /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF4E2D8F0A5800F9E8DD /* Utils.swift */; };
+		AF8BBF512D8F20E200F9E8DD /* ClassSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,6 +85,7 @@
 		AF8BBF472D8EDC8300F9E8DD /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		AF8BBF4C2D8EE08D00F9E8DD /* ArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveView.swift; sourceTree = "<group>"; };
 		AF8BBF4E2D8F0A5800F9E8DD /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -218,6 +220,7 @@
 				AF6A0D272D80A7BB00FBD63C /* ClassesView.swift */,
 				AF6A0D232D80A77E00FBD63C /* AddClassView.swift */,
 				AF6A0D252D80A7A200FBD63C /* EditClassView.swift */,
+				AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */,
 				AF0BE6112D88967700F9BB2C /* StudenLists */,
 				AF6A0D312D80B2C800FBD63C /* StudentsListView.swift */,
 				AF6A0D332D80B2EE00FBD63C /* AddStudentView.swift */,
@@ -410,6 +413,7 @@
 				AF6A0D342D80B2EE00FBD63C /* AddStudentView.swift in Sources */,
 				AF6A0D362D80B31300FBD63C /* EditStudentView.swift in Sources */,
 				AF0BE6102D88942400F9BB2C /* ImportManager.swift in Sources */,
+				AF8BBF512D8F20E200F9E8DD /* ClassSelectionView.swift in Sources */,
 				AF6A0D1F2D80A72000FBD63C /* TimetableViewModel.swift in Sources */,
 				AF6A0D222D80A75700FBD63C /* GridComponent.swift in Sources */,
 				AF8BBF4D2D8EE08D00F9E8DD /* ArchiveView.swift in Sources */,
