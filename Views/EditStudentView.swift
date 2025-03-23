@@ -1,3 +1,4 @@
+
 import SwiftUI
 
 struct EditStudentView: View {
@@ -252,6 +253,7 @@ struct EditStudentView: View {
             }
         }
         .presentationDetents([.large])
+        .presentationDragIndicator(.visible) // Zeigt einen Drag-Indikator an
     }
 
     private func saveStudent() {
@@ -324,6 +326,8 @@ struct ClassChangeView: View {
     @State private var selectedClassId: UUID?
     @State private var isProcessing = false
     @State private var showArchiveAlert = false
+    @State private var errorMessage: String? = nil
+    @State private var showError = false
 
     var body: some View {
         NavigationView {
@@ -375,13 +379,38 @@ struct ClassChangeView: View {
                     }
                 }
 
+                if showError, let message = errorMessage {
+                    Section {
+                        Text(message)
+                            .foregroundColor(.red)
+                            .padding(.vertical, 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+
                 if viewModel.classes.count > 1 {
                     Section {
                         Button(action: {
                             if selectedClassId != nil {
+                                // Prüfen, ob die Zielklasse voll ist
+                                let studentsInTargetClass = viewModel.getStudentCountForClass(classId: selectedClassId!)
+                                if studentsInTargetClass >= 40 {
+                                    errorMessage = "Die Zielklasse hat bereits 40 Schüler."
+                                    showError = true
+                                    return
+                                }
+
+                                // Prüfen, ob der Schülername in der Zielklasse bereits existiert
+                                if !viewModel.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: selectedClassId!) {
+                                    errorMessage = "Ein Schüler mit diesem Namen existiert bereits in der Zielklasse."
+                                    showError = true
+                                    return
+                                }
+
                                 showArchiveAlert = true
                             } else {
-                                viewModel.showError(message: "Bitte wählen Sie eine Klasse aus.")
+                                errorMessage = "Bitte wählen Sie eine Klasse aus."
+                                showError = true
                             }
                         }) {
                             if isProcessing {
@@ -443,7 +472,14 @@ struct ClassChangeView: View {
                     }
                 )
             }
+            .onChange(of: viewModel.showError) { newValue in
+                if newValue {
+                    errorMessage = viewModel.errorMessage
+                    showError = true
+                }
+            }
         }
         .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
 }

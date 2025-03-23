@@ -144,34 +144,6 @@ class StudentsViewModel: ObservableObject {
         return dataStore.getStudentsForClass(classId: classId).count
     }
 
-    // In StudentsViewModel.swift, ersetze die bestehende addStudent-Methode mit dieser:
-
-//    func addStudent(_ student: Student) {
-//        do {
-//            try student.validate()
-//
-//            // Prüfen, ob das Limit von 40 Schülern pro Klasse erreicht ist
-//            let currentCount = getStudentCountForClass(classId: student.classId)
-//            if currentCount >= 40 {
-//                showError(message: "Diese Klasse hat bereits 40 Schüler. Mehr können nicht hinzugefügt werden.")
-//                return
-//            }
-//
-//            // Prüfen auf doppelte Namen
-//            if !dataStore.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: student.classId) {
-//                showError(message: "Ein Schüler mit dem Namen '\(student.firstName) \(student.lastName)' existiert bereits in dieser Klasse.")
-//                return
-//            }
-//
-//            dataStore.addStudent(student)
-//            loadStudentsForSelectedClass()
-//        } catch Student.ValidationError.noName {
-//            showError(message: "Bitte geben Sie mindestens einen Vor- oder Nachnamen ein.")
-//        } catch {
-//            showError(message: "Fehler beim Speichern des Schülers: \(error.localizedDescription)")
-//        }
-//    }
-    // Im StudentsViewModel:
     func addStudent(_ student: Student) -> Bool {
         do {
             try student.validate()
@@ -229,46 +201,6 @@ class StudentsViewModel: ObservableObject {
         dataStore.archiveStudent(student)
         loadStudentsForSelectedClass()
     }
-
-    // Verschieben eines Schülers in eine andere Klasse
-//    func moveStudentToClass(studentId: UUID, newClassId: UUID) {
-//        guard let student = dataStore.getStudent(id: studentId) else {
-//            showError(message: "Schüler nicht gefunden.")
-//            return
-//        }
-//
-//        // Prüfen, ob die Zielklasse das Limit von 40 Schülern erreicht hat
-//        let studentsInTargetClass = getStudentCountForClass(classId: newClassId)
-//        if studentsInTargetClass >= 40 {
-//            showError(message: "Die Zielklasse hat bereits 40 Schüler. Der Schüler kann nicht hinzugefügt werden.")
-//            return
-//        }
-//
-//        // Aktualisiere den Schüler mit der neuen Klassen-ID
-//        var updatedStudent = student
-//        updatedStudent.classId = newClassId
-//
-//        // Speichere den aktualisierten Schüler
-//        dataStore.updateStudent(updatedStudent)
-//
-//        // Aktualisiere auch die Sitzposition, falls vorhanden
-//        if let position = dataStore.getSeatingPosition(studentId: studentId, classId: student.classId) {
-//            // Lösche alte Sitzposition
-//            dataStore.deleteSeatingPosition(id: position.id)
-//
-//            // Erstelle neue Sitzposition mit Standard-Werten
-//            let newPosition = SeatingPosition(
-//                studentId: studentId,
-//                classId: newClassId,
-//                xPos: 0,  // Standard-Position in der neuen Klasse
-//                yPos: 0
-//            )
-//            dataStore.addSeatingPosition(newPosition)
-//        }
-//
-//        // Aktualisiere die Schülerliste
-//        loadStudentsForSelectedClass()
-//    }
 
     func moveStudentToClass(studentId: UUID, newClassId: UUID) {
         guard let student = dataStore.getStudent(id: studentId) else {
@@ -409,4 +341,30 @@ class StudentsViewModel: ObservableObject {
     func isStudentNameUnique(firstName: String, lastName: String, classId: UUID, exceptStudentId: UUID? = nil) -> Bool {
         return dataStore.isStudentNameUnique(firstName: firstName, lastName: lastName, classId: classId, exceptStudentId: exceptStudentId)
     }
+
+    func validateMoveStudents(studentIds: [UUID], toClassId: UUID) -> String? {
+        // Prüfen, ob die Zielklasse voll ist
+        let currentStudentCount = getStudentCountForClass(classId: toClassId)
+        if currentStudentCount + studentIds.count > 40 {
+            return "Die Zielklasse hat nur Platz für \(40 - currentStudentCount) weitere Schüler. Sie haben \(studentIds.count) Schüler ausgewählt."
+        }
+
+        // Prüfen auf doppelte Namen
+        var duplicateNames: [String] = []
+        for studentId in studentIds {
+            if let student = dataStore.getStudent(id: studentId) {
+                if !dataStore.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: toClassId, exceptStudentId: student.id) {
+                    duplicateNames.append("\(student.firstName) \(student.lastName)")
+                }
+            }
+        }
+
+        if !duplicateNames.isEmpty {
+            let namesStr = duplicateNames.joined(separator: ", ")
+            return "Folgende Schüler existieren bereits in der Zielklasse: \(namesStr)"
+        }
+
+        return nil // Keine Fehler gefunden
+    }
+
 }

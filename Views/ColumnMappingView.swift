@@ -15,9 +15,28 @@ struct ColumnMappingView: View {
 
     @State private var showResultAlert = false
     @State private var importInProgress = false
+    @State private var errorMessage: String? = nil
 
     var body: some View {
         NavigationView {
+            VStack {
+                // Fehlermeldung oben anzeigen, außerhalb des ScrollViews
+                if let error = errorMessage {
+                    VStack(spacing: 4) {
+                        Text("Fehler")
+                            .font(.headline)
+                            .foregroundColor(.red)
+
+                        Text(error)
+                            .multilineTextAlignment(.center)
+                            .padding(8)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+                }
+
             Form {
                 Section(header: Text("Spalten zuordnen")) {
                     Text("Bitte ordnen Sie die Spalten aus Ihrer Datei den entsprechenden Schülerfeldern zu.")
@@ -83,6 +102,15 @@ struct ColumnMappingView: View {
                     }
                 }
 
+                if errorMessage != nil {
+                    Section {
+                        Text(errorMessage!)
+                            .foregroundColor(.red)
+                            .padding(.vertical, 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+
                 Section {
                     Button(action: {
                         importStudents()
@@ -125,7 +153,7 @@ struct ColumnMappingView: View {
             }
         }
     }
-
+    }
     private func isColumnMapped(_ header: String) -> Bool {
         return importManager.firstNameColumn == header ||
                importManager.lastNameColumn == header ||
@@ -138,13 +166,34 @@ struct ColumnMappingView: View {
 
     private func importStudents() {
         importInProgress = true
+        errorMessage = nil
+
+        // Prüfe zuerst die Anzahl der Schüler
+        let currentStudentCount = DataStore.shared.getStudentsForClass(classId: importManager.selectedClassId).count
+        let remainingSlots = 40 - currentStudentCount
+
+        if remainingSlots <= 0 {
+            errorMessage = "Diese Klasse hat bereits 40 Schüler. Mehr können nicht hinzugefügt werden."
+            importInProgress = false
+            return
+        }
+
+        // Wenn mehr Zeilen vorhanden sind als Plätze, zeige eine Warnung
+        if importManager.allRows.count > remainingSlots {
+            errorMessage = "Es können nur \(remainingSlots) von \(importManager.allRows.count) Schülern importiert werden, da die Klasse auf 40 Schüler begrenzt ist."
+        }
 
         DispatchQueue.global(qos: .userInitiated).async {
             let result = importManager.importStudents()
 
             DispatchQueue.main.async {
                 importInProgress = false
-                showResultAlert = true
+
+                if importManager.showError && importManager.error != nil {
+                    errorMessage = importManager.error?.localizedDescription
+                } else {
+                    showResultAlert = true
+                }
             }
         }
     }

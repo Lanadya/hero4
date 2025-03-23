@@ -5,7 +5,6 @@
 //  Created by Nina Klee on 17.03.25.
 //
 
-
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
@@ -41,7 +40,7 @@ enum ImportError: Error, LocalizedError {
     case invalidHeader
     case missingFirstName
     case missingLastName
-    case duplicateEntry
+    case duplicateEntry(String)
     case classLimitReached
     case unknownError(Error)
 
@@ -61,8 +60,8 @@ enum ImportError: Error, LocalizedError {
             return "Vorname fehlt."
         case .missingLastName:
             return "Nachname fehlt."
-        case .duplicateEntry:
-            return "Doppelter Eintrag gefunden."
+        case .duplicateEntry(let name):
+            return "Schüler '\(name)' existiert bereits in dieser Klasse."
         case .classLimitReached:
             return "Klassenlimit von 40 Schülern erreicht."
         case .unknownError(let error):
@@ -92,7 +91,7 @@ class ImportManager: ObservableObject {
     @Published var importedCount = 0
     @Published var failedCount = 0
 
-    private let dataStore = DataStore.shared
+    let dataStore = DataStore.shared
     var selectedClassId: UUID
 
     init(classId: UUID) {
@@ -263,6 +262,11 @@ class ImportManager: ObservableObject {
                     throw ImportError.missingFirstName
                 }
 
+                // Prüfen auf doppelte Namen
+                if !dataStore.isStudentNameUnique(firstName: firstName, lastName: lastName, classId: selectedClassId) {
+                    throw ImportError.duplicateEntry("\(firstName) \(lastName)")
+                }
+
                 // Neuen Schüler erstellen
                 let student = Student(
                     firstName: firstName,
@@ -277,6 +281,10 @@ class ImportManager: ObservableObject {
                 dataStore.addStudent(student)
                 successCount += 1
 
+            } catch ImportError.duplicateEntry(let name) {
+                print("Duplikat gefunden: \(name)")
+                failureCount += 1
+                continue
             } catch {
                 failureCount += 1
                 continue

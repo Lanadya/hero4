@@ -1,4 +1,3 @@
-
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -182,24 +181,71 @@ struct StudentsListView: View {
                 }
             }
             .sheet(isPresented: $showClassChangeForSelectedStudents) {
-                ClassSelectionView(
-                    classes: viewModel.classes, // Liste der Klassen aus deinem ViewModel
-                    onClassSelected: { selectedClassId in
-                        // Logik zum Verschieben der Schüler in die neue Klasse
-                        for studentId in selectedStudents {
-                            if let student = viewModel.dataStore.getStudent(id: studentId) {
-                                var updatedStudent = student
-                                updatedStudent.classId = selectedClassId
-                                viewModel.dataStore.updateStudent(updatedStudent)
-                            }
+                VStack {
+                    // Fehlermeldung oben anzeigen
+                    if let errorMessage = viewModel.errorMessage, viewModel.showError {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundColor(.red)
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.leading)
+                            Spacer()
                         }
-                        // Aktualisiere die Schülerliste und setze den State zurück
-                        viewModel.loadStudentsForSelectedClass()
-                        selectedStudents.removeAll()
-                        editMode = .inactive
-                        showClassChangeForSelectedStudents = false
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                        .padding(.top)
                     }
-                )
+
+                    ClassSelectionView(
+                        classes: viewModel.classes.filter { $0.id != viewModel.selectedClassId },
+                        onClassSelected: { selectedClassId in
+                            // Überprüfe zuerst, ob Platz in der Zielklasse ist
+                            let currentStudentCount = viewModel.getStudentCountForClass(classId: selectedClassId)
+                            if currentStudentCount + selectedStudents.count > 40 {
+                                showClassSelectionError("Die Zielklasse hat nur Platz für \(40 - currentStudentCount) weitere Schüler. Sie haben \(selectedStudents.count) Schüler ausgewählt.")
+                                return
+                            }
+
+                            // Überprüfe auf doppelte Namen
+                            var duplicateNames: [String] = []
+                            for studentId in selectedStudents {
+                                if let student = viewModel.dataStore.getStudent(id: studentId) {
+                                    if !viewModel.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: selectedClassId, exceptStudentId: student.id) {
+                                        duplicateNames.append("\(student.firstName) \(student.lastName)")
+                                    }
+                                }
+                            }
+
+                            if !duplicateNames.isEmpty {
+                                let namesStr = duplicateNames.joined(separator: ", ")
+                                showClassSelectionError("Folgende Schüler existieren bereits in der Zielklasse: \(namesStr)")
+                                return
+                            }
+
+                            // Verschiebe die Schüler
+                            for studentId in selectedStudents {
+                                viewModel.moveStudentToClass(studentId: studentId, newClassId: selectedClassId)
+                            }
+
+                            // Aktualisiere die Schülerliste und setze den State zurück
+                            viewModel.loadStudentsForSelectedClass()
+                            selectedStudents.removeAll()
+                            editMode = .inactive
+                            showClassChangeForSelectedStudents = false
+                        },
+                        onCancel: {
+                            // Beim Abbrechen auch den Edit-Mode zurücksetzen
+                            editMode = .inactive
+                            selectedStudents.removeAll()
+                            showClassChangeForSelectedStudents = false
+                        }
+                    )
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
 
             .navigationBarTitle("Schülerverwaltung", displayMode: .inline)
@@ -234,6 +280,8 @@ struct StudentsListView: View {
                         viewModel: viewModel,
                         isPresented: $showAddStudentModal
                     )
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
                 }
             }
             .sheet(isPresented: $showEditStudentModal) {
@@ -243,6 +291,8 @@ struct StudentsListView: View {
                         viewModel: viewModel,
                         isPresented: $showEditStudentModal
                     )
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
                 }
             }
             .sheet(isPresented: $showMoveClassForSelectedStudents) {
@@ -252,6 +302,8 @@ struct StudentsListView: View {
                         viewModel: viewModel,
                         isPresented: $showMoveClassForSelectedStudents
                     )
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
                 }
             }
             .sheet(isPresented: $showColumnMappingView) {
@@ -260,6 +312,8 @@ struct StudentsListView: View {
                     isPresented: $showColumnMappingView,
                     refreshStudents: $refreshStudentList
                 )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
             .actionSheet(isPresented: $showImportSheet) {
                 ActionSheet(
@@ -302,18 +356,18 @@ struct StudentsListView: View {
         .navigationViewStyle(StackNavigationViewStyle())
 
         .onAppear {
-                    // Lade die Schüler für die aktuell ausgewählte Klasse
-                    viewModel.loadStudentsForSelectedClass()
+            // Lade die Schüler für die aktuell ausgewählte Klasse
+            viewModel.loadStudentsForSelectedClass()
 
-                    // Prüfe, ob eine Klasse aus UserDefaults geladen werden soll
-                    if let classIdString = UserDefaults.standard.string(forKey: "selectedClassForStudentsList"),
-                       let classId = UUID(uuidString: classIdString) {
-                        // Wähle die Klasse im ViewModel aus
-                        viewModel.selectClass(id: classId)
-                        // Entferne den Eintrag aus UserDefaults, damit er nicht erneut verwendet wird
-                        UserDefaults.standard.removeObject(forKey: "selectedClassForStudentsList")
-                    }
-                }
+            // Prüfe, ob eine Klasse aus UserDefaults geladen werden soll
+            if let classIdString = UserDefaults.standard.string(forKey: "selectedClassForStudentsList"),
+               let classId = UUID(uuidString: classIdString) {
+                // Wähle die Klasse im ViewModel aus
+                viewModel.selectClass(id: classId)
+                // Entferne den Eintrag aus UserDefaults, damit er nicht erneut verwendet wird
+                UserDefaults.standard.removeObject(forKey: "selectedClassForStudentsList")
+            }
+        }
 
         .onDisappear {
             // Beim Verlassen der View die Suche zurücksetzen
@@ -347,6 +401,22 @@ struct StudentsListView: View {
                 importManager.selectedClassId = classId
             }
         }
+        // Neuer onChange-Handler für selectedStudents
+        .onChange(of: selectedStudents) { newSelection in
+            // Wenn alle Schüler abgewählt wurden, setze den Edit-Mode zurück
+            if newSelection.isEmpty && editMode == .active {
+                editMode = .inactive
+            }
+        }
+    }
+
+    // Hilfsfunktion für Fehlermeldungen in der ClassSelectionView
+    private func showClassSelectionError(_ message: String) {
+        NotificationCenter.default.post(
+            name: Notification.Name("ClassSelectionError"),
+            object: nil,
+            userInfo: ["message": message]
+        )
     }
 
     // MARK: - Subviews
@@ -550,6 +620,16 @@ struct StudentsListView: View {
                             // Klasse-wechseln-Button
                             Button(action: {
                                 if !selectedStudents.isEmpty {
+                                    // Fehlermeldungen zurücksetzen vor dem Öffnen des Modals
+                                    viewModel.showError = false
+                                    viewModel.errorMessage = nil
+
+                                    // Benachrichtigung senden, dass der Fehler zurückgesetzt werden soll
+                                    NotificationCenter.default.post(
+                                        name: Notification.Name("ClassSelectionClearError"),
+                                        object: nil
+                                    )
+
                                     showClassChangeForSelectedStudents = true
                                 }
                             }) {

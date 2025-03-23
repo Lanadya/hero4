@@ -15,73 +15,97 @@ struct AddStudentView: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Schüler hinzufügen")) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Klasse:")
-                            .font(.headline)
-
-                        HStack {
-                            Text(className)
-                                .foregroundColor(.primary)
-                                .padding(8)
-                                .background(Color.blue.opacity(0.1))
+            VStack {
+                // Fehlermeldung oben anzeigen
+                            if showValidationError {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .foregroundColor(.red)
+                                    Text(validationErrorMessage)
+                                        .foregroundColor(.red)
+                                        .padding(.vertical, 6)
+                                    Spacer()
+                                }
+                                .padding(.horizontal)
+                                .padding(.vertical, 8)
+                                .background(Color.red.opacity(0.1))
                                 .cornerRadius(8)
+                                .padding(.horizontal)
+                            }
+
+                // Formular-Bereich
+                Form {
+                    Section(header: Text("Schüler hinzufügen")) {
+                        // Klassenanzeige
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Klasse:")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            Text(className)
+                                .padding(6)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(6)
+                        }
+                        .padding(.vertical, 4)
+
+                        // Vorname
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Vorname:")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            TextField("Vorname", text: $firstName)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(6)
+                                .disableAutocorrection(true)
+                        }
+                        .padding(.vertical, 4)
+
+                        // Nachname
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Nachname:")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            TextField("Nachname", text: $lastName)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(6)
+                                .disableAutocorrection(true)
+                        }
+                        .padding(.vertical, 4)
+
+                        // Notizen
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Notizen (optional):")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            TextEditor(text: $notes)
+                                .frame(height: 80)
+                                .padding(4)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(6)
+                        }
+                        .padding(.vertical, 4)
+                    }
+
+                    // Fehlermeldung (falls vorhanden)
+                    if showValidationError {
+                        Section {
+                            Text(validationErrorMessage)
+                                .foregroundColor(.red)
+                                .padding(.vertical, 6)
                         }
                     }
-                    .padding(.vertical, 8)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Vorname:")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        TextField("Vorname", text: $firstName)
-                            .padding(10)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .disableAutocorrection(true)
-                    }
-                    .padding(.vertical, 8)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Nachname:")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        TextField("Nachname", text: $lastName)
-                            .padding(10)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .disableAutocorrection(true)
-                    }
-                    .padding(.vertical, 8)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Notizen (optional):")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        TextEditor(text: $notes)
-                            .frame(height: 100)
-                            .padding(5)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .foregroundColor(.primary)
-                    }
-                    .padding(.vertical, 8)
                 }
+                .frame(maxHeight: 450) // Begrenze die Höhe des Forms
 
-                if showValidationError {
-                    Section {
-                        Text(validationErrorMessage)
-                            .foregroundColor(.red)
-                            .padding(.vertical, 6)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-
-                Section {
+                // Buttons unten
+                VStack(spacing: 12) {
+                    // Speichern-Button
                     Button(action: {
                         saveStudent()
                     }) {
@@ -95,11 +119,15 @@ struct AddStudentView: View {
                             }
                             Text("Speichern")
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                     }
                     .disabled(isSaving)
 
+                    // Speichern und weiteren Schüler hinzufügen
                     Button(action: {
                         saveStudentAndAddAnother()
                     }) {
@@ -113,13 +141,15 @@ struct AddStudentView: View {
                             }
                             Text("Speichern und weiteren Schüler hinzufügen")
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                     }
                     .disabled(isSaving)
-                }
 
-                Section {
+                    // Abbrechen-Button
                     Button(action: {
                         isPresented = false
                     }) {
@@ -127,76 +157,22 @@ struct AddStudentView: View {
                             Image(systemName: "xmark.circle.fill")
                             Text("Abbrechen")
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(8)
                     }
-                    .foregroundColor(.red)
                     .disabled(isSaving)
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 16)
             }
             .navigationBarTitle("Schüler hinzufügen", displayMode: .inline)
-            .navigationBarItems(
-                leading: Button(action: {
-                    isPresented = false
-                }) {
-                    Text("Abbrechen")
-                        .foregroundColor(.red)
-                }.disabled(isSaving),
-
-                trailing: Button(action: {
-                    saveStudent()
-                }) {
-                    Text("Speichern")
-                        .fontWeight(.bold)
-                        .foregroundColor(.blue)
-                }.disabled(isSaving)
-            )
         }
     }
 
+
     // 5. Schließlich aktualisieren wir die AddStudentView, um die Überprüfung auf doppelte Namen zu verbessern:
-
-
-//    private func saveStudent() {
-//        guard validateInputs() else { return }
-//
-//        isSaving = true
-//
-//        // Prüfen ob Klassenlimit erreicht ist
-//        let currentStudentCount = viewModel.getStudentCountForClass(classId: classId)
-//        if currentStudentCount >= 40 {
-//            showError("Diese Klasse hat bereits 40 Schüler. Mehr können nicht hinzugefügt werden.")
-//            isSaving = false
-//            return
-//        }
-//
-//        // Validierung auf doppelte Namen erfolgt im ViewModel
-//
-//        print("DEBUG: Speichere Schüler: \(firstName) \(lastName) in Klasse \(className)")
-//
-//        let newStudent = Student(
-//            firstName: firstName,
-//            lastName: lastName,
-//            classId: classId,
-//            notes: notes.isEmpty ? nil : notes
-//        )
-//
-//        // Leichte Verzögerung, um sicherzustellen, dass die UI aktualisiert wird
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-//            // Die eigentliche Validierung auf doppelte Namen erfolgt im ViewModel
-//            // Wenn ein Fehler auftritt, wird die showError-Methode des ViewModels aufgerufen
-//            self.viewModel.addStudent(newStudent)
-//
-//            // Wir prüfen, ob ein Fehler angezeigt wird
-//            if self.viewModel.showError {
-//                self.isSaving = false
-//                // Die Fehlermeldung wird bereits im ViewModel angezeigt, also müssen wir hier nichts tun
-//            } else {
-//                self.isSaving = false
-//                self.isPresented = false
-//            }
-//        }
-//    }
 
     private func saveStudent() {
         guard validateInputs() else { return }
@@ -207,6 +183,13 @@ struct AddStudentView: View {
         let currentStudentCount = viewModel.getStudentCountForClass(classId: classId)
         if currentStudentCount >= 40 {
             showError("Diese Klasse hat bereits 40 Schüler. Mehr können nicht hinzugefügt werden.")
+            isSaving = false
+            return
+        }
+
+        // Prüfen auf doppelte Namen
+        if !viewModel.isStudentNameUnique(firstName: firstName, lastName: lastName, classId: classId) {
+            showError("Ein Schüler mit dem Namen '\(firstName) \(lastName)' existiert bereits in dieser Klasse.")
             isSaving = false
             return
         }
@@ -222,12 +205,16 @@ struct AddStudentView: View {
 
         // Leichte Verzögerung, um sicherzustellen, dass die UI aktualisiert wird
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            // Wenn der Schüler erfolgreich hinzugefügt wurde, schließe das Modal
             if self.viewModel.addStudent(newStudent) {
                 self.isSaving = false
                 self.isPresented = false
             } else {
-                // Wenn nicht, bleibt das Modal offen und zeigt den Fehler
+                // Falls ein anderer Fehler aufgetreten ist
+                if let errorMsg = self.viewModel.errorMessage {
+                    self.showError(errorMsg)
+                } else {
+                    self.showError("Fehler beim Speichern des Schülers.")
+                }
                 self.isSaving = false
             }
         }
@@ -257,14 +244,14 @@ struct AddStudentView: View {
 
         // Leichte Verzögerung, um sicherzustellen, dass die UI aktualisiert wird
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            viewModel.addStudent(newStudent)
-
-            // Felder zurücksetzen für den nächsten Schüler
-            firstName = ""
-            lastName = ""
-            notes = ""
-            showValidationError = false
-            isSaving = false
+            if self.viewModel.addStudent(newStudent) {
+                // Felder zurücksetzen für den nächsten Schüler
+                self.firstName = ""
+                self.lastName = ""
+                self.notes = ""
+                self.showValidationError = false
+            }
+            self.isSaving = false
         }
     }
 

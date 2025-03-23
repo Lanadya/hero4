@@ -199,6 +199,12 @@ struct AddClassView: View {
         // Prüfe, ob die Eingaben gültig sind
         guard validateInputs() else { return }
 
+        // Prüfen, ob der Klassenname bereits existiert
+        if !viewModel.isClassNameValid(className) {
+            showError("Klassenname '\(className)' existiert bereits. Bitte wählen Sie einen eindeutigen Namen.")
+            return
+        }
+
         isSaving = true
 
         // Erstelle eine neue Klasse mit einer eindeutigen ID
@@ -213,6 +219,13 @@ struct AddClassView: View {
 
         // Speichere die Klasse im ViewModel
         viewModel.saveClass(newClass)
+
+        // Fehlerfall prüfen - wenn viewModel.showError gesetzt wurde, bleibt das Modal offen
+        if viewModel.showError {
+            isSaving = false
+            showError(viewModel.errorMessage ?? "Fehler beim Speichern der Klasse")
+            return
+        }
 
         // Wenn der Nutzer zur Schülerliste navigieren will
         if navigateToStudents {
