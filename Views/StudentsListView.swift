@@ -296,6 +296,13 @@ struct StudentsListView: View {
                     .presentationDragIndicator(.visible)
                 }
             }
+            .onChange(of: showEditStudentModal) { isShowing in
+                if !isShowing {
+                    print("DEBUG: Modal geschlossen, setze Suche zurück")
+                    // Wenn das Modal geschlossen wird, Suche zurücksetzen
+                    viewModel.clearGlobalSearch()
+                }
+            }
             .sheet(isPresented: $showMoveClassForSelectedStudents) {
                 if let student = selectedStudent {
                     ClassChangeView(
@@ -558,7 +565,6 @@ struct StudentsListView: View {
                 Spacer()
 
                 // RECHTE SEITE: Aktionsbuttons in einer Reihe
-                // RECHTE SEITE: Aktionsbuttons in einer Reihe
                 HStack(spacing: 10) {
                     // Auswählen-Button
                     if !viewModel.students.isEmpty {
@@ -743,35 +749,26 @@ struct StudentsListView: View {
                     .cornerRadius(8)
 
                     // Schülerliste mit verbessertem Multi-Select
+                    // Schülerliste mit verbessertem Multi-Select
                     List {
                         ForEach(viewModel.students) { student in
-                            HStack {
-                                if editMode == .active {
-                                    Button(action: {
-                                        if selectedStudents.contains(student.id) {
-                                            selectedStudents.remove(student.id)
-                                        } else {
-                                            selectedStudents.insert(student.id)
-                                        }
-                                    }) {
+                            ZStack {
+                                // Hintergrund für Auswahlzustand
+                                if selectedStudents.contains(student.id) {
+                                    Rectangle()
+                                        .fill(Color.blue.opacity(0.1))
+                                        .cornerRadius(6)
+                                }
+
+                                HStack {
+                                    // Checkbox im Edit-Modus
+                                    if editMode == .active {
                                         Image(systemName: selectedStudents.contains(student.id) ? "checkmark.circle.fill" : "circle")
                                             .foregroundColor(selectedStudents.contains(student.id) ? .blue : .gray)
                                             .frame(width: 30, alignment: .center)
                                     }
-                                }
 
-                                Button(action: {
-                                    if editMode == .inactive {
-                                        selectedStudent = student
-                                        showEditStudentModal = true
-                                    } else {
-                                        if selectedStudents.contains(student.id) {
-                                            selectedStudents.remove(student.id)
-                                        } else {
-                                            selectedStudents.insert(student.id)
-                                        }
-                                    }
-                                }) {
+                                    // Schüler-Informationen
                                     HStack {
                                         Text(student.lastName)
                                             .frame(width: 130, alignment: .leading)
@@ -787,13 +784,21 @@ struct StudentsListView: View {
                                             Spacer()
                                         }
                                     }
-                                    .padding(.vertical, 8)
-                                    .frame(maxWidth: .infinity)
                                 }
-                                .buttonStyle(PlainButtonStyle())
-                                .contentShape(Rectangle())
-                                .background(selectedStudents.contains(student.id) ? Color.blue.opacity(0.1) : Color.clear)
-                                .cornerRadius(6)
+                                .padding(.vertical, 8)
+                            }
+                            .contentShape(Rectangle()) // Macht den gesamten Bereich klickbar
+                            .onTapGesture {
+                                if editMode == .inactive {
+                                    selectedStudent = student
+                                    showEditStudentModal = true
+                                } else {
+                                    if selectedStudents.contains(student.id) {
+                                        selectedStudents.remove(student.id)
+                                    } else {
+                                        selectedStudents.insert(student.id)
+                                    }
+                                }
                             }
                             .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
                         }

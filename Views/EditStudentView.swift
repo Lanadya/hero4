@@ -17,6 +17,7 @@ struct EditStudentView: View {
     @State private var isSaving: Bool = false
     @State private var showClassChangeModal = false
 
+    // Initialisierung
     init(student: Student, viewModel: StudentsViewModel, isPresented: Binding<Bool>) {
         self.student = student
         self.viewModel = viewModel
@@ -30,57 +31,56 @@ struct EditStudentView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Hauptinhalt
                 ScrollView {
-                    VStack(spacing: 16) {
-                        // Namensfelder
-                        VStack(alignment: .leading, spacing: 8) {
+                    VStack(spacing: 12) {
+                        // Namensfelder kompakter gestalten
+                        VStack(alignment: .leading, spacing: 4) {
                             Text("Vorname:")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
 
                             TextField("Vorname", text: $firstName)
-                                .padding(10)
+                                .padding(8)
                                 .background(Color(.systemGray6))
                                 .cornerRadius(8)
                                 .disableAutocorrection(true)
                         }
 
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text("Nachname:")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
 
                             TextField("Nachname", text: $lastName)
-                                .padding(10)
+                                .padding(8)
                                 .background(Color(.systemGray6))
                                 .cornerRadius(8)
                                 .disableAutocorrection(true)
                         }
 
-                        // Notizen
-                        VStack(alignment: .leading, spacing: 8) {
+                        // Notizen kompakter
+                        VStack(alignment: .leading, spacing: 4) {
                             Text("Notizen (optional):")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
 
                             TextEditor(text: $notes)
-                                .frame(height: 80)
-                                .padding(5)
+                                .frame(height: 60) // Etwas kleiner
+                                .padding(4)
                                 .background(Color(.systemGray6))
                                 .cornerRadius(8)
                                 .foregroundColor(.primary)
                         }
 
-                        // Infos und Klasse
-                        HStack(alignment: .top, spacing: 20) {
-                            // Erfassungsdatum
-                            VStack(alignment: .leading, spacing: 4) {
+                        // Datum und Klasse in einer Zeile
+                        HStack {
+                            // Datum ohne Uhrzeit
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text("Erfasst am:")
-                                    .font(.subheadline)
+                                    .font(.caption)
                                     .foregroundColor(.secondary)
 
-                                Text(formatDate(student.entryDate))
+                                Text(formatDateOnly(student.entryDate))
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
@@ -89,20 +89,20 @@ struct EditStudentView: View {
 
                             // Aktuelle Klasse
                             if let classObj = viewModel.dataStore.getClass(id: student.classId) {
-                                VStack(alignment: .trailing, spacing: 4) {
-                                    Text("Aktuelle Klasse:")
-                                        .font(.subheadline)
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("Klasse:")
+                                        .font(.caption)
                                         .foregroundColor(.secondary)
 
                                     Text(classObj.name)
-                                        .font(.body)
+                                        .font(.caption)
                                         .foregroundColor(.primary)
                                 }
                             }
                         }
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 2)
 
-                        // Klasse wechseln Button
+                        // Klasse wechseln Button - deutlicher hervorheben
                         if viewModel.classes.count > 1 {
                             Button(action: {
                                 showClassChangeModal = true
@@ -112,28 +112,29 @@ struct EditStudentView: View {
                                     Text("In andere Klasse verschieben")
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
+                                .padding(.vertical, 10)
                                 .background(Color.blue.opacity(0.1))
                                 .foregroundColor(.blue)
                                 .cornerRadius(10)
                             }
+                            .padding(.top, 4)
                         }
 
                         // Fehlermeldung, wenn vorhanden
                         if showValidationError {
                             Text(validationErrorMessage)
                                 .foregroundColor(.red)
-                                .padding(.vertical, 6)
+                                .padding(.vertical, 4)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 24)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
                 }
 
-                // Aktionsbuttons im gleichen Stil wie die Hilfe-Knöpfe
-                VStack(spacing: 12) {
+                // Aktionsbuttons
+                VStack(spacing: 10) {
                     // Speichern
                     Button(action: {
                         saveStudent()
@@ -157,7 +158,7 @@ struct EditStudentView: View {
                     }
                     .disabled(isSaving)
 
-                    HStack(spacing: 12) {
+                    HStack(spacing: 10) {
                         // Archivieren
                         Button(action: {
                             showingArchiveConfirmation = true
@@ -208,7 +209,7 @@ struct EditStudentView: View {
                     .disabled(isSaving)
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .padding(.bottom, 16)
                 .padding(.top, 8)
                 .background(Color(.systemBackground))
             }
@@ -245,8 +246,17 @@ struct EditStudentView: View {
         .presentationDragIndicator(.visible)
     }
 
+    // Nur Datum ohne Uhrzeit formatieren
+    private func formatDateOnly(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        formatter.locale = Locale(identifier: "de_DE")
+        return formatter.string(from: date)
+    }
+
+    // Andere Funktionen bleiben wie sie sind...
     private func validateInputs() -> Bool {
-        // Mindestens ein Namensfeld muss ausgefüllt sein
         if firstName.isEmpty && lastName.isEmpty {
             showError("Bitte geben Sie mindestens einen Vor- oder Nachnamen ein.")
             return false
@@ -298,20 +308,11 @@ struct EditStudentView: View {
         }
     }
 
+    // In EditStudentView:
     private func deleteStudent() {
-        isSaving = true
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.viewModel.deleteStudent(id: self.student.id)
-            self.isSaving = false
-            self.isPresented = false
-        }
+        print("DEBUG: deleteStudent wird aufgerufen")
+        // Direkt löschen ohne DispatchQueue.asyncAfter
+        viewModel.deleteStudent(id: student.id)
+        isPresented = false
     }
-//    // Die restlichen Funktionen bleiben gleich
-//    private func saveStudent() { /* Dein Code */ }
-//    private func archiveStudent() { /* Dein Code */ }
-//    private func deleteStudent() { /* Dein Code */ }
-//    private func validateInputs() -> Bool { /* Dein Code */ }
-//    private func showError(_ message: String) { /* Dein Code */ }
-//    private func formatDate(_ date: Date) -> String { /* Dein Code */ }
 }

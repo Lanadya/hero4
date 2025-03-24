@@ -190,16 +190,19 @@ class StudentsViewModel: ObservableObject {
         } catch {
             showError(message: "Fehler beim Aktualisieren des Schülers: \(error.localizedDescription)")
         }
+        clearGlobalSearch()
     }
 
     func deleteStudent(id: UUID) {
         dataStore.deleteStudent(id: id)
         loadStudentsForSelectedClass()
+        clearGlobalSearch()
     }
 
     func archiveStudent(_ student: Student) {
         dataStore.archiveStudent(student)
         loadStudentsForSelectedClass()
+        clearGlobalSearch()
     }
 
     func moveStudentToClass(studentId: UUID, newClassId: UUID) {
@@ -304,9 +307,76 @@ class StudentsViewModel: ObservableObject {
         print("DEBUG: Suche nach '\(globalSearchText)' ergab \(searchResults.count) Ergebnisse.")
     }
 
+    // In StudentsViewModel:
     func updateGlobalSearchText(_ text: String) {
         globalSearchText = text
-        performGlobalSearch()
+
+        // Intelligente Suche basierend auf Länge
+        if text.count == 0 {
+            searchResults = []
+        } else if text.count == 1 {
+            // Bei einem Buchstaben: Nur exakte Treffer am Anfang des Namens
+            let searchChar = text.lowercased()
+            searchResults = allStudents.compactMap { student in
+                if student.firstName.lowercased().hasPrefix(searchChar) ||
+                   student.lastName.lowercased().hasPrefix(searchChar) {
+                    if let classObj = dataStore.getClass(id: student.classId) {
+                        return SearchResult(student: student, className: classObj.name)
+                    }
+                }
+                return nil
+            }
+        } else if text.count == 2 {
+            // Bei zwei Buchstaben: Treffer am Anfang + begrenzte Anzahl
+            let searchText = text.lowercased()
+            let matches = allStudents.compactMap { student in
+                if student.firstName.lowercased().hasPrefix(searchText) ||
+                   student.lastName.lowercased().hasPrefix(searchText) {
+                    if let classObj = dataStore.getClass(id: student.classId) {
+                        return SearchResult(student: student, className: classObj.name)
+                    }
+                }
+                return nil
+            }
+            // Begrenze auf maximal 10 Ergebnisse
+            searchResults = Array(matches.prefix(10))
+        } else {
+            // Ab 3 Buchstaben: Normale Suche mit containment
+            let searchText = text.lowercased()
+            let matches = allStudents.compactMap { student in
+                if student.firstName.lowercased().contains(searchText) ||
+                   student.lastName.lowercased().contains(searchText) {
+                    if let classObj = dataStore.getClass(id: student.classId) {
+                        return SearchResult(student: student, className: classObj.name)
+                    }
+                }
+                return nil
+            }
+            // Sortierung nach Relevanz
+            searchResults = matches.sorted { (result1, result2) -> Bool in
+                // Exakte Übereinstimmungen bevorzugen
+                let r1FirstNameMatch = result1.student.firstName.lowercased() == searchText
+                let r1LastNameMatch = result1.student.lastName.lowercased() == searchText
+                let r2FirstNameMatch = result2.student.firstName.lowercased() == searchText
+                let r2LastNameMatch = result2.student.lastName.lowercased() == searchText
+
+                if (r1FirstNameMatch || r1LastNameMatch) && !(r2FirstNameMatch || r2LastNameMatch) {
+                    return true
+                }
+                if !(r1FirstNameMatch || r1LastNameMatch) && (r2FirstNameMatch || r2LastNameMatch) {
+                    return false
+                }
+
+                // Alphabetisch sortieren
+                return result1.student.sortableName < result2.student.sortableName
+            }
+            // Begrenze auf 20 Ergebnisse für bessere Performance
+            if searchResults.count > 20 {
+                searchResults = Array(searchResults.prefix(20))
+            }
+        }
+
+        print("DEBUG: Suche nach '\(text)' ergab \(searchResults.count) Ergebnisse.")
     }
 
     func clearGlobalSearch() {
