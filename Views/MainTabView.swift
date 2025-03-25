@@ -1,3 +1,6 @@
+
+
+
 import SwiftUI
 
 struct MainTabView: View {
@@ -18,14 +21,12 @@ struct MainTabView: View {
                 }
                 .tag(1)
 
-            // Hier verwenden wir jetzt die neue, verbesserte EnhancedSeatingView
             EnhancedSeatingView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Sitzplan", systemImage: "rectangle.grid.2x2")
                 }
                 .tag(2)
 
-            // Die implementierte ResultsView verwenden
             ResultsView()
                 .tabItem {
                     Label("Noten", systemImage: "list.bullet")
@@ -38,10 +39,11 @@ struct MainTabView: View {
                 }
                 .tag(4)
         }
+        .accentColor(Color.heroSecondary) // Setzt die Akzentfarbe auf heroSecondary
         .onChange(of: appState.shouldNavigateToStudentsList) { shouldNavigate in
             if shouldNavigate {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    selectedTab = 1 // Zur Schülerliste navigieren
+                    selectedTab = 1
                     appState.shouldNavigateToStudentsList = false
                 }
             }
@@ -52,12 +54,10 @@ struct MainTabView: View {
     }
 
     private func checkForNavigationRequests() {
-        // Prüfen, ob wir von einer Klassen-Erstellung kommen und zur Schülerliste wechseln sollen
         if let navigateToStudents = UserDefaults.standard.object(forKey: "navigateToStudentsTab") as? Bool,
            navigateToStudents == true {
-            // Verzögerung für bessere Animation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                selectedTab = 1 // Zur Schülerliste wechseln
+                selectedTab = 1
                 UserDefaults.standard.removeObject(forKey: "navigateToStudentsTab")
             }
         }

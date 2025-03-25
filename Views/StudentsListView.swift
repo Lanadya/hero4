@@ -748,7 +748,7 @@ struct StudentsListView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(8)
 
-                    // Schülerliste mit verbessertem Multi-Select
+
                     // Schülerliste mit verbessertem Multi-Select
                     List {
                         ForEach(viewModel.students) { student in

@@ -102,6 +102,7 @@ struct EditStudentView: View {
                         }
                         .padding(.vertical, 2)
 
+
                         // Klasse wechseln Button - deutlicher hervorheben
                         if viewModel.classes.count > 1 {
                             Button(action: {
@@ -177,7 +178,9 @@ struct EditStudentView: View {
 
                         // Löschen
                         Button(action: {
+                            print("DEBUG: Löschen-Button geklickt")
                             showingDeleteConfirmation = true
+                            print("DEBUG: showingDeleteConfirmation gesetzt auf \(showingDeleteConfirmation)")
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "trash.fill")
@@ -219,7 +222,8 @@ struct EditStudentView: View {
                     title: Text("Schüler löschen"),
                     message: Text("Möchten Sie den Schüler \(student.fullName) wirklich löschen? Dies kann nicht rückgängig gemacht werden."),
                     primaryButton: .destructive(Text("Löschen")) {
-                        deleteStudent()
+                        print("DEBUG: Löschen-Button im Alert gedrückt für Schüler \(student.id)")
+                        viewModel.deleteStudent(id: student.id)
                     },
                     secondaryButton: .cancel(Text("Abbrechen"))
                 )
@@ -308,11 +312,15 @@ struct EditStudentView: View {
         }
     }
 
-    // In EditStudentView:
     private func deleteStudent() {
-        print("DEBUG: deleteStudent wird aufgerufen")
-        // Direkt löschen ohne DispatchQueue.asyncAfter
+        print("DEBUG: deleteStudent()-Methode aufgerufen für ID: \(student.id)")
+
+        // ViewModel verwenden statt direktem DataStore-Zugriff
         viewModel.deleteStudent(id: student.id)
+        print("DEBUG: Nach ViewModel-deleteStudent Aufruf")
+
+        // Modal schließen
         isPresented = false
+        print("DEBUG: Modal geschlossen")
     }
 }

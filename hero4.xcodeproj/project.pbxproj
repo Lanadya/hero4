@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF023B752D91F3D600CC962F /* TestAlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF023B742D91F3D600CC962F /* TestAlertView.swift */; };
 		AF0BE60E2D8893D400F9BB2C /* ColumnMappingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0BE60D2D8893D400F9BB2C /* ColumnMappingView.swift */; };
 		AF0BE6102D88942400F9BB2C /* ImportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0BE60F2D88942400F9BB2C /* ImportManager.swift */; };
 		AF4AA91F2D8A125100BCFEED /* SeatingPlanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA91E2D8A125100BCFEED /* SeatingPlanViewModel.swift */; };
@@ -17,6 +18,9 @@
 		AF4AA9412D8C7A5600BCFEED /* Rating.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9402D8C7A5600BCFEED /* Rating.swift */; };
 		AF4AA9432D8C7A7700BCFEED /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9422D8C7A7700BCFEED /* ResultsView.swift */; };
 		AF4AA9462D8C7ACA00BCFEED /* ResultsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4AA9452D8C7ACA00BCFEED /* ResultsViewModel.swift */; };
+		AF68134D2D930204008972A8 /* ViewExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF68134C2D930204008972A8 /* ViewExtensions.swift */; };
+		AF68134F2D93021D008972A8 /* AlertType.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF68134E2D93021D008972A8 /* AlertType.swift */; };
+		AF6813512D930237008972A8 /* InfoDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6813502D930237008972A8 /* InfoDialogView.swift */; };
 		AF6A0D1B2D80A6B200FBD63C /* Class.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1A2D80A6B200FBD63C /* Class.swift */; };
 		AF6A0D1D2D80A6F100FBD63C /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1C2D80A6F100FBD63C /* DataStore.swift */; };
 		AF6A0D1F2D80A72000FBD63C /* TimetableViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0D1E2D80A71F00FBD63C /* TimetableViewModel.swift */; };
@@ -36,6 +40,7 @@
 		AF8BBF4F2D8F0A5800F9E8DD /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF4E2D8F0A5800F9E8DD /* Utils.swift */; };
 		AF8BBF512D8F20E200F9E8DD /* ClassSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */; };
 		AF8BBF532D909A6B00F9E8DD /* ClassChangeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF522D909A6B00F9E8DD /* ClassChangeView.swift */; };
+		AF99EEDF2D92BAB20035D96F /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF99EEDE2D92BAB20035D96F /* ColorExtensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +61,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AF023B742D91F3D600CC962F /* TestAlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestAlertView.swift; sourceTree = "<group>"; };
 		AF0BE60D2D8893D400F9BB2C /* ColumnMappingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColumnMappingView.swift; sourceTree = "<group>"; };
 		AF0BE60F2D88942400F9BB2C /* ImportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportManager.swift; sourceTree = "<group>"; };
 		AF4AA91E2D8A125100BCFEED /* SeatingPlanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeatingPlanViewModel.swift; sourceTree = "<group>"; };
@@ -66,6 +72,9 @@
 		AF4AA9402D8C7A5600BCFEED /* Rating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rating.swift; sourceTree = "<group>"; };
 		AF4AA9422D8C7A7700BCFEED /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		AF4AA9452D8C7ACA00BCFEED /* ResultsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsViewModel.swift; sourceTree = "<group>"; };
+		AF68134C2D930204008972A8 /* ViewExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewExtensions.swift; sourceTree = "<group>"; };
+		AF68134E2D93021D008972A8 /* AlertType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertType.swift; sourceTree = "<group>"; };
+		AF6813502D930237008972A8 /* InfoDialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoDialogView.swift; sourceTree = "<group>"; };
 		AF6A0CE92D809A6900FBD63C /* hero4.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = hero4.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF6A0CF92D809A6A00FBD63C /* hero4Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hero4Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF6A0D032D809A6A00FBD63C /* hero4UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hero4UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,6 +97,7 @@
 		AF8BBF4E2D8F0A5800F9E8DD /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionView.swift; sourceTree = "<group>"; };
 		AF8BBF522D909A6B00F9E8DD /* ClassChangeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassChangeView.swift; sourceTree = "<group>"; };
+		AF99EEDE2D92BAB20035D96F /* ColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -160,6 +170,8 @@
 		AF6A0CE02D809A6900FBD63C = {
 			isa = PBXGroup;
 			children = (
+				AF99EEDE2D92BAB20035D96F /* ColorExtensions.swift */,
+				AF023B742D91F3D600CC962F /* TestAlertView.swift */,
 				AF8BBF4E2D8F0A5800F9E8DD /* Utils.swift */,
 				AF8BBF472D8EDC8300F9E8DD /* AppState.swift */,
 				AF6A0D182D80A63E00FBD63C /* Models */,
@@ -234,6 +246,9 @@
 				AF4AA9442D8C7A9F00BCFEED /* Results */,
 				AF8BBF4B2D8EE07500F9E8DD /* Archive */,
 				AF6A0D202D80A73D00FBD63C /* Components */,
+				AF68134C2D930204008972A8 /* ViewExtensions.swift */,
+				AF68134E2D93021D008972A8 /* AlertType.swift */,
+				AF6813502D930237008972A8 /* InfoDialogView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -399,15 +414,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF6A0D1B2D80A6B200FBD63C /* Class.swift in Sources */,
+				AF023B752D91F3D600CC962F /* TestAlertView.swift in Sources */,
 				AF6A0D1D2D80A6F100FBD63C /* DataStore.swift in Sources */,
 				AF6A0D302D80B29B00FBD63C /* StudentsViewModel.swift in Sources */,
 				AF8BBF482D8EDC8300F9E8DD /* AppState.swift in Sources */,
 				AF4AA93D2D8B1F1D00BCFEED /* EnhancedSeatingView.swift in Sources */,
+				AF68134F2D93021D008972A8 /* AlertType.swift in Sources */,
 				AF6A0D242D80A77E00FBD63C /* AddClassView.swift in Sources */,
 				AF4AA9292D8AC3EF00BCFEED /* EnhancedSeatingViewModel.swift in Sources */,
 				AF6A0D2C2D80B23400FBD63C /* Student.swift in Sources */,
+				AF99EEDF2D92BAB20035D96F /* ColorExtensions.swift in Sources */,
 				AF8BBF4F2D8F0A5800F9E8DD /* Utils.swift in Sources */,
 				AF8BBF532D909A6B00F9E8DD /* ClassChangeView.swift in Sources */,
+				AF68134D2D930204008972A8 /* ViewExtensions.swift in Sources */,
+				AF6813512D930237008972A8 /* InfoDialogView.swift in Sources */,
 				AF0BE60E2D8893D400F9BB2C /* ColumnMappingView.swift in Sources */,
 				AF4AA9432D8C7A7700BCFEED /* ResultsView.swift in Sources */,
 				AF6A0D2E2D80B24D00FBD63C /* SeatingPosition.swift in Sources */,

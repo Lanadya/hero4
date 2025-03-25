@@ -194,9 +194,12 @@ class StudentsViewModel: ObservableObject {
     }
 
     func deleteStudent(id: UUID) {
-        dataStore.deleteStudent(id: id)
-        loadStudentsForSelectedClass()
-        clearGlobalSearch()
+        dataStore.deleteStudent(id: id) // Löscht den Schüler aus dem DataStore
+        searchText = "" // Setzt die klassenbezogene Suche zurück
+        loadStudentsForSelectedClass() // Lädt die aktualisierte Schülerliste
+        clearGlobalSearch() // Setzt die globale Suche zurück, falls aktiv
+        objectWillChange.send() // Informiert die UI über die Änderung
+        print("DEBUG ViewModel: Schüler mit ID \(id) gelöscht und Liste aktualisiert")
     }
 
     func archiveStudent(_ student: Student) {

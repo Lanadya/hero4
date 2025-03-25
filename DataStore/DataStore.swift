@@ -386,20 +386,27 @@ class DataStore: ObservableObject {
     func deleteStudent(id: UUID) {
         if let index = students.firstIndex(where: { $0.id == id }) {
             let studentToDelete = students[index]
-            print("DEBUG DataStore: Lösche Schüler: \(studentToDelete.fullName)")
+            print("DEBUG DataStore: Lösche Schüler: \(studentToDelete.fullName) mit ID: \(id)")
+
+            // Schüler entfernen
             students.remove(at: index)
             saveStudents()
 
-            // Auch alle Sitzpositionen für diesen Schüler löschen
-            deleteSeatingPositionsForStudent(studentId: id)
+            // Sitzpositionen für diesen Schüler löschen
+            seatingPositions.removeAll(where: { $0.studentId == id })
+            saveSeatingPositions()
 
             // Abwesenheitsstatus löschen
-            if absenceStatuses[id] != nil {
-                absenceStatuses.removeValue(forKey: id)
-                saveAbsenceStatuses()
-            }
+            absenceStatuses.removeValue(forKey: id)
+            saveAbsenceStatuses()
+
+            // Bewertungen für diesen Schüler löschen (falls vorhanden)
+            ratings.removeAll(where: { $0.studentId == id })
+            saveRatings()
+
+            print("DEBUG DataStore: Schüler und zugehörige Daten erfolgreich gelöscht.")
         } else {
-            print("FEHLER DataStore: Konnte Schüler mit ID \(id) nicht zum Löschen finden.")
+            print("FEHLER DataStore: Schüler mit ID \(id) nicht gefunden.")
         }
     }
 
