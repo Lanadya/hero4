@@ -479,7 +479,7 @@ struct AdaptiveGridCell: View {
             case .filled:
                 return Color.gridFilledCell  // Use your defined color
             case .editing:
-                return Color.accentSandLight  // Use your defined color for editing state
+                return Color.accentGreenLight  // Use your defined color for editing state
             case .error:
                 return Color.red.opacity(0.15)
             }

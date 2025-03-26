@@ -2,6 +2,7 @@
 
 import Foundation
 import Combine
+import GRDB
 
 class EnhancedSeatingViewModel: ObservableObject {
     // Veröffentlichte Variablen für die View
@@ -80,6 +81,24 @@ class EnhancedSeatingViewModel: ObservableObject {
         } else {
             selectedClass = nil
         }
+    }
+
+    // Klassen nach Wochentagen gruppiert
+    var classesByWeekday: [(weekday: String, classes: [Class])] {
+        let weekdays = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
+
+        var result: [(weekday: String, classes: [Class])] = []
+
+        for (index, weekday) in weekdays.enumerated() {
+            let column = index + 1
+            let classesForDay = classes.filter { $0.column == column && !$0.isArchived }.sorted { $0.row < $1.row }
+
+            if !classesForDay.isEmpty {
+                result.append((weekday: weekday, classes: classesForDay))
+            }
+        }
+
+        return result
     }
 
     // MARK: - Schüler-Operationen

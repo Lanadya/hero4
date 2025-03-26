@@ -191,7 +191,7 @@ struct EnhancedSeatingView: View {
     }
 }
 
-// Ersetzen Sie die bestehende SeatingHeaderView mit dieser optimierten Version
+//  SeatingHeaderView
 struct SeatingHeaderView: View {
     @ObservedObject var viewModel: EnhancedSeatingViewModel
     @Binding var showClassPicker: Bool
@@ -199,27 +199,21 @@ struct SeatingHeaderView: View {
     @Binding var isFullscreen: Bool
     @Binding var showSettings: Bool
     @Binding var zoomLevel: Double
+    @State private var showInfoDialog = false
 
     var body: some View {
         VStack(spacing: 0) {
-            // Obere Zeile: Klassenauswahl und Modus-Button
-            HStack {
+            // Obere Zeile: Alle Steuerelemente einheitlich nebeneinander
+            HStack(spacing: 8) {
                 // Klassenauswahl-Button
                 Button(action: {
                     showClassPicker = true
                 }) {
                     HStack {
-                        if let className = viewModel.selectedClass?.name {
-                            Text(className)
+                        if let selectedClass = viewModel.selectedClass {
+                            Text(selectedClass.name)
                                 .fontWeight(.medium)
                                 .lineLimit(1)
-
-                            if let note = viewModel.selectedClass?.note, !note.isEmpty {
-                                Text("(\(note))")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                    .lineLimit(1)
-                            }
                         } else {
                             Text("Klasse wählen")
                         }
@@ -227,76 +221,83 @@ struct SeatingHeaderView: View {
                         Image(systemName: "chevron.down")
                             .font(.caption)
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(Color(.systemGray6))
+                    .frame(height: 36)
+                    .padding(.horizontal, 10)
+                    .background(Color.gradePrimaryLight)
                     .cornerRadius(8)
+                    .foregroundColor(.gradePrimary)
+                }
+
+                // Modus-Umschalter
+                Button(action: {
+                    editMode.toggle()
+                }) {
+                    HStack {
+                        // Icon je nach Modus
+                        Image(systemName: editMode ? "pencil.circle" : "hand.tap")
+
+                        // Text mit korrekten Bezeichnungen
+                        Text(editMode ? "Bearbeitungsmodus" : "Bewertungsmodus")
+                            .font(.caption)
+
+                        // Umschaltpfeil
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10))
+                            .foregroundColor(.gray)
+                    }
+                    .frame(height: 36)
+                    .padding(.horizontal, 10)
+                    .background(editMode ? Color.heroSecondaryLight : Color.accentGreenLight)
+                    .cornerRadius(8)
+                    .foregroundColor(editMode ? .heroSecondary : .accentGreen)
                 }
 
                 Spacer()
 
-                // Modus-Button (Bearbeiten/Bewerten)
+                // Info-Button - nur Icon, konsistent mit Startseite
                 Button(action: {
-                    editMode.toggle()
+                    showInfoDialog = true
                 }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: editMode ? "pencil.circle.fill" : "hand.tap.fill")
-                        Text(editMode ? "Bearbeiten" : "Bewerten")
-                            .font(.caption)
-                    }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 10)
-                    .background(
-                        Capsule()
-                            .fill(editMode ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
-                    )
-                    .foregroundColor(editMode ? .blue : .green)
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(.heroSecondary)
+                        .padding(6)
+                        .background(Color.heroSecondaryLight)
+                        .clipShape(Circle())
                 }
+                .buttonStyle(PlainButtonStyle())
 
-                // Vollbildmodus-Button
+                // Vollbildmodus-Button - gleicher Stil wie Info-Button
                 Button(action: {
                     withAnimation {
                         isFullscreen = true
                     }
                 }) {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.system(size: 16))
-                        .padding(8)
-                        .background(Color(.systemGray6))
+                        .font(.system(size: 22))
+                        .foregroundColor(.heroSecondary)
+                        .padding(6)
+                        .background(Color.heroSecondaryLight)
                         .clipShape(Circle())
                 }
+                .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
+            .padding(.vertical, 8)
 
-            // Zweite Zeile: Info und Modus-Anzeige
+            // Schüleranzahl-Leiste
             HStack {
-                // Schüleranzahl & Abwesende
-                HStack(spacing: 4) {
-                    Text("\(viewModel.students.count) Schüler")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                Text("\(viewModel.students.count) Schüler")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
-                    if !viewModel.absentStudents.isEmpty {
-                        Text("(\(viewModel.absentStudents.count) abwesend)")
-                            .font(.caption)
-                            .foregroundColor(.red)
-                    }
+                if !viewModel.absentStudents.isEmpty {
+                    Text("(\(viewModel.absentStudents.count) abwesend)")
+                        .font(.caption)
+                        .foregroundColor(.red)
                 }
 
                 Spacer()
-
-                // Aktueller Modus-Indikator
-                if editMode {
-                    Text("Ziehen und Positionieren")
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                        .padding(.vertical, 2)
-                        .padding(.horizontal, 6)
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(4)
-                }
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
@@ -305,8 +306,102 @@ struct SeatingHeaderView: View {
         }
         .background(Color.white)
         .shadow(radius: 1)
+        .sheet(isPresented: $showInfoDialog) {
+            InfoDialogView(
+                isPresented: $showInfoDialog,
+                title: "Sitzplan-Hilfe",
+                content: "• Bewertungsmodus: Tippen Sie auf einen Schüler, um eine Bewertung (++, +, -, --) zu vergeben oder den Anwesenheitsstatus zu ändern.\n\n• Bearbeitungsmodus: Ziehen Sie die Schülerkarten, um den Sitzplan nach Ihren Wünschen zu gestalten.\n\n• Nutzen Sie den Vollbildmodus für eine bessere Übersicht bei großen Klassen.\n\n• Alle vergebenen Bewertungen werden automatisch in der Notenliste gespeichert.",
+                buttonText: "Verstanden"
+            )
+        }
     }
 }
+
+// Separater Info-Dialog mit vollständigem Text
+//struct InfoDialogView: View {
+//    @Binding var isPresented: Bool
+//
+//    var body: some View {
+//        NavigationView {
+//            ScrollView {
+//                VStack(alignment: .leading, spacing: 16) {
+//                    Group {
+//                        Text("Die zwei Modi des Sitzplans:")
+//                            .font(.headline)
+//                            .padding(.top)
+//
+//                        HStack(alignment: .top, spacing: 12) {
+//                            Image(systemName: "hand.tap")
+//                                .foregroundColor(.accentGreen)
+//                                .frame(width: 24)
+//                            VStack(alignment: .leading) {
+//                                Text("Bewertungsmodus")
+//                                    .font(.subheadline)
+//                                    .fontWeight(.medium)
+//                                    .foregroundColor(.accentGreen)
+//                                Text("In diesem Modus können Sie Schüler bewerten, indem Sie auf ihre Karte tippen. Sie können schnell und einfach Bewertungen (++, +, -, --) vergeben oder den Anwesenheitsstatus ändern.")
+//                                    .fixedSize(horizontal: false, vertical: true)
+//                            }
+//                        }
+//                        .padding(.bottom, 8)
+//
+//                        HStack(alignment: .top, spacing: 12) {
+//                            Image(systemName: "pencil.circle")
+//                                .foregroundColor(.heroSecondary)
+//                                .frame(width: 24)
+//                            VStack(alignment: .leading) {
+//                                Text("Bearbeitungsmodus")
+//                                    .font(.subheadline)
+//                                    .fontWeight(.medium)
+//                                    .foregroundColor(.heroSecondary)
+//                                Text("Wechseln Sie in diesen Modus, um den Sitzplan zu gestalten. Sie können Schülerkarten durch Ziehen an die gewünschte Position bewegen und so den Sitzplan an Ihr Klassenzimmer anpassen.")
+//                                    .fixedSize(horizontal: false, vertical: true)
+//                            }
+//                        }
+//                    }
+//
+//                    Divider()
+//
+//                    Group {
+//                        Text("Tipps für den Sitzplan:")
+//                            .font(.headline)
+//
+//                        HStack(alignment: .top, spacing: 12) {
+//                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+//                                .foregroundColor(.gradePrimary)
+//                                .frame(width: 24)
+//                            Text("Nutzen Sie den Vollbildmodus für eine bessere Übersicht, besonders bei großen Klassen.")
+//                                .fixedSize(horizontal: false, vertical: true)
+//                        }
+//                        .padding(.bottom, 8)
+//
+//                        HStack(alignment: .top, spacing: 12) {
+//                            Image(systemName: "hand.tap")
+//                                .foregroundColor(.gradePrimary)
+//                                .frame(width: 24)
+//                            Text("Alle vergebenen Bewertungen werden automatisch in der Notenliste gespeichert und mit dem aktuellen Datum versehen.")
+//                                .fixedSize(horizontal: false, vertical: true)
+//                        }
+//                        .padding(.bottom, 8)
+//
+//                        HStack(alignment: .top, spacing: 12) {
+//                            Image(systemName: "person.fill.xmark")
+//                                .foregroundColor(.gradePrimary)
+//                                .frame(width: 24)
+//                            Text("Abwesende Schüler werden grau hinterlegt und können trotzdem bewegt werden.")
+//                                .fixedSize(horizontal: false, vertical: true)
+//                        }
+//                    }
+//                }
+//                .padding()
+//            }
+//            .navigationBarTitle("Sitzplan-Hilfe", displayMode: .inline)
+//            .navigationBarItems(trailing: Button("Schließen") {
+//                isPresented = false
+//            })
+//        }
+//    }
+//}
 
 
 // Fullscreen Exit-Button
@@ -1089,33 +1184,38 @@ struct SeatingClassPicker: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(viewModel.classes) { classObj in
-                    Button(action: {
-                        viewModel.selectClass(classObj.id)
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(classObj.name)
-                                    .font(.headline)
+                ForEach(viewModel.classesByWeekday, id: \.weekday) { group in
+                    Section(header: Text(group.weekday)) {
+                        ForEach(group.classes) { classObj in
+                            Button(action: {
+                                viewModel.selectClass(classObj.id)
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(classObj.name)
+                                            .font(.headline)
 
-                                if let note = classObj.note, !note.isEmpty {
-                                    Text(note)
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
+                                        if let note = classObj.note, !note.isEmpty {
+                                            Text(note)
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    if viewModel.selectedClass?.id == classObj.id {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.blue)
+                                    }
                                 }
-                            }
-
-                            Spacer()
-
-                            if viewModel.selectedClass?.id == classObj.id {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
                             }
                         }
                     }
                 }
             }
+            .listStyle(InsetGroupedListStyle())
             .navigationBarTitle("Klasse auswählen", displayMode: .inline)
             .navigationBarItems(trailing: Button("Fertig") {
                 presentationMode.wrappedValue.dismiss()
@@ -1124,161 +1224,3 @@ struct SeatingClassPicker: View {
         .navigationViewStyle(StackNavigationViewStyle())
     }
 }
-
-//import SwiftUI
-//
-//struct EnhancedSeatingView: View {
-//    @StateObject private var viewModel = EnhancedSeatingViewModel()
-//    @Binding var selectedTab: Int
-//    @State private var showClassPicker = false
-//    @State private var editMode = false
-//    @State private var isFullscreen = false
-//    @State private var showModeSwitchInfo = false // Temporär deaktiviert
-//    init(selectedTab: Binding<Int>) {
-//        self._selectedTab = selectedTab
-//    }
-//
-//    var body: some View {
-//        NavigationView {
-//            ZStack {
-//                VStack(spacing: 0) {
-//                    // Header (nur wenn nicht im Vollbildmodus)
-//                    if !isFullscreen {
-//                        SP_HeaderView(
-//                            viewModel: viewModel,
-//                            showClassPicker: $showClassPicker,
-//                            editMode: $editMode,
-//                            isFullscreen: $isFullscreen
-//                        )
-//                    }
-//
-//                    // Content area
-//                    SP_ContentView(
-//                        viewModel: viewModel,
-//                        selectedTab: $selectedTab,
-//                        showClassPicker: $showClassPicker,
-//                        editMode: editMode,
-//                        isFullscreen: isFullscreen
-//                    )
-//                }
-//
-//                // Vollbildmodus-X in der oberen rechten Ecke (nur im Vollbildmodus)
-//                if isFullscreen {
-//                    SP_ExitButton(isFullscreen: $isFullscreen)
-//                }
-//
-//                //  !!!!!!!!!Info-Toast beim Moduswechsel TEMPORÄR DEAKTIVIERT !!!!!!!!!!!!
-////                if showModeSwitchInfo {
-////                    VStack {
-////                        Spacer().frame(height: 60)
-////
-////                        HStack {
-////                            Image(systemName: editMode ? "arrow.up.and.down.and.arrow.left.and.right" : "pencil")
-////                                .foregroundColor(.white)
-////                            Text(editMode ? "Positioniere Schüler durch Ziehen" : "Tippe auf Buttons, um Noten zu vergeben")
-////                                .foregroundColor(.white)
-////                                .font(.footnote)
-////                        }
-////                        .padding(10)
-////                        .background(Color.black.opacity(0.7))
-////                        .cornerRadius(20)
-////                        .transition(.move(edge: .top).combined(with: .opacity))
-////
-////                        Spacer()
-////                    }
-////                    .zIndex(100)
-////                    .animation(.easeInOut, value: showModeSwitchInfo)
-////                    .onAppear {
-////                        // Info-Toast nach 3 Sekunden ausblenden
-////                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-////                            withAnimation {
-////                                showModeSwitchInfo = false
-////                            }
-////                        }
-////                    }
-////                }
-//            }
-//            .navigationBarTitle("Sitzplan", displayMode: .inline)
-//            .navigationBarHidden(true)
-//            .sheet(isPresented: $showClassPicker) {
-//                SeatingClassPicker(viewModel: viewModel)
-//            }
-//            .onAppear {
-//                // Lade verfügbare Klassen
-//                viewModel.loadClasses()
-//
-//                // Prüfe, ob eine Klasse für den Sitzplan ausgewählt wurde
-//                if let classIdString = UserDefaults.standard.string(forKey: "selectedClassForSeatingPlan"),
-//                   let classId = UUID(uuidString: classIdString) {
-//                    viewModel.selectClass(classId)
-//                    // Nach Nutzung löschen
-//                    UserDefaults.standard.removeObject(forKey: "selectedClassForSeatingPlan")
-//                }
-//                // Falls keine Klasse ausgewählt ist, aber Klassen vorhanden sind, wähle die erste
-//                else if viewModel.selectedClass == nil && !viewModel.classes.isEmpty {
-//                    viewModel.selectClass(viewModel.classes[0].id)
-//                }
-//
-//                // Initial Info-Nachricht für Moduswechsel
-//                // Nur beim ersten Erscheinen einmalig anzeigen
-//                if !UserDefaults.standard.bool(forKey: "hasSeenSeatingPlanModeInfo") {
-//                    // showModeSwitchInfo = true // Temporär deaktiviert
-//                    // Nach 3 Sekunden ausblenden
-//                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-//                        withAnimation {
-//                            showModeSwitchInfo = false
-//                        }
-//                    }
-//
-//                    // Markieren, dass die Info gesehen wurde
-//                    UserDefaults.standard.set(true, forKey: "hasSeenSeatingPlanModeInfo")
-//                }
-//            }
-//        }
-//        .navigationViewStyle(StackNavigationViewStyle())
-//    }
-//}
-//
-//// MARK: - Seating Class Picker
-//// Diese Komponente ist speziell für den EnhancedSeatingViewModel, um Konflikte mit ClassPickerView zu vermeiden
-//struct SeatingClassPicker: View {
-//    @ObservedObject var viewModel: EnhancedSeatingViewModel
-//    @Environment(\.presentationMode) var presentationMode
-//
-//    var body: some View {
-//        NavigationView {
-//            List {
-//                ForEach(viewModel.classes) { classObj in
-//                    Button(action: {
-//                        viewModel.selectClass(classObj.id)
-//                        presentationMode.wrappedValue.dismiss()
-//                    }) {
-//                        HStack {
-//                            VStack(alignment: .leading) {
-//                                Text(classObj.name)
-//                                    .font(.headline)
-//
-//                                if let note = classObj.note, !note.isEmpty {
-//                                    Text(note)
-//                                        .font(.caption)
-//                                        .foregroundColor(.gray)
-//                                }
-//                            }
-//
-//                            Spacer()
-//
-//                            if viewModel.selectedClass?.id == classObj.id {
-//                                Image(systemName: "checkmark")
-//                                    .foregroundColor(.blue)
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            .navigationBarTitle("Klasse auswählen", displayMode: .inline)
-//            .navigationBarItems(trailing: Button("Fertig") {
-//                presentationMode.wrappedValue.dismiss()
-//            })
-//        }
-//    }
-//}

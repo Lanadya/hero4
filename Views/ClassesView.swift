@@ -209,8 +209,8 @@ struct DebugControlsView: View {
                         .font(.caption)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color.accentSandLight)
-                        .foregroundColor(.accentSand)
+                        .background(Color.accentGreenLight)
+                        .foregroundColor(.accentGreen)
                         .cornerRadius(8)
                 }
                 Button(action: {

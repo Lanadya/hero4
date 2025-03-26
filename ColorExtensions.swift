@@ -1,16 +1,18 @@
 import SwiftUI
 
 // Farbschema-Definition
+// In ColorExtensions.swift hinzufügen/ersetzen:
 extension Color {
-    // Subdued Professional Farbpalette - Hauptfarben
+    // Hauptfarben
     static let gradePrimary = Color(hex: "#1A365D")     // Gedämpftes Marineblau
     static let heroSecondary = Color(hex: "#2C7A7B")    // Sanftes Türkis
-    static let accentSand = Color(hex: "#C05621")       // Warmes Sand
+    static let accentGreen = Color(hex: "#4CAF50")      // Frisches Grün (statt accentSand)
 
-    // Abgeschwächte/Hellere Varianten für Hintergründe etc.
+    // Abgeschwächte/Hellere Varianten
     static let gradePrimaryLight = Color(hex: "#1A365D").opacity(0.1)
     static let heroSecondaryLight = Color(hex: "#2C7A7B").opacity(0.1)
-    static let accentSandLight = Color(hex: "#C05621").opacity(0.1)
+    static let accentGreenLight = Color(hex: "#4CAF50").opacity(0.1)  // Neues helles Grün
+
 
     // Zusätzliche UI-Farben
     static let gridBackground = Color(hex: "#F9FAFB")   // Sehr helles Grau für Tabellenhintergrund
