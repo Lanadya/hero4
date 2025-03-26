@@ -39,7 +39,7 @@ struct GridComponent: View {
     @State private var isLandscape = false
     @State private var showNotes = true
     @State private var needsScrolling = false
-    @State private var showIntroOverlay = false
+//    @State private var showIntroOverlay = false
     @State private var showHelpAlert = false
 
     private let rows = 13  // 1 Header + 12 Stunden
@@ -80,8 +80,8 @@ struct GridComponent: View {
 
             // Entscheide, ob Notizen angezeigt werden sollen
             let shouldShowNotes = isLandscapeMode ?
-                                   interactiveCellWidth >= 100 && rowHeight >= 45 :
-                                   interactiveCellWidth >= 80 && rowHeight >= 50
+            interactiveCellWidth >= 100 && rowHeight >= 45 :
+            interactiveCellWidth >= 80 && rowHeight >= 50
 
             // Berechne, ob wir scrollen müssen
             let totalGridHeight = headerHeight + (rowHeight * 12)
@@ -112,7 +112,7 @@ struct GridComponent: View {
                 }
 
                 // Debug-Info über aktuelle Klassen
-                #if DEBUG
+#if DEBUG
                 if showDebugControls {
                     VStack(alignment: .leading) {
                         Text("DEBUG: Aktive Klassen: \(viewModel.classes.count)")
@@ -129,7 +129,7 @@ struct GridComponent: View {
                     .padding(.horizontal)
                     .padding(.bottom, 2)
                 }
-                #endif
+#endif
 
                 // Fehleranzeige
                 if viewModel.showError, let errorMessage = viewModel.errorMessage {
@@ -155,8 +155,8 @@ struct GridComponent: View {
                 let newInteractiveCellWidth = (newValue.width - 50) / 5
                 let newRowHeight = max(min(newMaxRowHeight, 70), 30)
                 let newShouldShowNotes = newIsLandscape ?
-                                         newInteractiveCellWidth >= 100 && newRowHeight >= 45 :
-                                         newInteractiveCellWidth >= 80 && newRowHeight >= 50
+                newInteractiveCellWidth >= 100 && newRowHeight >= 45 :
+                newInteractiveCellWidth >= 80 && newRowHeight >= 50
                 let newTotalGridHeight = headerHeight + (newRowHeight * 12)
                 let newNeedsToScroll = newTotalGridHeight > newAvailableHeight
 
@@ -204,57 +204,58 @@ struct GridComponent: View {
                 }
             }
         }
-        // Im View-Body nach GeometryReader
-        .overlay(
-            Group {
-                if showIntroOverlay && viewModel.classes.isEmpty {
-                    VStack {
-                        Spacer()
-
-                        HStack {
-                            Spacer()
-
-                            VStack(alignment: .center, spacing: 16) {
-                                Image(systemName: "hand.tap")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(.white)
-
-                                Text("Tippen Sie auf eine Zelle, um eine neue Klasse anzulegen")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .multilineTextAlignment(.center)
-                                    .padding()
-                            }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.blue.opacity(0.8))
-                            )
-                            .shadow(radius: 8)
-                            .padding()
-
-                            Spacer()
-                        }
-
-                        Spacer()
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        showIntroOverlay = false
-                        UserDefaults.standard.set(true, forKey: "hasSeenOverlay")
-                    }
-                }
-            }
-        )
-        .onAppear {
-            // Prüfe, ob der Nutzer das Overlay schon gesehen hat
-            if !UserDefaults.standard.bool(forKey: "hasSeenOverlay") {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    showIntroOverlay = true
-                }
-            }
-        }
     }
+//        // Im View-Body nach GeometryReader
+//        .overlay(
+//            Group {
+//                if showIntroOverlay && viewModel.classes.isEmpty {
+//                    VStack {
+//                        Spacer()
+//
+//                        HStack {
+//                            Spacer()
+//
+//                            VStack(alignment: .center, spacing: 16) {
+//                                Image(systemName: "hand.tap")
+//                                    .font(.system(size: 40))
+//                                    .foregroundColor(.white)
+//
+//                                Text("Tippen Sie auf eine Zelle, um eine neue Klasse anzulegen")
+//                                    .font(.headline)
+//                                    .foregroundColor(.white)
+//                                    .multilineTextAlignment(.center)
+//                                    .padding()
+//                            }
+//                            .padding()
+//                            .background(
+//                                RoundedRectangle(cornerRadius: 16)
+//                                    .fill(Color.blue.opacity(0.8))
+//                            )
+//                            .shadow(radius: 8)
+//                            .padding()
+//
+//                            Spacer()
+//                        }
+//
+//                        Spacer()
+//                    }
+//                    .contentShape(Rectangle())
+//                    .onTapGesture {
+//                        showIntroOverlay = false
+//                        UserDefaults.standard.set(true, forKey: "hasSeenOverlay")
+//                    }
+//                }
+//            }
+//        )
+//        .onAppear {
+//            // Prüfe, ob der Nutzer das Overlay schon gesehen hat
+//            if !UserDefaults.standard.bool(forKey: "hasSeenOverlay") {
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+//                    showIntroOverlay = true
+//                }
+//            }
+//        }
+//    }
 
     // Extrahiere die eigentliche Grid-Darstellung in eine separate Funktion
     private func gridContent(rowHeight: CGFloat, headerHeight: CGFloat, cellWidth: CGFloat, isLandscape: Bool, showNotes: Bool) -> some View {

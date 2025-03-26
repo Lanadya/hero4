@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 
 struct Rating: Identifiable, Codable, Equatable, Hashable {
     var id: UUID
@@ -30,5 +31,54 @@ struct Rating: Identifiable, Codable, Equatable, Hashable {
         self.isArchived = isArchived
         self.createdAt = createdAt
         self.schoolYear = schoolYear
+    }
+}
+
+// MARK: - GRDB Record Protocols
+extension Rating: TableRecord, FetchableRecord, PersistableRecord {
+    // Define table name
+    static var databaseTableName: String { "rating" }
+
+    // Define column names
+    enum Columns {
+        static let id = Column("id")
+        static let studentId = Column("studentId")
+        static let classId = Column("classId")
+        static let date = Column("date")
+        static let value = Column("value")
+        static let isAbsent = Column("isAbsent")
+        static let isArchived = Column("isArchived")
+        static let createdAt = Column("createdAt")
+        static let schoolYear = Column("schoolYear")
+    }
+
+    // Encode the Rating to database columns
+    func encode(to container: inout PersistenceContainer) {
+        container[Columns.id] = id.uuidString
+        container[Columns.studentId] = studentId.uuidString
+        container[Columns.classId] = classId.uuidString
+        container[Columns.date] = date
+        container[Columns.value] = value?.rawValue
+        container[Columns.isAbsent] = isAbsent
+        container[Columns.isArchived] = isArchived
+        container[Columns.createdAt] = createdAt
+        container[Columns.schoolYear] = schoolYear
+    }
+
+    // Initialize Rating from database row
+    init(row: Row) {
+        self.id = UUID(uuidString: row[Columns.id]) ?? UUID()
+        self.studentId = UUID(uuidString: row[Columns.studentId]) ?? UUID()
+        self.classId = UUID(uuidString: row[Columns.classId]) ?? UUID()
+        self.date = row[Columns.date]
+        if let valueInt = row[Columns.value] as Int? {
+            self.value = RatingValue(rawValue: valueInt)
+        } else {
+            self.value = nil
+        }
+        self.isAbsent = row[Columns.isAbsent]
+        self.isArchived = row[Columns.isArchived]
+        self.createdAt = row[Columns.createdAt]
+        self.schoolYear = row[Columns.schoolYear]
     }
 }

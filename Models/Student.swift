@@ -7,6 +7,7 @@
 
 
 import Foundation
+import GRDB
 
 struct Student: Identifiable, Codable, Equatable, Hashable {
     var id: UUID
@@ -64,5 +65,47 @@ struct Student: Identifiable, Codable, Equatable, Hashable {
 
     enum ValidationError: Error {
         case noName
+    }
+}
+
+// MARK: - GRDB Record Protocols
+extension Student: TableRecord, FetchableRecord, PersistableRecord {
+    // Define table name
+    static var databaseTableName: String { "student" }
+
+    // Define column names
+    enum Columns {
+        static let id = Column("id")
+        static let firstName = Column("firstName")
+        static let lastName = Column("lastName")
+        static let classId = Column("classId")
+        static let entryDate = Column("entryDate")
+        static let exitDate = Column("exitDate")
+        static let isArchived = Column("isArchived")
+        static let notes = Column("notes")
+    }
+
+    // Encode the Student to database columns
+    func encode(to container: inout PersistenceContainer) {
+        container[Columns.id] = id.uuidString
+        container[Columns.firstName] = firstName
+        container[Columns.lastName] = lastName
+        container[Columns.classId] = classId.uuidString
+        container[Columns.entryDate] = entryDate
+        container[Columns.exitDate] = exitDate
+        container[Columns.isArchived] = isArchived
+        container[Columns.notes] = notes
+    }
+
+    // Initialize Student from database row
+    init(row: Row) {
+        self.id = UUID(uuidString: row[Columns.id]) ?? UUID()
+        self.firstName = row[Columns.firstName]
+        self.lastName = row[Columns.lastName]
+        self.classId = UUID(uuidString: row[Columns.classId]) ?? UUID()
+        self.entryDate = row[Columns.entryDate]
+        self.exitDate = row[Columns.exitDate]
+        self.isArchived = row[Columns.isArchived]
+        self.notes = row[Columns.notes]
     }
 }

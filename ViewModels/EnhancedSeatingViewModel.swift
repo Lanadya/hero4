@@ -1,3 +1,5 @@
+
+
 import Foundation
 import Combine
 
@@ -138,6 +140,69 @@ class EnhancedSeatingViewModel: ObservableObject {
         }
     }
 
+
+    // MARK: - Sitzposition-Operationen
+
+    // Bestehende Funktionen hier...
+
+    // Ordnet Schüler initial in der Ecke des Raums an
+    func arrangeStudentsInCorner() {
+        guard let classId = selectedClassId else { return }
+        print("DEBUG: Arrangiere Schüler in der Ecke")
+
+        // Sortiere Schüler nach Nachnamen
+        let sortedStudents = students.sorted { $0.lastName < $1.lastName }
+
+        // Überprüfe, ob bereits benutzerdefinierte Positionen existieren
+        let hasCustomPositions = seatingPositions.contains { $0.isCustomPosition }
+        if hasCustomPositions {
+            print("DEBUG: Überspringe Anordnung - Benutzerdefinierte Positionen existieren bereits")
+            return
+        }
+
+        // Anfangsposition in der Ecke (oben links)
+        let startX = 0
+        let startY = 0
+
+        // Position der gestapelten Schüler
+        for (index, student) in sortedStudents.enumerated() {
+            // Berechne Position mit leichter Versetzung (bis zu 3 Schüler pro Reihe)
+            let xPos = startX + (index % 3)
+            let yPos = startY + (index / 3)
+
+            // Erstelle oder aktualisiere Position
+            if let existingPosition = seatingPositions.first(where: { $0.studentId == student.id }) {
+                var updatedPosition = existingPosition
+                updatedPosition.xPos = xPos
+                updatedPosition.yPos = yPos
+                updatedPosition.isCustomPosition = false // Nicht als benutzerdefiniert markieren
+
+                // Speichere die Position
+                dataStore.updateSeatingPosition(updatedPosition)
+
+                // Aktualisiere in-memory Liste
+                if let index = seatingPositions.firstIndex(where: { $0.id == existingPosition.id }) {
+                    seatingPositions[index] = updatedPosition
+                }
+            } else {
+                // Neue Position erstellen
+                let newPosition = SeatingPosition(
+                    studentId: student.id,
+                    classId: classId,
+                    xPos: xPos,
+                    yPos: yPos,
+                    isCustomPosition: false
+                )
+                dataStore.addSeatingPosition(newPosition)
+                seatingPositions.append(newPosition)
+            }
+        }
+
+        // Benachrichtige über Änderungen
+        objectWillChange.send()
+        print("DEBUG: \(sortedStudents.count) Schüler in der Ecke angeordnet")
+    }
+
     // MARK: - Öffentliche Zugriffsmethoden
 
     /// Lädt die Sitzpositionen für die aktuell ausgewählte Klasse neu
@@ -249,8 +314,6 @@ class EnhancedSeatingViewModel: ObservableObject {
 }
 
 
-// Diese Methoden zum EnhancedSeatingViewModel hinzufügen
-
 // MARK: - Zusätzliche Schüler-Verwaltungsfunktionen
 
 extension EnhancedSeatingViewModel {
@@ -280,3 +343,5 @@ extension EnhancedSeatingViewModel {
         absentStudents.remove(id)
     }
 }
+
+

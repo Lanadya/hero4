@@ -33,7 +33,7 @@ struct MainTabView: View {
                 }
                 .tag(3)
 
-            Text("Archiv (Wird noch implementiert)")
+            ArchiveView()
                 .tabItem {
                     Label("Archiv", systemImage: "archivebox")
                 }

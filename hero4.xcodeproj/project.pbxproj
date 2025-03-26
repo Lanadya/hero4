@@ -41,6 +41,11 @@
 		AF8BBF512D8F20E200F9E8DD /* ClassSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */; };
 		AF8BBF532D909A6B00F9E8DD /* ClassChangeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8BBF522D909A6B00F9E8DD /* ClassChangeView.swift */; };
 		AF99EEDF2D92BAB20035D96F /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF99EEDE2D92BAB20035D96F /* ColorExtensions.swift */; };
+		AFE7A4722D94283B00AF8164 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = AFE7A4712D94283B00AF8164 /* GRDB */; };
+		AFE7A4742D94285800AF8164 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE7A4732D94285800AF8164 /* AppDatabase.swift */; };
+		AFE7A4762D94287600AF8164 /* ClassRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE7A4752D94287600AF8164 /* ClassRecord.swift */; };
+		AFE7A4782D94295A00AF8164 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE7A4772D94295A00AF8164 /* GRDBManager.swift */; };
+		AFE7A47A2D943D2000AF8164 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE7A4792D943D2000AF8164 /* BackupManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -98,6 +103,10 @@
 		AF8BBF502D8F20E200F9E8DD /* ClassSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionView.swift; sourceTree = "<group>"; };
 		AF8BBF522D909A6B00F9E8DD /* ClassChangeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassChangeView.swift; sourceTree = "<group>"; };
 		AF99EEDE2D92BAB20035D96F /* ColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensions.swift; sourceTree = "<group>"; };
+		AFE7A4732D94285800AF8164 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
+		AFE7A4752D94287600AF8164 /* ClassRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassRecord.swift; sourceTree = "<group>"; };
+		AFE7A4772D94295A00AF8164 /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
+		AFE7A4792D943D2000AF8164 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -123,6 +132,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFE7A4722D94283B00AF8164 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,6 +221,9 @@
 			isa = PBXGroup;
 			children = (
 				AF6A0D1C2D80A6F100FBD63C /* DataStore.swift */,
+				AFE7A4732D94285800AF8164 /* AppDatabase.swift */,
+				AFE7A4772D94295A00AF8164 /* GRDBManager.swift */,
+				AFE7A4792D943D2000AF8164 /* BackupManager.swift */,
 			);
 			path = DataStore;
 			sourceTree = "<group>";
@@ -223,6 +236,7 @@
 				AF6A0D2D2D80B24D00FBD63C /* SeatingPosition.swift */,
 				AF4AA9242D8A14F900BCFEED /* SharedTypes.swift */,
 				AF4AA9402D8C7A5600BCFEED /* Rating.swift */,
+				AFE7A4752D94287600AF8164 /* ClassRecord.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -289,6 +303,7 @@
 			);
 			name = hero4;
 			packageProductDependencies = (
+				AFE7A4712D94283B00AF8164 /* GRDB */,
 			);
 			productName = hero4;
 			productReference = AF6A0CE92D809A6900FBD63C /* hero4.app */;
@@ -372,6 +387,9 @@
 			);
 			mainGroup = AF6A0CE02D809A6900FBD63C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AFE7A4702D94283B00AF8164 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AF6A0CEA2D809A6900FBD63C /* Products */;
 			projectDirPath = "";
@@ -416,6 +434,7 @@
 				AF6A0D1B2D80A6B200FBD63C /* Class.swift in Sources */,
 				AF023B752D91F3D600CC962F /* TestAlertView.swift in Sources */,
 				AF6A0D1D2D80A6F100FBD63C /* DataStore.swift in Sources */,
+				AFE7A4742D94285800AF8164 /* AppDatabase.swift in Sources */,
 				AF6A0D302D80B29B00FBD63C /* StudentsViewModel.swift in Sources */,
 				AF8BBF482D8EDC8300F9E8DD /* AppState.swift in Sources */,
 				AF4AA93D2D8B1F1D00BCFEED /* EnhancedSeatingView.swift in Sources */,
@@ -431,7 +450,10 @@
 				AF0BE60E2D8893D400F9BB2C /* ColumnMappingView.swift in Sources */,
 				AF4AA9432D8C7A7700BCFEED /* ResultsView.swift in Sources */,
 				AF6A0D2E2D80B24D00FBD63C /* SeatingPosition.swift in Sources */,
+				AFE7A4762D94287600AF8164 /* ClassRecord.swift in Sources */,
 				AF4AA91F2D8A125100BCFEED /* SeatingPlanViewModel.swift in Sources */,
+				AFE7A47A2D943D2000AF8164 /* BackupManager.swift in Sources */,
+				AFE7A4782D94295A00AF8164 /* GRDBManager.swift in Sources */,
 				AF4AA9412D8C7A5600BCFEED /* Rating.swift in Sources */,
 				AF6A0D282D80A7BB00FBD63C /* ClassesView.swift in Sources */,
 				AF6A0D342D80B2EE00FBD63C /* AddStudentView.swift in Sources */,
@@ -763,6 +785,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AFE7A4702D94283B00AF8164 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AFE7A4712D94283B00AF8164 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AFE7A4702D94283B00AF8164 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AF6A0CE12D809A6900FBD63C /* Project object */;
 }

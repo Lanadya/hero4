@@ -267,16 +267,22 @@ struct SP_GridView: View {
         )
     }
 
+    // Replace the handlePositionChange method in SP_GridView struct with this corrected version:
+
     // Handle student position change
     private func handlePositionChange(studentId: UUID, newPosition: CGPoint) {
         // Umrechnung von Bildschirmkoordinaten zu Grid-Koordinaten
         let newX = Int((newPosition.x - cardWidth/2 - 10) / (cardWidth * 1.2))
         let newY = Int((newPosition.y - cardHeight/2 - 10) / (cardHeight * 1.2))
 
+        // Ensure we're passing positive values
+        let safeX = max(0, newX)
+        let safeY = max(0, newY)
+
         viewModel.updateStudentPosition(
             studentId: studentId,
-            newX: newX,
-            newY: newY
+            newX: safeX,
+            newY: safeY
         )
     }
 
