@@ -18,21 +18,20 @@ class StudentRepository {
             return []
         }
     }
-
     func addStudent(_ student: Student) throws {
-        try database.write { db in
+        _ = try database.write { db in
             try student.insert(db)
         }
     }
 
     func updateStudent(_ student: Student) throws {
-        try database.write { db in
+        _ = try database.write { db in
             try student.update(db)
         }
     }
 
     func deleteStudent(id: UUID) throws {
-        try database.write { db in
+        _ = try database.write { db in
             try Student.filter(Student.Columns.id == id.uuidString).deleteAll(db)
         }
     }

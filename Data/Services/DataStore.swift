@@ -580,27 +580,67 @@ class DataStore: ObservableObject {
             }
         }
 
-        private func addSampleStudentsToClass(classId: UUID, count: Int = 15) {
-            let firstNames = ["Max", "Anna", "Paul", "Sophie", "Tom", "Lisa", "Felix", "Sarah", "Lukas", "Lena",
-                             "Jonas", "Laura", "David", "Julia", "Niklas", "Emma", "Alexander", "Mia", "Leon", "Hannah"]
-            let lastNames = ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Meyer", "Wagner", "Becker", "Hoffmann", "Schulz",
-                            "Bauer", "Koch", "Richter", "Klein", "Wolf", "Schröder", "Neumann", "Schwarz", "Zimmermann", "Braun"]
+    private func addSampleStudentsToClass(classId: UUID, count: Int = 40) {
+        // Erweiterte Listen von Vor- und Nachnamen für mehr Variation
+        let firstNames = ["Max", "Anna", "Paul", "Sophie", "Tom", "Lisa", "Felix", "Sarah", "Lukas", "Lena",
+                          "Jonas", "Laura", "David", "Julia", "Niklas", "Emma", "Alexander", "Mia", "Leon", "Hannah",
+                          "Finn", "Marie", "Elias", "Emilia", "Noah", "Charlotte", "Ben", "Lina", "Luis", "Lea",
+                          "Henry", "Johanna", "Theo", "Ida", "Samuel", "Clara", "Oscar", "Mathilda", "Anton", "Ella",
+                          "Emil", "Helena", "Jakob", "Victoria", "Jonathan", "Greta", "Moritz", "Amelie", "Vincent", "Zoe"]
 
-            for i in 0..<min(count, 40) {
-                let firstName = firstNames[Int.random(in: 0..<firstNames.count)]
-                let lastName = lastNames[Int.random(in: 0..<lastNames.count)]
-                let note = Int.random(in: 0...5) == 0 ? "Sprachförderung" : nil
+        let lastNames = ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Meyer", "Wagner", "Becker", "Hoffmann", "Schulz",
+                         "Bauer", "Koch", "Richter", "Klein", "Wolf", "Schröder", "Neumann", "Schwarz", "Zimmermann", "Braun",
+                         "Krüger", "Hofmann", "Hartmann", "Lange", "Schmitt", "Werner", "Schmitz", "Krause", "Meier", "Lehmann",
+                         "Schmid", "Schulze", "Maier", "Köhler", "Herrmann", "Walter", "König", "Mayer", "Huber", "Kaiser",
+                         "Fuchs", "Peters", "Lang", "Scholz", "Möller", "Weiß", "Jung", "Hahn", "Schubert", "Vogel"]
 
-                let student = Student(
-                    firstName: firstName,
-                    lastName: lastName,
-                    classId: classId,
-                    notes: note
-                )
+        // Ein Set, um die bereits verwendeten Namenskombinationen zu speichern
+        var usedNames = Set<String>()
+        var studentsAdded = 0
+
+        // Mehr Durchläufe als nötig, um für Ausfälle durch Duplikate zu kompensieren
+        for _ in 0..<(count * 2) {
+            // Wenn wir bereits die gewünschte Anzahl erreicht haben, brechen wir ab
+            if studentsAdded >= count {
+                break
+            }
+
+            // Zufälligen Vor- und Nachnamen generieren
+            let firstName = firstNames[Int.random(in: 0..<firstNames.count)]
+            let lastName = lastNames[Int.random(in: 0..<lastNames.count)]
+
+            // Prüfen, ob diese Kombination bereits verwendet wurde
+            let nameKey = "\(firstName)|\(lastName)"
+            if usedNames.contains(nameKey) {
+                continue  // Falls duplikat, überspringen und nächsten Versuch machen
+            }
+
+            // Namen als verwendet markieren
+            usedNames.insert(nameKey)
+
+            // Gelegentlich Notizen hinzufügen
+            let note = Int.random(in: 0...5) == 0 ? "Sprachförderung" : nil
+
+            let student = Student(
+                firstName: firstName,
+                lastName: lastName,
+                classId: classId,
+                notes: note
+            )
+
+            // Versuchen, den Schüler hinzuzufügen
+            do {
+                try student.validate()  // Validieren vor dem Hinzufügen
+
+                // Prüfen, ob der Name in der Klasse einzigartig ist
+                if !isStudentNameUnique(firstName: firstName, lastName: lastName, classId: classId) {
+                    continue  // Falls nicht einzigartig, überspringen
+                }
 
                 addStudent(student)
+                studentsAdded += 1
 
-                // Auch Sitzposition hinzufügen
+                // Sitzposition hinzufügen
                 let xPos = Int.random(in: 0...5)
                 let yPos = Int.random(in: 0...5)
 
@@ -612,7 +652,36 @@ class DataStore: ObservableObject {
                 )
 
                 addSeatingPosition(position)
+            } catch {
+                // Bei Fehler einfach weitermachen und nächsten Versuch starten
+                continue
             }
         }
+
+        print("DEBUG DataStore: \(studentsAdded) Beispielschüler zur Klasse hinzugefügt")
+    }
+
+
+    // Add to DataStore.swift
+
+    // Method for testing purposes
+    func resetForTesting(with dbQueue: DatabaseQueue) {
+        // Reset all cached data
+        classes = []
+        students = []
+        seatingPositions = []
+        ratings = []
+
+        // Inject the test database connection
+        // This would ideally be done by making the dbManager a property that can be replaced,
+        // but as a temporary solution for testing we can create a specific testing method
+        do {
+            try GRDBManager.shared.migrateAllDataFromUserDefaults()
+        } catch {
+            print("Error setting up test database: \(error)")
+        }
+    }
+
+
     }
 

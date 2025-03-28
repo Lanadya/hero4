@@ -46,7 +46,7 @@ struct AddClassView: View {
                             .padding(10)
                             .background(Color(.systemGray6))
                             .cornerRadius(8)
-                            .onChange(of: className) { newValue in
+                            .onChange(of: className) { oldValue, newValue in
                                 if newValue.count > 8 {
                                     className = String(newValue.prefix(8))
                                 }
@@ -63,7 +63,7 @@ struct AddClassView: View {
                             .padding(10)
                             .background(Color(.systemGray6))
                             .cornerRadius(8)
-                            .onChange(of: classNote) { newValue in
+                            .onChange(of: classNote) { oldValue, newValue in
                                 if newValue.count > 10 {
                                     classNote = String(newValue.prefix(10))
                                 }

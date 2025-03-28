@@ -54,13 +54,13 @@ class SeatingRepository {
     }
 
     func deleteSeatingPosition(id: UUID) throws {
-        try dbQueue.write { db in
+        _ = try dbQueue.write { db in
             try SeatingPosition.filter(Column("id") == id.uuidString).deleteAll(db)
         }
     }
 
     func deleteAll() throws {
-        try dbQueue.write { db in
+        _ = try dbQueue.write { db in
             try SeatingPosition.deleteAll(db)
         }
     }

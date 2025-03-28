@@ -50,6 +50,8 @@
 		AFC909F32D95B21B0063CDA4 /* StudentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC909F22D95B21B0063CDA4 /* StudentRow.swift */; };
 		AFC90A032D95B5C80063CDA4 /* ArchiveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC90A022D95B5C80063CDA4 /* ArchiveViewModel.swift */; };
 		AFC90A052D95B6F70063CDA4 /* RatingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC90A042D95B6F70063CDA4 /* RatingRepository.swift */; };
+		AFDC5FCE2D96D8B700895D12 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFDC5FCD2D96D8B700895D12 /* XCTest.framework */; platformFilter = ios; settings = {ATTRIBUTES = (Required, ); }; };
+		AFDC5FD12D96D9C500895D12 /* Testing in Frameworks */ = {isa = PBXBuildFile; productRef = AFDC5FD02D96D9C500895D12 /* Testing */; };
 		AFE7A4722D94283B00AF8164 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = AFE7A4712D94283B00AF8164 /* GRDB */; };
 		AFE7A4742D94285800AF8164 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE7A4732D94285800AF8164 /* AppDatabase.swift */; };
 		AFE7A4782D94295A00AF8164 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE7A4772D94295A00AF8164 /* GRDBManager.swift */; };
@@ -120,10 +122,42 @@
 		AFC909F22D95B21B0063CDA4 /* StudentRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentRow.swift; sourceTree = "<group>"; };
 		AFC90A022D95B5C80063CDA4 /* ArchiveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveViewModel.swift; sourceTree = "<group>"; };
 		AFC90A042D95B6F70063CDA4 /* RatingRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingRepository.swift; sourceTree = "<group>"; };
+		AFDC5FCD2D96D8B700895D12 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		AFE7A4732D94285800AF8164 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
 		AFE7A4772D94295A00AF8164 /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
 		AFE7A4792D943D2000AF8164 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AFDC5FC42D96D11B00895D12 /* Exceptions for "hero4Tests" folder in "hero4" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DatabaseTests/ClassModelTests.swift,
+				DatabaseTests/DataStoreTests.swift,
+				DatabaseTests/RatingModelTest.swift,
+				DatabaseTests/SeatingPositionModelTests.swift,
+				DatabaseTests/StudentModelTests.swift,
+				hero4Tests.swift,
+				hero4Tests.xctestplan,
+				TestHelpers/TestDatabase.swift,
+			);
+			target = AF6A0CE82D809A6900FBD63C /* hero4 */;
+		};
+		AFDC5FC52D96D11B00895D12 /* Exceptions for "hero4Tests" folder in "hero4Tests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DatabaseTests/ClassModelTests.swift,
+				DatabaseTests/DataStoreTests.swift,
+				DatabaseTests/RatingModelTest.swift,
+				DatabaseTests/SeatingPositionModelTests.swift,
+				DatabaseTests/StudentModelTests.swift,
+				hero4Tests.swift,
+				hero4Tests.xctestplan,
+				TestHelpers/TestDatabase.swift,
+			);
+			target = AF6A0CF82D809A6A00FBD63C /* hero4Tests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AF6A0CEB2D809A6900FBD63C /* hero4 */ = {
@@ -131,14 +165,18 @@
 			path = hero4;
 			sourceTree = "<group>";
 		};
-		AF6A0CFC2D809A6A00FBD63C /* hero4Tests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = hero4Tests;
-			sourceTree = "<group>";
-		};
 		AF6A0D062D809A6A00FBD63C /* hero4UITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = hero4UITests;
+			sourceTree = "<group>";
+		};
+		AFDC5FBB2D96D11B00895D12 /* hero4Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AFDC5FC42D96D11B00895D12 /* Exceptions for "hero4Tests" folder in "hero4" target */,
+				AFDC5FC52D96D11B00895D12 /* Exceptions for "hero4Tests" folder in "hero4Tests" target */,
+			);
+			path = hero4Tests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -156,6 +194,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFDC5FCE2D96D8B700895D12 /* XCTest.framework in Frameworks */,
+				AFDC5FD12D96D9C500895D12 /* Testing in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -204,9 +244,11 @@
 				AFC909DC2D95ADE60063CDA4 /* Data */,
 				AFC909EB2D95B0090063CDA4 /* Features */,
 				AFC90A012D95B4540063CDA4 /* Navigation */,
+				AFDC5FBB2D96D11B00895D12 /* hero4Tests */,
 				AF6A0CEB2D809A6900FBD63C /* hero4 */,
-				AF6A0CFC2D809A6A00FBD63C /* hero4Tests */,
+				AFDC5F972D96CBB800895D12 /* New Group */,
 				AF6A0D062D809A6A00FBD63C /* hero4UITests */,
+				AFDC5FCC2D96D88000895D12 /* Frameworks */,
 				AF6A0CEA2D809A6900FBD63C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -507,6 +549,21 @@
 			path = Navigation;
 			sourceTree = "<group>";
 		};
+		AFDC5F972D96CBB800895D12 /* New Group */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "New Group";
+			sourceTree = "<group>";
+		};
+		AFDC5FCC2D96D88000895D12 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AFDC5FCD2D96D8B700895D12 /* XCTest.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -524,6 +581,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				AF6A0CEB2D809A6900FBD63C /* hero4 */,
+				AFDC5FBB2D96D11B00895D12 /* hero4Tests */,
 			);
 			name = hero4;
 			packageProductDependencies = (
@@ -546,11 +604,9 @@
 			dependencies = (
 				AF6A0CFB2D809A6A00FBD63C /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				AF6A0CFC2D809A6A00FBD63C /* hero4Tests */,
-			);
 			name = hero4Tests;
 			packageProductDependencies = (
+				AFDC5FD02D96D9C500895D12 /* Testing */,
 			);
 			productName = hero4Tests;
 			productReference = AF6A0CF92D809A6A00FBD63C /* hero4Tests.xctest */;
@@ -613,6 +669,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				AFE7A4702D94283B00AF8164 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				AFDC5FCF2D96D9C500895D12 /* XCRemoteSwiftPackageReference "swift-testing" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AF6A0CEA2D809A6900FBD63C /* Products */;
@@ -1019,6 +1076,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		AFDC5FCF2D96D9C500895D12 /* XCRemoteSwiftPackageReference "swift-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-testing";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.3;
+			};
+		};
 		AFE7A4702D94283B00AF8164 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift.git";
@@ -1030,6 +1095,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		AFDC5FD02D96D9C500895D12 /* Testing */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AFDC5FCF2D96D9C500895D12 /* XCRemoteSwiftPackageReference "swift-testing" */;
+			productName = Testing;
+		};
 		AFE7A4712D94283B00AF8164 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AFE7A4702D94283B00AF8164 /* XCRemoteSwiftPackageReference "GRDB.swift" */;

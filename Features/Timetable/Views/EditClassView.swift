@@ -22,7 +22,7 @@ struct EditClassView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Klasse bearbeiten")) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -48,7 +48,7 @@ struct EditClassView: View {
                             .padding(10)
                             .background(Color(.systemGray6))
                             .cornerRadius(8)
-                            .onChange(of: className) { newValue in
+                            .onChange(of: className) { oldValue, newValue in
                                 if newValue.count > 8 {
                                     className = String(newValue.prefix(8))
                                 }
@@ -65,7 +65,7 @@ struct EditClassView: View {
                             .padding(10)
                             .background(Color(.systemGray6))
                             .cornerRadius(8)
-                            .onChange(of: classNote) { newValue in
+                            .onChange(of: classNote) { oldValue, newValue in
                                 if newValue.count > 10 {
                                     classNote = String(newValue.prefix(10))
                                 }
@@ -187,12 +187,9 @@ struct EditClassView: View {
                     secondaryButton: .cancel(Text("Abbrechen"))
                 )
             }
-            .background(
-                NavigationLink(
-                    destination: StudentsListView(),
-                    isActive: $navigateToStudentsList
-                ) { EmptyView() }
-            )
+            .navigationDestination(isPresented: $navigateToStudentsList) {
+                StudentsListView()
+            }
         }
     }
 

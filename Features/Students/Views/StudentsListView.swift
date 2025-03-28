@@ -296,7 +296,7 @@ struct StudentsListView: View {
                     .presentationDragIndicator(.visible)
                 }
             }
-            .onChange(of: showEditStudentModal) { isShowing in
+            .onChange(of: showEditStudentModal) { oldValue, isShowing in
                 if !isShowing {
                     print("DEBUG: Modal geschlossen, setze Suche zurück")
                     // Wenn das Modal geschlossen wird, Suche zurücksetzen
@@ -398,7 +398,7 @@ struct StudentsListView: View {
             selectedStudents.removeAll()
         }
         // Zusätzliche onChange-Funktion um auf Tab-Wechsel zu reagieren
-        .onChange(of: selectedTab) { newTab in
+        .onChange(of: selectedTab) { oldValue, newTab in
             if newTab != 1 {  // 1 ist der Index des Schüler-Tabs
                 // Suchfeld zurücksetzen, wenn zu einem anderen Tab gewechselt wird
                 viewModel.clearGlobalSearch()
@@ -409,20 +409,20 @@ struct StudentsListView: View {
             }
         }
         // Aktualisiere die Schülerliste, wenn der Import abgeschlossen ist
-        .onChange(of: refreshStudentList) { refresh in
+        .onChange(of: refreshStudentList) { oldValue, refresh in
             if refresh {
                 viewModel.loadStudentsForSelectedClass()
                 refreshStudentList = false
             }
         }
         // Aktualisiere den ImportManager, wenn sich die ausgewählte Klasse ändert
-        .onChange(of: viewModel.selectedClassId) { newClassId in
+        .onChange(of: viewModel.selectedClassId) { oldValue, newClassId in
             if let classId = newClassId {
                 importManager.selectedClassId = classId
             }
         }
         // Neuer onChange-Handler für selectedStudents
-        .onChange(of: selectedStudents) { newSelection in
+        .onChange(of: selectedStudents) { oldValue, newSelection in
             // Wenn alle Schüler abgewählt wurden, setze den Edit-Mode zurück
             if newSelection.isEmpty && editMode == .active {
                 editMode = .inactive

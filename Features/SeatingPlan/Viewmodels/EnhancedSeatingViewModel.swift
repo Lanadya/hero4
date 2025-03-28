@@ -434,7 +434,7 @@ class EnhancedSeatingViewModel: ObservableObject {
 
     // Arrange students in a grid automatically
     func arrangeStudentsInGrid(columns: Int) {
-        guard let classId = selectedClassId else { return }
+        guard selectedClassId != nil else { return }
         print("DEBUG: Arranging students in grid (columns: \(columns))")
 
         // Sort students by last name

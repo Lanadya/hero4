@@ -231,7 +231,7 @@ struct SP_GridView: View {
             .onAppear {
                 updateOccupiedPositions()
             }
-            .onChange(of: geometry.size) { newSize in
+            .onChange(of: geometry.size) { oldValue, newSize in
                 adjustCardPositionsForNewOrientation(geometry: geometry)
             }
         }
@@ -324,7 +324,6 @@ struct SP_GridView: View {
 
         // Check for overlap with existing cards
         let maxOverlap: CGFloat = cardSize.width * 0.5
-        let currentStudentPositions = getCurrentStudentPosition(studentId)
 
         // Return the position if no excessive overlap
         if !hasExcessiveOverlap(boundedPosition, studentId: studentId, maxOverlap: maxOverlap) {

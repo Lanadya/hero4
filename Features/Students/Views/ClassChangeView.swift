@@ -153,7 +153,7 @@ struct ClassChangeView: View {
                     }
                 )
             }
-            .onChange(of: viewModel.showError) { newValue in
+            .onChange(of: viewModel.showError) { oldValue, newValue in
                 if newValue {
                     errorMessage = viewModel.errorMessage
                     showError = true
