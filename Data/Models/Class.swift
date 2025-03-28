@@ -45,15 +45,18 @@ struct Class: Identifiable, Codable, Equatable, Hashable {
         if name.isEmpty || name.count > 8 {
             throw ValidationError.invalidName
         }
-
         if let note = note, note.count > 10 {
             throw ValidationError.invalidNote
+        }
+        if row <= 0 || column <= 0 {
+            throw ValidationError.invalidDimensions
         }
     }
 
     enum ValidationError: Error {
         case invalidName
         case invalidNote
+        case invalidDimensions
     }
 }
 
@@ -90,7 +93,12 @@ extension Class: TableRecord, FetchableRecord, PersistableRecord {
 
     // Beim Laden aus der Datenbank
     init(row dbRow: Row) {
-        // Beachte den umbennanten Parameter 'dbRow' statt 'row'
+        guard let idString = dbRow[Columns.id] as? String,
+              let uuid = UUID(uuidString: idString) else {
+            fatalError("Ungültige UUID in Datenbank: \(dbRow[Columns.id] ?? "nil")")
+        }
+        self.id = uuid
+        self.id = uuid
         self.id = UUID(uuidString: dbRow[Columns.id]) ?? UUID()
         self.name = dbRow[Columns.name]
         self.note = dbRow[Columns.note]

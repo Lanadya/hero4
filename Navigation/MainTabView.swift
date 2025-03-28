@@ -40,8 +40,8 @@ struct MainTabView: View {
                 .tag(4)
         }
         .accentColor(Color.heroSecondary) // Setzt die Akzentfarbe auf heroSecondary
-        .onChange(of: appState.shouldNavigateToStudentsList) { shouldNavigate in
-            if shouldNavigate {
+        .onChange(of: appState.shouldNavigateToStudentsList) { oldValue, newValue in
+            if newValue {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     selectedTab = 1
                     appState.shouldNavigateToStudentsList = false

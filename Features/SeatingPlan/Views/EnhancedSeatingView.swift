@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct EnhancedSeatingView: View {
@@ -154,7 +153,7 @@ struct EnhancedSeatingView: View {
                     }
                 }
             }
-            .onChange(of: geometry.size) { newSize in
+            .onChange(of: geometry.size) { oldSize, newSize in
                 adjustForScreenSize(newSize)
             }
         }
@@ -191,7 +190,7 @@ struct EnhancedSeatingView: View {
     }
 }
 
-//  SeatingHeaderView
+// SeatingHeaderView - keine Änderungen nötig
 struct SeatingHeaderView: View {
     @ObservedObject var viewModel: EnhancedSeatingViewModel
     @Binding var showClassPicker: Bool
@@ -317,94 +316,7 @@ struct SeatingHeaderView: View {
     }
 }
 
-// Separater Info-Dialog mit vollständigem Text
-//struct InfoDialogView: View {
-//    @Binding var isPresented: Bool
-//
-//    var body: some View {
-//        NavigationView {
-//            ScrollView {
-//                VStack(alignment: .leading, spacing: 16) {
-//                    Group {
-//                        Text("Die zwei Modi des Sitzplans:")
-//                            .font(.headline)
-//                            .padding(.top)
-//
-//                        HStack(alignment: .top, spacing: 12) {
-//                            Image(systemName: "hand.tap")
-//                                .foregroundColor(.accentGreen)
-//                                .frame(width: 24)
-//                            VStack(alignment: .leading) {
-//                                Text("Bewertungsmodus")
-//                                    .font(.subheadline)
-//                                    .fontWeight(.medium)
-//                                    .foregroundColor(.accentGreen)
-//                                Text("In diesem Modus können Sie Schüler bewerten, indem Sie auf ihre Karte tippen. Sie können schnell und einfach Bewertungen (++, +, -, --) vergeben oder den Anwesenheitsstatus ändern.")
-//                                    .fixedSize(horizontal: false, vertical: true)
-//                            }
-//                        }
-//                        .padding(.bottom, 8)
-//
-//                        HStack(alignment: .top, spacing: 12) {
-//                            Image(systemName: "pencil.circle")
-//                                .foregroundColor(.heroSecondary)
-//                                .frame(width: 24)
-//                            VStack(alignment: .leading) {
-//                                Text("Bearbeitungsmodus")
-//                                    .font(.subheadline)
-//                                    .fontWeight(.medium)
-//                                    .foregroundColor(.heroSecondary)
-//                                Text("Wechseln Sie in diesen Modus, um den Sitzplan zu gestalten. Sie können Schülerkarten durch Ziehen an die gewünschte Position bewegen und so den Sitzplan an Ihr Klassenzimmer anpassen.")
-//                                    .fixedSize(horizontal: false, vertical: true)
-//                            }
-//                        }
-//                    }
-//
-//                    Divider()
-//
-//                    Group {
-//                        Text("Tipps für den Sitzplan:")
-//                            .font(.headline)
-//
-//                        HStack(alignment: .top, spacing: 12) {
-//                            Image(systemName: "arrow.up.left.and.arrow.down.right")
-//                                .foregroundColor(.gradePrimary)
-//                                .frame(width: 24)
-//                            Text("Nutzen Sie den Vollbildmodus für eine bessere Übersicht, besonders bei großen Klassen.")
-//                                .fixedSize(horizontal: false, vertical: true)
-//                        }
-//                        .padding(.bottom, 8)
-//
-//                        HStack(alignment: .top, spacing: 12) {
-//                            Image(systemName: "hand.tap")
-//                                .foregroundColor(.gradePrimary)
-//                                .frame(width: 24)
-//                            Text("Alle vergebenen Bewertungen werden automatisch in der Notenliste gespeichert und mit dem aktuellen Datum versehen.")
-//                                .fixedSize(horizontal: false, vertical: true)
-//                        }
-//                        .padding(.bottom, 8)
-//
-//                        HStack(alignment: .top, spacing: 12) {
-//                            Image(systemName: "person.fill.xmark")
-//                                .foregroundColor(.gradePrimary)
-//                                .frame(width: 24)
-//                            Text("Abwesende Schüler werden grau hinterlegt und können trotzdem bewegt werden.")
-//                                .fixedSize(horizontal: false, vertical: true)
-//                        }
-//                    }
-//                }
-//                .padding()
-//            }
-//            .navigationBarTitle("Sitzplan-Hilfe", displayMode: .inline)
-//            .navigationBarItems(trailing: Button("Schließen") {
-//                isPresented = false
-//            })
-//        }
-//    }
-//}
-
-
-// Fullscreen Exit-Button
+// Fullscreen Exit-Button - keine Änderungen nötig
 struct ExitFullscreenButton: View {
     @Binding var isFullscreen: Bool
     @Binding var editMode: Bool
@@ -468,46 +380,79 @@ struct SeatingGridView: View {
             // Hintergrund-Raster
             GridBackgroundView()
 
-            // Schülerkacheln
-            // In the ForEach loop in SeatingGridView
-            ForEach(viewModel.students) { student in
-                if let position = getPosition(for: student.id) {
-                    StudentCard(
-                        student: student,
-                        position: position,
-                        size: scaledCardSize,
-                        isAbsent: viewModel.absentStudents.contains(student.id),
-                        hasNotes: student.notes != nil && !student.notes!.isEmpty,
-                        editMode: editMode,
-                        screenWidth: screenSize.width,
-                        onTap: {
-                            // This can be used for other actions, like showing notes
-                            // or toggling absence, but not for rating
-                            onStudentTap(student)
-                        },
-                        onDragChanged: { offset in
-                            handleDrag(studentId: student.id, offset: offset)
-                        },
-                        onDragEnded: { offset in
-                            handleDragEnd(studentId: student.id, finalOffset: offset)
-                        },
-                        // Add the direct rating callback
-                        onRatingSelected: { rating in
-                            viewModel.addRatingForStudent(studentId: student.id, value: rating)
-                            // Optional: provide subtle visual feedback
-                        }
-                    )
-                }
-            }
+            // Studentenkarten ohne ForEach
+            studentCardsView
         }
         .scaleEffect(zoomLevel)
         .contentShape(Rectangle())
         .onAppear {
             loadPositions()
         }
-        .onChange(of: viewModel.seatingPositions) { _ in
+        .onChange(of: viewModel.seatingPositions) { oldValue, newValue in
             loadPositions()
         }
+    }
+
+    // Ausgelagerte View für Studentenkarten
+    private var studentCardsView: some View {
+        // Statt ForEach verwenden wir Group mit manuell erzeugten Views
+        Group {
+            // Manuell die Views für jeden Studenten erzeugen
+            createStudentCards()
+        }
+    }
+
+    // Hilfsfunktion zum Erstellen aller StudentCards
+    @ViewBuilder
+    private func createStudentCards() -> some View {
+        // Manuelles Iteration durch das Array
+        ZStack {
+            // Erste 20 Studenten
+            createStudentGroup(startIndex: 0, endIndex: 19)
+
+            // Zweite 20 Studenten
+            createStudentGroup(startIndex: 20, endIndex: 39)
+        }
+    }
+
+    // Hilfsfunktion zum Erstellen einer Gruppe von StudentCards
+    @ViewBuilder
+    private func createStudentGroup(startIndex: Int, endIndex: Int) -> some View {
+        ZStack {
+            // Für jeden Studenten mit Position eine Karte erstellen
+            ForEach(startIndex...endIndex, id: \.self) { index in
+                if index < viewModel.students.count,
+                   let student = viewModel.students[safe: index],
+                   let position = positions[student.id] {
+                    createCard(for: student, at: position)
+                }
+            }
+        }
+    }
+
+
+    // Hilfsfunktion zum Erstellen einer einzelnen Karte
+    private func createCard(for student: Student, at position: CGPoint) -> some View {
+        StudentCard(
+            student: student,
+            position: position,
+            size: scaledCardSize,
+            isAbsent: viewModel.isStudentAbsent(student.id),
+            editMode: editMode,
+            screenWidth: screenSize.width,
+            onTap: {
+                onStudentTap(student)
+            },
+            onDragChanged: { offset in
+                handleDrag(studentId: student.id, offset: offset)
+            },
+            onDragEnded: { offset in
+                handleDragEnd(studentId: student.id, finalOffset: offset)
+            },
+            onRatingSelected: { rating in
+                viewModel.addRatingForStudent(studentId: student.id, value: rating)
+            }
+        )
     }
 
     // Berechnete Eigenschaften
@@ -520,6 +465,7 @@ struct SeatingGridView: View {
 
     // Helper-Methoden
     private func loadPositions() {
+        positions.removeAll()
         for position in viewModel.seatingPositions {
             let screenPosition = gridToScreenPosition(
                 x: position.xPos,
@@ -528,10 +474,6 @@ struct SeatingGridView: View {
             )
             positions[position.studentId] = screenPosition
         }
-    }
-
-    private func getPosition(for studentId: UUID) -> CGPoint? {
-        return positions[studentId]
     }
 
     private func handleDrag(studentId: UUID, offset: CGSize) {
@@ -545,7 +487,6 @@ struct SeatingGridView: View {
         }
     }
 
-    // Ersetzen Sie die bestehende handleDragEnd-Funktion in SeatingGridView mit dieser sicheren Version
     private func handleDragEnd(studentId: UUID, finalOffset: CGSize) {
         if editMode, let position = positions[studentId] {
             // Berechne neue Position
@@ -593,144 +534,89 @@ struct SeatingGridView: View {
     }
 }
 
+// Erweiterung für sicheren Array-Zugriff
+extension Array {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
+}
+
 struct StudentCard: View {
+    // Student und Card-Properties
     let student: Student
     let position: CGPoint
-    let size: CGSize
+    let size: CGSize  // Jetzt als Parameter, keine feste Größe
     let isAbsent: Bool
-    let hasNotes: Bool
     let editMode: Bool
     let screenWidth: CGFloat
+
+    // Aktuelle Bewertung
+    @State private var currentRating: RatingValue?
+
+    // Drag-State
+    @State private var dragOffset = CGSize.zero
+    @State private var isDragging = false
+
+    // Callbacks
     let onTap: () -> Void
     let onDragChanged: (CGSize) -> Void
     let onDragEnded: (CGSize) -> Void
     let onRatingSelected: (RatingValue) -> Void
 
-    @State private var dragOffset = CGSize.zero
-    @State private var isDragging = false
-
-    // Erkennen kleiner Bildschirme für kompaktes Layout
+    // Layout-Eigenschaften
     private var isCompactLayout: Bool {
         return screenWidth < 600
     }
 
     var body: some View {
-        VStack(spacing: 2) {
-            // Schülername - bei kompakten Layouts nur Nachnamen oder kürzen
-            if isCompactLayout {
-                // Kompaktes Layout für kleine Bildschirme
-                Text(student.lastName)
-                    .font(.system(size: 12, weight: .bold))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: .infinity)
-            } else {
-                // Ausführliches Layout für größere Bildschirme
-                VStack(spacing: 1) {
-                    Text(student.firstName)
-                        .font(.system(size: 14))
-                        .fontWeight(.medium)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .frame(maxWidth: .infinity)
-
-                    Text(student.lastName)
-                        .font(.system(size: 13, weight: .bold))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .frame(maxWidth: .infinity)
+        VStack(spacing: 0) {
+            // Name-Bereich - ohne farbigen Hintergrund
+            Button(action: {
+                if !editMode {
+                    onTap()
                 }
+            }) {
+                VStack(spacing: 0) {
+                    if !isCompactLayout {
+                        Text(truncateName(student.firstName, limit: 10))
+                            .font(.system(size: 12))
+                            .lineLimit(1)
+                    }
+
+                    Text(truncateName(student.lastName, limit: 12))
+                        .font(.system(size: isCompactLayout ? 12 : 13, weight: .bold))
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 3)
             }
+            .buttonStyle(PlainButtonStyle())
+            .foregroundColor(isAbsent ? .gray : .primary)
 
-            Spacer(minLength: 1)
+            Spacer(minLength: 2)
 
-            // Bewertungsbuttons - direkt klickbar ohne Overlay
+            // Bewertungsbuttons - direkt unter dem Namen
             if !editMode {
-                HStack(spacing: isCompactLayout ? 1 : 3) {
-                    // Direct rating buttons
-                    Button(action: { onRatingSelected(.doublePlus) }) {
-                        Text("++")
-                            .font(.system(size: 11, weight: .bold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 18)
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(4)
-                    }
-
-                    Button(action: { onRatingSelected(.plus) }) {
-                        Text("+")
-                            .font(.system(size: 11, weight: .bold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 18)
-                            .background(Color.green.opacity(0.7))
-                            .foregroundColor(.white)
-                            .cornerRadius(4)
-                    }
-
-                    Button(action: { onRatingSelected(.minus) }) {
-                        Text("-")
-                            .font(.system(size: 11, weight: .bold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 18)
-                            .background(Color.red.opacity(0.7))
-                            .foregroundColor(.white)
-                            .cornerRadius(4)
-                    }
-
-                    Button(action: { onRatingSelected(.doubleMinus) }) {
-                        Text("--")
-                            .font(.system(size: 11, weight: .bold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 18)
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .cornerRadius(4)
-                    }
+                HStack(spacing: isCompactLayout ? 0 : 1) {
+                    ratingButton("++", .doublePlus)
+                    ratingButton("+", .plus)
+                    ratingButton("-", .minus)
+                    ratingButton("--", .doubleMinus)
                 }
-            }
-
-            // Statusanzeige unten
-            if !isCompactLayout || !editMode {
-                HStack(spacing: 8) {
-                    // Abwesenheitsindikator
-                    if isAbsent {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: isCompactLayout ? 10 : 12))
-                            .foregroundColor(.red)
-                    }
-
-                    // Notizindikator
-                    if hasNotes {
-                        Image(systemName: "note.text")
-                            .font(.system(size: isCompactLayout ? 10 : 12))
-                            .foregroundColor(.blue)
-                    }
-
-                    // "Move" Indikator im Bearbeitungsmodus
-                    if editMode {
-                        Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
-                            .font(.system(size: isCompactLayout ? 10 : 12))
-                            .foregroundColor(.blue)
-                            .opacity(isDragging ? 0 : 0.7)
-                    }
-
-                    Spacer()
-                }
-                .padding(.horizontal, 2)
                 .padding(.vertical, 2)
+                .opacity(isAbsent ? 0.5 : 1.0)
+                .disabled(isAbsent) // Keine Bewertung für abwesende Schüler
             }
         }
-        .padding(isCompactLayout ? 2 : 3)
         .frame(width: size.width, height: size.height)
-        .background(cardBackground)
+        .background(isAbsent ? Color.gray.opacity(0.2) : Color.white)
         .cornerRadius(8)
         .shadow(radius: isDragging ? 3 : 0.5)
         .overlay(
+            // Rahmen
             RoundedRectangle(cornerRadius: 8)
                 .stroke(cardBorderColor, lineWidth: isDragging ? 2 : 0.5)
         )
-        .contentShape(Rectangle())
         .position(
             x: position.x + dragOffset.width,
             y: position.y + dragOffset.height
@@ -739,51 +625,69 @@ struct StudentCard: View {
             DragGesture(coordinateSpace: .global)
                 .onChanged { gesture in
                     if editMode {
-                        // Direkte 1:1 Bewegung mit dem Finger/Cursor
                         isDragging = true
                         dragOffset = gesture.translation
-                        // Wir informieren den Parent über die aktuelle Position ohne Animation
                         onDragChanged(gesture.translation)
                     }
                 }
                 .onEnded { gesture in
                     if editMode {
-                        // Animation beim Loslassen ausblenden
                         isDragging = false
-
-                        // Finale Position an Parent melden, der die dauerhafte Positionierung übernimmt
                         onDragEnded(gesture.translation)
-
-                        // Offset zurücksetzen (weil die Basis-Position vom Parent aktualisiert wird)
                         dragOffset = .zero
                     }
                 }
         )
-        .onTapGesture {
-            if !editMode {
-                onTap()
+    }
+
+    // Bewertungsbutton mit Hervorhebung und strenger Begrenzung
+    private func ratingButton(_ text: String, _ value: RatingValue) -> some View {
+        let isActive = currentRating == value
+
+        let baseColor: Color
+        switch value {
+        case .doublePlus: baseColor = .green
+        case .plus: baseColor = .green.opacity(0.7)
+        case .minus: baseColor = .red.opacity(0.7)
+        case .doubleMinus: baseColor = .red
+        }
+
+        let buttonColor = isActive ? baseColor : baseColor.opacity(0.3)
+
+        return Button(action: {
+            onRatingSelected(value)
+            withAnimation(.easeInOut(duration: 0.2)) {
+                currentRating = value
             }
+        }) {
+            Text(text)
+                .font(.system(size: 11, weight: .bold))
+                .frame(maxWidth: .infinity)
+                .frame(height: 22)
+                .background(buttonColor)
+                .foregroundColor(.white)
+                .cornerRadius(4)
         }
+        .buttonStyle(BorderlessButtonStyle())
+        .contentShape(Rectangle()) // Begrenzt die Hitbox auf den sichtbaren Bereich
     }
 
-    // Hintergrundfarbe basierend auf Status
-    private var cardBackground: Color {
-        if isAbsent {
-            return Color.gray.opacity(0.2)
-        } else {
-            return Color.white
-        }
-    }
-
-    // Rahmenfarbe basierend auf Zustand
     private var cardBorderColor: Color {
         if isDragging {
             return Color.blue
         } else if isAbsent {
-            return Color.gray.opacity(0.3)
+            return Color.red.opacity(0.3)
         } else {
             return Color.gray.opacity(0.3)
         }
+    }
+
+    // Namenbegrenzung für einheitliche Kartengröße
+    private func truncateName(_ name: String, limit: Int) -> String {
+        if name.count <= limit {
+            return name
+        }
+        return String(name.prefix(limit-1)) + "…"
     }
 }
 
@@ -793,30 +697,39 @@ struct StudentDetailOverlay: View {
     @ObservedObject var viewModel: EnhancedSeatingViewModel
     let onDismiss: () -> Void
 
-    @State private var showConfirmation = false
-    @State private var confirmedAction: (() -> Void)? = nil
-    @State private var confirmationMessage = ""
     @State private var isAbsent: Bool
+    @State private var studentNotes: String
+    @State private var originalNotes: String
+    @State private var showSaveConfirmation = false
+    @State private var changesMade = false
 
     init(student: Student, viewModel: EnhancedSeatingViewModel, onDismiss: @escaping () -> Void) {
         self.student = student
         self.viewModel = viewModel
         self.onDismiss = onDismiss
+
+        // Initialen Zustand laden
         self._isAbsent = State(initialValue: viewModel.isStudentAbsent(student.id))
+        self._studentNotes = State(initialValue: student.notes ?? "")
+        self._originalNotes = State(initialValue: student.notes ?? "")
     }
 
     var body: some View {
         ZStack {
-            // Halbtransparenter Hintergrund
+            // Hintergrund
             Color.black.opacity(0.7)
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
-                    onDismiss()
+                    if changesMade {
+                        showSaveConfirmation = true
+                    } else {
+                        onDismiss()
+                    }
                 }
 
-            // Inhalt-Karte
+            // Inhalt
             VStack(spacing: 0) {
-                // Header: Schülername und Schließen-Button
+                // Header
                 HStack {
                     Text(student.fullName)
                         .font(.headline)
@@ -824,7 +737,13 @@ struct StudentDetailOverlay: View {
 
                     Spacer()
 
-                    Button(action: onDismiss) {
+                    Button(action: {
+                        if changesMade {
+                            showSaveConfirmation = true
+                        } else {
+                            onDismiss()
+                        }
+                    }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.white)
                     }
@@ -834,16 +753,20 @@ struct StudentDetailOverlay: View {
 
                 // Hauptinhalt
                 VStack(spacing: 16) {
-                    // Status-Anzeige
+                    // Anwesenheitsstatus
                     HStack {
-                        Text("Status:")
+                        Text("Anwesenheit:")
                             .fontWeight(.medium)
 
                         Spacer()
 
                         Toggle("Abwesend", isOn: $isAbsent)
                             .labelsHidden()
-                            .onChange(of: isAbsent) { newValue in
+                            .onChange(of: isAbsent) { oldValue, newValue in
+                                // Markieren, dass Änderungen vorgenommen wurden
+                                changesMade = true
+
+                                // Direktes Update der Abwesenheit im ViewModel
                                 viewModel.updateStudentAbsenceStatus(studentId: student.id, isAbsent: newValue)
                             }
 
@@ -856,45 +779,50 @@ struct StudentDetailOverlay: View {
                         Text("Notizen:")
                             .fontWeight(.medium)
 
-                        if let notes = student.notes, !notes.isEmpty {
-                            Text(notes)
-                                .padding(8)
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(4)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        } else {
-                            Text("Keine Notizen vorhanden")
-                                .foregroundColor(.gray)
-                                .italic()
-                        }
+                        TextEditor(text: $studentNotes)
+                            .frame(height: 100)
+                            .padding(4)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(4)
+                            .onChange(of: studentNotes) { oldValue, newValue in
+                                changesMade = originalNotes != newValue
+                            }
                     }
 
-                    Divider()
-
-                    // Bewertungsoptionen
-                    Text("Bewertung hinzufügen:")
-                        .fontWeight(.medium)
-
-                    VStack(spacing: 12) {
-                        // Erste Zeile
-                        HStack(spacing: 16) {
-                            RatingButton(label: "Sehr gut", symbol: "++", color: .green) {
-                                addRating(.doublePlus)
-                            }
-                            RatingButton(label: "Gut", symbol: "+", color: Color.green.opacity(0.7)) {
-                                addRating(.plus)
-                            }
+                    // Buttons für Aktionen
+                    HStack {
+                        // Abbrechen-Button
+                        Button(action: {
+                            // Änderungen verwerfen
+                            studentNotes = originalNotes
+                            // Abwesenheitsstatus zurücksetzen
+                            viewModel.updateStudentAbsenceStatus(studentId: student.id, isAbsent: viewModel.isStudentAbsent(student.id))
+                            onDismiss()
+                        }) {
+                            Text("Abbrechen")
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundColor(.primary)
+                                .cornerRadius(8)
                         }
 
-                        // Zweite Zeile
-                        HStack(spacing: 16) {
-                            RatingButton(label: "Schlecht", symbol: "-", color: Color.red.opacity(0.7)) {
-                                addRating(.minus)
-                            }
-                            RatingButton(label: "Sehr schlecht", symbol: "--", color: .red) {
-                                addRating(.doubleMinus)
-                            }
+                        Spacer()
+
+                        // Speichern-Button
+                        Button(action: {
+                            // Speichere Änderungen und schließe Overlay
+                            saveChanges()
+                            onDismiss()
+                        }) {
+                            Text("Speichern")
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(changesMade ? Color.blue : Color.gray.opacity(0.3))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
                         }
+                        .disabled(!changesMade)
                     }
                 }
                 .padding()
@@ -904,56 +832,37 @@ struct StudentDetailOverlay: View {
             .cornerRadius(12)
             .shadow(radius: 10)
         }
-        .alert(isPresented: $showConfirmation) {
+        .alert(isPresented: $showSaveConfirmation) {
             Alert(
-                title: Text("Bestätigung"),
-                message: Text(confirmationMessage),
-                primaryButton: .default(Text("Ja")) {
-                    if let action = confirmedAction {
-                        action()
-                    }
+                title: Text("Änderungen speichern?"),
+                message: Text("Möchten Sie die Änderungen speichern?"),
+                primaryButton: .default(Text("Speichern")) {
+                    saveChanges()
+                    onDismiss()
                 },
-                secondaryButton: .cancel(Text("Abbrechen"))
+                secondaryButton: .destructive(Text("Verwerfen")) {
+                    onDismiss()
+                }
             )
         }
     }
 
-    private func addRating(_ value: RatingValue) {
-        confirmationMessage = "Möchten Sie wirklich eine \(value.stringValue)-Bewertung für \(student.fullName) hinzufügen?"
-        confirmedAction = {
-            viewModel.addRatingForStudent(studentId: student.id, value: value)
-            // Optional: Bestätigung anzeigen
-            onDismiss()
+    private func saveChanges() {
+        // Speichere Notizen
+        if studentNotes != originalNotes {
+            viewModel.updateStudentNotes(studentId: student.id, notes: studentNotes)
         }
-        showConfirmation = true
-    }
-}
 
-struct RatingButton: View {
-    let label: String
-    let symbol: String
-    let color: Color
-    let action: () -> Void
+        // Abwesenheit ist bereits in Echtzeit über die Toggle-Änderung gespeichert
 
-    var body: some View {
-        Button(action: action) {
-            VStack {
-                Text(symbol)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 50, height: 50)
-                    .background(color)
-                    .cornerRadius(8)
-
-                Text(label)
-                    .font(.caption)
-                    .foregroundColor(.primary)
-            }
+        // Auch eine Bewertung für diesen Tag hinzufügen/aktualisieren, wenn der Schüler abwesend ist
+        if isAbsent {
+            // Einen Eintrag ohne Bewertung, aber mit Abwesenheit erstellen
+            // Dies stellt sicher, dass die Abwesenheit auch in der Notenliste erscheint
+            viewModel.addRatingForAbsentStudent(studentId: student.id)
         }
     }
 }
-
-
 
 // Einstellungen-Overlay
 struct SeatingSettingsOverlay: View {

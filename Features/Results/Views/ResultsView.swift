@@ -259,7 +259,8 @@ struct ResultsView: View {
     }
 }
 
-// Zelle für eine einzelne Bewertung
+
+// Zelle für eine einzelne Bewertung - verbesserte Version
 struct RatingCell: View {
     let rating: Rating?
     let isNewStudent: Bool
@@ -282,10 +283,15 @@ struct RatingCell: View {
 
                 if let rating = rating {
                     if rating.isAbsent {
-                        // Abwesend
-                        Text("fehlt")
-                            .font(.system(size: 12))
-                            .foregroundColor(.red)
+                        // Abwesend - jetzt mit grauem Hintergrund
+                        VStack {
+                            Text("fehlt")
+                                .font(.system(size: 12))
+                                .foregroundColor(.red)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.gray.opacity(0.2))
                     } else if let value = rating.value {
                         // Bewertung
                         Text(value.stringValue)
@@ -305,16 +311,21 @@ struct RatingCell: View {
         }
         .buttonStyle(PlainButtonStyle())
         .actionSheet(isPresented: $showingOptions) {
-            var buttons: [ActionSheet.Button] = [
-                .default(Text("++")) { onRatingChanged(.doublePlus) },
-                .default(Text("+")) { onRatingChanged(.plus) },
-                .default(Text("-")) { onRatingChanged(.minus) },
-                .default(Text("--")) { onRatingChanged(.doubleMinus) },
-                .default(Text("Keine Bewertung")) { onRatingChanged(nil) },
-                .destructive(Text(rating?.isAbsent == true ? "Als anwesend markieren" : "Als abwesend markieren")) {
-                    onAbsenceToggled()
-                }
-            ]
+            var buttons: [ActionSheet.Button] = []
+
+            // Abwesenheits-Umschalter immer als erste Option
+            buttons.append(.destructive(Text(rating?.isAbsent == true ? "Als anwesend markieren" : "Als abwesend markieren")) {
+                onAbsenceToggled()
+            })
+
+            // Wenn nicht abwesend, Bewertungsoptionen anzeigen
+            if rating?.isAbsent != true {
+                buttons.append(.default(Text("++")) { onRatingChanged(.doublePlus) })
+                buttons.append(.default(Text("+")) { onRatingChanged(.plus) })
+                buttons.append(.default(Text("-")) { onRatingChanged(.minus) })
+                buttons.append(.default(Text("--")) { onRatingChanged(.doubleMinus) })
+                buttons.append(.default(Text("Keine Bewertung")) { onRatingChanged(nil) })
+            }
 
             // Nur anzeigen, wenn bereits eine Bewertung existiert
             if rating != nil {

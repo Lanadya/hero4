@@ -43,8 +43,7 @@ class GRDBManager {
 
     func fetchClass(id: UUID) throws -> Class? {
         try AppDatabase.shared.read { db in
-            // Suche nach Klasse mit der angegebenen ID
-            return try Class
+            try Class
                 .filter(Class.Columns.id == id.uuidString)
                 .fetchOne(db)
         }

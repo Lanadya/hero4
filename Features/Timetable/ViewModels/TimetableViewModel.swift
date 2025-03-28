@@ -22,7 +22,6 @@ class TimetableViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
     func loadClasses() {
         print("DEBUG ViewModel: loadClasses() aufgerufen")
         dataStore.loadClasses()
@@ -65,8 +64,7 @@ class TimetableViewModel: ObservableObject {
             var updatedClass = `class`
             updatedClass.modifiedAt = Date()
 
-            // KORREKTUR: Der kritische Fehler war hier - wir prüfen, ob eine Klasse mit dieser ID bereits existiert
-            // statt einen unsinnigen Vergleich mit einer neuen UUID durchzuführen
+            // Prüfen, ob eine Klasse mit dieser ID bereits existiert
             let existingClassIndex = dataStore.classes.firstIndex(where: { $0.id == updatedClass.id })
             let isNewClass = existingClassIndex == nil
 

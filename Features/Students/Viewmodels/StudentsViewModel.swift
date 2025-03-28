@@ -199,7 +199,6 @@ class StudentsViewModel: ObservableObject {
         loadStudentsForSelectedClass() // Lädt die aktualisierte Schülerliste
         clearGlobalSearch() // Setzt die globale Suche zurück, falls aktiv
         objectWillChange.send() // Informiert die UI über die Änderung
-        print("DEBUG ViewModel: Schüler mit ID \(id) gelöscht und Liste aktualisiert")
     }
 
     func archiveStudent(_ student: Student) {

@@ -256,6 +256,7 @@ class ResultsViewModel: ObservableObject {
         }
     }
 
+
     // Klassen nach Wochentagen gruppiert
     var classesByWeekday: [(weekday: String, classes: [Class])] {
         let weekdays = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
