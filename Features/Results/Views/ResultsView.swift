@@ -65,7 +65,7 @@ struct ResultsView: View {
             HStack {
                 Image(systemName: "magnifyingglass").foregroundColor(.gray)
                 TextField("Schüler suchen", text: $searchText)
-                    .onChange(of: searchText) { _ in
+                    .onChange(of: searchText) { oldValue, newValue in
                         viewModel.filterStudents(searchText)
                     }
                 if !searchText.isEmpty {

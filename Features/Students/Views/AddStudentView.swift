@@ -1,3 +1,5 @@
+
+
 import SwiftUI
 
 struct AddStudentView: View {
@@ -225,10 +227,17 @@ struct AddStudentView: View {
 
         isSaving = true
 
-        // Prüfen ob Klassenlimit erreicht ist
+        // Check if class limit is reached
         let currentStudentCount = viewModel.getStudentCountForClass(classId: classId)
         if currentStudentCount >= 40 {
             showError("Diese Klasse hat bereits 40 Schüler. Mehr können nicht hinzugefügt werden.")
+            isSaving = false
+            return
+        }
+
+        // Check for duplicate names - Add this check to match saveStudent() method
+        if !viewModel.isStudentNameUnique(firstName: firstName, lastName: lastName, classId: classId) {
+            showError("Ein Schüler mit dem Namen '\(firstName) \(lastName)' existiert bereits in dieser Klasse.")
             isSaving = false
             return
         }
@@ -242,14 +251,21 @@ struct AddStudentView: View {
             notes: notes.isEmpty ? nil : notes
         )
 
-        // Leichte Verzögerung, um sicherzustellen, dass die UI aktualisiert wird
+        // Slight delay to ensure the UI updates
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             if self.viewModel.addStudent(newStudent) {
-                // Felder zurücksetzen für den nächsten Schüler
+                // Reset fields for the next student
                 self.firstName = ""
                 self.lastName = ""
                 self.notes = ""
                 self.showValidationError = false
+            } else {
+                // Handle other errors
+                if let errorMsg = self.viewModel.errorMessage {
+                    self.showError(errorMsg)
+                } else {
+                    self.showError("Fehler beim Speichern des Schülers.")
+                }
             }
             self.isSaving = false
         }

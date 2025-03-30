@@ -204,46 +204,53 @@ class DataStore: ObservableObject {
         }
     }
 
-    func updateStudent(_ student: Student) {
+    func updateStudent(_ student: Student) -> Bool {
         do {
-            // Validate the student data
             try student.validate()
 
-            // Save to database
             let updatedStudent = try dbManager.saveStudent(student)
 
-            // Update memory cache
             if let index = students.firstIndex(where: { $0.id == updatedStudent.id }) {
                 students[index] = updatedStudent
-                print("DEBUG DataStore: Schüler \(updatedStudent.fullName) aktualisiert")
             } else {
-                // Add to cache if not found (rare case)
                 students.append(updatedStudent)
-                print("DEBUG DataStore: Schüler \(updatedStudent.fullName) hinzugefügt (Update)")
             }
 
             objectWillChange.send()
+            return true
         } catch {
-            print("ERROR DataStore: Fehler beim Aktualisieren des Schülers: \(error)")
+            print("ERROR DataStore: Failed to update student: \(error.localizedDescription)")
+            return false
         }
     }
 
-    func deleteStudent(id: UUID) {
+    func deleteStudent(id: UUID) -> Bool {
         do {
-            // Delete from database
+            // First check if the student exists
+            guard let student = getStudent(id: id) else {
+                print("ERROR DataStore: Attempted to delete non-existent student with ID: \(id)")
+                return false
+            }
+
+            print("DEBUG DataStore: Deleting student: \(student.fullName) with ID: \(id)")
+
+            // Try to delete from database
             try dbManager.deleteStudent(id: id)
 
             // Remove from memory cache
             if let index = students.firstIndex(where: { $0.id == id }) {
-                print("DEBUG DataStore: Schüler \(students[index].fullName) gelöscht")
                 students.remove(at: index)
+                print("DEBUG DataStore: Successfully deleted student from memory cache")
             }
 
             objectWillChange.send()
+            return true
         } catch {
-            print("ERROR DataStore: Fehler beim Löschen des Schülers: \(error)")
+            print("ERROR DataStore: Failed to delete student: \(error.localizedDescription)")
+            return false
         }
     }
+
 
     func getStudent(id: UUID) -> Student? {
         // First check memory cache
@@ -263,25 +270,24 @@ class DataStore: ObservableObject {
         return nil
     }
 
+    // In DataStore.swift, verify the getStudentsForClass implementation:
     func getStudentsForClass(classId: UUID, includeArchived: Bool = false) -> [Student] {
-        do {
-            // Try to get from database first
-            let classStudents = try dbManager.fetchStudentsForClass(classId: classId, includeArchived: includeArchived)
-            return classStudents.sorted { $0.sortableName < $1.sortableName }
-        } catch {
-            // Fall back to memory cache if database access fails
-            print("ERROR DataStore: Fehler beim Laden der Schüler für Klasse: \(error)")
-            return students.filter {
-                $0.classId == classId && (includeArchived || !$0.isArchived)
-            }.sorted { $0.sortableName < $1.sortableName }
+        // Filter students from the in-memory array
+        let filteredStudents = students.filter { student in
+            student.classId == classId && (includeArchived || !student.isArchived)
         }
+
+        print("DEBUG DataStore.getStudentsForClass: Found \(filteredStudents.count) students for class \(classId), includeArchived=\(includeArchived)")
+
+        return filteredStudents.sorted { $0.sortableName < $1.sortableName }
     }
 
-    func archiveStudent(_ student: Student) {
-        // Create an updated version of the student with archived status
+    func archiveStudent(_ student: Student) -> Bool {
+        print("DEBUG DataStore: Archiving student: \(student.fullName) with ID: \(student.id)")
+
         var updatedStudent = student
         updatedStudent.isArchived = true
-        updateStudent(updatedStudent)
+        return updateStudent(updatedStudent)
     }
 
     func isStudentNameUnique(firstName: String, lastName: String, classId: UUID, exceptStudentId: UUID? = nil) -> Bool {

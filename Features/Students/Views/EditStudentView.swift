@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct EditStudentView: View {
@@ -6,18 +5,29 @@ struct EditStudentView: View {
     @ObservedObject var viewModel: StudentsViewModel
     @Binding var isPresented: Bool
 
-    // State-Variablen
+    // State variables
     @State private var firstName: String
     @State private var lastName: String
     @State private var notes: String
     @State private var showValidationError: Bool = false
     @State private var validationErrorMessage: String = ""
-    @State private var showingDeleteConfirmation = false
-    @State private var showingArchiveConfirmation = false
     @State private var isSaving: Bool = false
-    @State private var showClassChangeModal = false
+ 
 
-    // Initialisierung
+    // Alert handling with enum to manage multiple alerts properly
+    enum ActiveAlert: Identifiable {
+        case delete, archive
+
+        var id: Int {
+            switch self {
+            case .delete: return 0
+            case .archive: return 1
+            }
+        }
+    }
+    @State private var activeAlert: ActiveAlert?
+
+    // Initialization
     init(student: Student, viewModel: StudentsViewModel, isPresented: Binding<Bool>) {
         self.student = student
         self.viewModel = viewModel
@@ -33,7 +43,7 @@ struct EditStudentView: View {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 12) {
-                        // Namensfelder kompakter gestalten
+                        // Name fields
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Vorname:")
                                 .font(.subheadline)
@@ -58,23 +68,23 @@ struct EditStudentView: View {
                                 .disableAutocorrection(true)
                         }
 
-                        // Notizen kompakter
+                        // Notes field
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Notizen (optional):")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
 
                             TextEditor(text: $notes)
-                                .frame(height: 60) // Etwas kleiner
+                                .frame(height: 60)
                                 .padding(4)
                                 .background(Color(.systemGray6))
                                 .cornerRadius(8)
                                 .foregroundColor(.primary)
                         }
 
-                        // Datum und Klasse in einer Zeile
+                        // Date and class info
                         HStack {
-                            // Datum ohne Uhrzeit
+                            // Entry date
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Erfasst am:")
                                     .font(.caption)
@@ -87,7 +97,7 @@ struct EditStudentView: View {
 
                             Spacer()
 
-                            // Aktuelle Klasse
+                            // Current class
                             if let classObj = viewModel.dataStore.getClass(id: student.classId) {
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("Klasse:")
@@ -102,11 +112,19 @@ struct EditStudentView: View {
                         }
                         .padding(.vertical, 2)
 
-
-                        // Klasse wechseln Button - deutlicher hervorheben
+                        // Class change button
                         if viewModel.classes.count > 1 {
                             Button(action: {
-                                showClassChangeModal = true
+                                // Instead of trying to open the new view directly,
+                                // just signal to the parent that we want to switch views
+                                isPresented = false  // Close this view
+
+                                // Send a notification that the parent view can listen for
+                                NotificationCenter.default.post(
+                                    name: Notification.Name("OpenClassChangeView"),
+                                    object: nil,
+                                    userInfo: ["studentId": student.id.uuidString]
+                                )
                             }) {
                                 HStack {
                                     Image(systemName: "arrow.right.circle")
@@ -121,7 +139,7 @@ struct EditStudentView: View {
                             .padding(.top, 4)
                         }
 
-                        // Fehlermeldung, wenn vorhanden
+                        // Error message
                         if showValidationError {
                             Text(validationErrorMessage)
                                 .foregroundColor(.red)
@@ -134,9 +152,9 @@ struct EditStudentView: View {
                     .padding(.bottom, 16)
                 }
 
-                // Aktionsbuttons
+                // Action buttons
                 VStack(spacing: 10) {
-                    // Speichern
+                    // Save button
                     Button(action: {
                         saveStudent()
                     }) {
@@ -160,9 +178,9 @@ struct EditStudentView: View {
                     .disabled(isSaving)
 
                     HStack(spacing: 10) {
-                        // Archivieren
+                        // Archive button
                         Button(action: {
-                            showingArchiveConfirmation = true
+                            activeAlert = .archive
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "archivebox.fill")
@@ -176,11 +194,11 @@ struct EditStudentView: View {
                         }
                         .disabled(isSaving)
 
-                        // Löschen
+                        // Delete button
                         Button(action: {
                             print("DEBUG: Löschen-Button geklickt")
-                            showingDeleteConfirmation = true
-                            print("DEBUG: showingDeleteConfirmation gesetzt auf \(showingDeleteConfirmation)")
+                            activeAlert = .delete
+                            print("DEBUG: Delete alert activated")
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "trash.fill")
@@ -195,7 +213,7 @@ struct EditStudentView: View {
                         .disabled(isSaving)
                     }
 
-                    // Abbrechen
+                    // Cancel button
                     Button(action: {
                         isPresented = false
                     }) {
@@ -217,40 +235,35 @@ struct EditStudentView: View {
                 .background(Color(.systemBackground))
             }
             .navigationBarTitle("Schüler bearbeiten", displayMode: .inline)
-            .alert(isPresented: $showingDeleteConfirmation) {
-                Alert(
-                    title: Text("Schüler löschen"),
-                    message: Text("Möchten Sie den Schüler \(student.fullName) wirklich löschen? Dies kann nicht rückgängig gemacht werden."),
-                    primaryButton: .destructive(Text("Löschen")) {
-                        print("DEBUG: Löschen-Button im Alert gedrückt für Schüler \(student.id)")
-                        viewModel.deleteStudent(id: student.id)
-                    },
-                    secondaryButton: .cancel(Text("Abbrechen"))
-                )
-            }
-            .sheet(isPresented: $showClassChangeModal) {
-                ClassChangeView(
-                    student: student,
-                    viewModel: viewModel,
-                    isPresented: $showClassChangeModal
-                )
-            }
-            .alert(isPresented: $showingArchiveConfirmation) {
-                Alert(
-                    title: Text("Schüler archivieren"),
-                    message: Text("Möchten Sie den Schüler \(student.fullName) wirklich archivieren?"),
-                    primaryButton: .default(Text("Archivieren")) {
-                        archiveStudent()
-                    },
-                    secondaryButton: .cancel(Text("Abbrechen"))
-                )
+            .alert(item: $activeAlert) { alertType in
+                switch alertType {
+                case .delete:
+                    return Alert(
+                        title: Text("Schüler löschen"),
+                        message: Text("Möchten Sie den Schüler \(student.fullName) wirklich löschen? Dies kann nicht rückgängig gemacht werden."),
+                        primaryButton: .destructive(Text("Löschen")) {
+                            print("DEBUG: Löschen-Button im Alert gedrückt für Schüler \(student.id)")
+                            deleteStudent()
+                        },
+                        secondaryButton: .cancel(Text("Abbrechen"))
+                    )
+                case .archive:
+                    return Alert(
+                        title: Text("Schüler archivieren"),
+                        message: Text("Möchten Sie den Schüler \(student.fullName) wirklich archivieren? Die Noten bleiben im Archiv erhalten."),
+                        primaryButton: .default(Text("Archivieren")) {
+                            archiveStudent()
+                        },
+                        secondaryButton: .cancel(Text("Abbrechen"))
+                    )
+                }
             }
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
 
-    // Nur Datum ohne Uhrzeit formatieren
+    // Format date without time
     private func formatDateOnly(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -259,7 +272,7 @@ struct EditStudentView: View {
         return formatter.string(from: date)
     }
 
-    // Andere Funktionen bleiben wie sie sind...
+    // Validate form inputs
     private func validateInputs() -> Bool {
         if firstName.isEmpty && lastName.isEmpty {
             showError("Bitte geben Sie mindestens einen Vor- oder Nachnamen ein.")
@@ -268,11 +281,13 @@ struct EditStudentView: View {
         return true
     }
 
+    // Show error message
     private func showError(_ message: String) {
         validationErrorMessage = message
         showValidationError = true
     }
 
+    // Format date with time
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -281,6 +296,7 @@ struct EditStudentView: View {
         return formatter.string(from: date)
     }
 
+    // Save student
     private func saveStudent() {
         guard validateInputs() else { return }
 
@@ -302,25 +318,28 @@ struct EditStudentView: View {
         }
     }
 
+    // Archive student
     private func archiveStudent() {
         isSaving = true
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.viewModel.archiveStudent(self.student)
+            self.viewModel.archiveStudentWithStatus(self.student)
             self.isSaving = false
+            // Modal schließen
             self.isPresented = false
         }
     }
 
+    // Delete student
     private func deleteStudent() {
         print("DEBUG: deleteStudent()-Methode aufgerufen für ID: \(student.id)")
 
-        // ViewModel verwenden statt direktem DataStore-Zugriff
-        viewModel.deleteStudent(id: student.id)
-        print("DEBUG: Nach ViewModel-deleteStudent Aufruf")
+        // Verwende die neue StatusManager-Methode
+        viewModel.deleteStudentWithStatus(id: student.id)
 
         // Modal schließen
         isPresented = false
         print("DEBUG: Modal geschlossen")
     }
 }
+

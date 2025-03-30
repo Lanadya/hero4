@@ -6,6 +6,7 @@ class StudentsViewModel: ObservableObject {
     @Published var selectedClassId: UUID?
     @Published var selectedClass: Class?
     @Published var students: [Student] = []
+    @Published var filteredStudents: [Student] = []
     @Published var allStudents: [Student] = []
     @Published var errorMessage: String?
     @Published var showError: Bool = false
@@ -15,7 +16,9 @@ class StudentsViewModel: ObservableObject {
     @Published var searchResults: [SearchResult] = []
 
     let dataStore = DataStore.shared
-    private var cancellables = Set<AnyCancellable>()
+        private var cancellables = Set<AnyCancellable>()
+        private var studentStatusManager = StudentStatusManager.shared
+        private var statusCancellables = Set<AnyCancellable>()  // Add this line
 
     struct SearchResult: Identifiable {
         var id: UUID { student.id }
@@ -24,19 +27,22 @@ class StudentsViewModel: ObservableObject {
     }
 
     init(initialClassId: UUID? = nil) {
-        // Wenn eine initiale Klassen-ID übergeben wurde, diese verwenden
+        // Set up the status subscription first - this should always happen
+        setupStatusSubscription()
+
+        // Handle initialClassId if provided
         if let classId = initialClassId {
             selectedClassId = classId
             print("DEBUG ViewModel: Initialisiere mit Klassen-ID: \(classId)")
         }
-        // Sonst prüfen, ob eine zuletzt erstellte Klasse gespeichert wurde
+        // Otherwise check for last created class
         else if let savedIdString = UserDefaults.standard.string(forKey: "lastCreatedClassId"),
                 let savedId = UUID(uuidString: savedIdString) {
             selectedClassId = savedId
             print("DEBUG ViewModel: Initialisiere mit gespeicherter Klassen-ID: \(savedId)")
         }
 
-        // Beobachte Änderungen bei den Schülern im DataStore
+        // Observe changes in DataStore - keep this part the same
         dataStore.$students
             .receive(on: RunLoop.main)
             .sink { [weak self] students in
@@ -46,7 +52,6 @@ class StudentsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Beobachte Änderungen bei den Klassen im DataStore
         dataStore.$classes
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
@@ -55,7 +60,7 @@ class StudentsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Initialen Klassenstatus laden
+        // Initial class status
         updateSelectedClass()
     }
 
@@ -111,6 +116,7 @@ class StudentsViewModel: ObservableObject {
     func loadStudentsForSelectedClass() {
         guard let classId = selectedClassId else {
             students = []
+            filteredStudents = [] // Auch die filteredStudents zurücksetzen
             return
         }
 
@@ -136,6 +142,9 @@ class StudentsViewModel: ObservableObject {
             }
             return lastNameComparison
         }
+
+        // Die filteredStudents aktualisieren, damit sie mit students übereinstimmen
+        filteredStudents = students
 
         isLoading = false
     }
@@ -260,6 +269,35 @@ class StudentsViewModel: ObservableObject {
         }
     }
 
+    func archiveMultipleStudents(studentIds: [UUID]) {
+        print("ViewModel: Archiving \(studentIds.count) students")
+
+        for studentId in studentIds {
+            if let student = dataStore.getStudent(id: studentId) {
+                print("ViewModel: Archiving student: \(student.fullName)")
+
+                // Use your existing archiveStudent method which should handle all the details
+                archiveStudent(student)
+            }
+        }
+
+        // No need to reload here since archiveStudent() already does this
+        print("ViewModel: Archive operation completed")
+    }
+
+    func deleteMultipleStudents(studentIds: [UUID]) {
+        print("ViewModel: Deleting \(studentIds.count) students")
+
+        for studentId in studentIds {
+            print("ViewModel: Deleting student with ID: \(studentId)")
+            // Use your existing deletion method
+            deleteStudent(id: studentId)
+        }
+
+        // No need to reload or clear search here, as deleteStudent() already does this
+        print("ViewModel: Delete operation completed")
+    }
+
     // MARK: - Globale Suche
 
     func performGlobalSearch() {
@@ -309,19 +347,19 @@ class StudentsViewModel: ObservableObject {
         print("DEBUG: Suche nach '\(globalSearchText)' ergab \(searchResults.count) Ergebnisse.")
     }
 
-    // In StudentsViewModel:
     func updateGlobalSearchText(_ text: String) {
         globalSearchText = text
 
-        // Intelligente Suche basierend auf Länge
+        // Intelligent search based on length
         if text.count == 0 {
+            // Empty search - clear results
             searchResults = []
         } else if text.count == 1 {
-            // Bei einem Buchstaben: Nur exakte Treffer am Anfang des Namens
+            // With one character: Only show exact single-character matches
             let searchChar = text.lowercased()
             searchResults = allStudents.compactMap { student in
-                if student.firstName.lowercased().hasPrefix(searchChar) ||
-                   student.lastName.lowercased().hasPrefix(searchChar) {
+                if (student.firstName.lowercased() == searchChar ||
+                    student.lastName.lowercased() == searchChar) {
                     if let classObj = dataStore.getClass(id: student.classId) {
                         return SearchResult(student: student, className: classObj.name)
                     }
@@ -329,21 +367,19 @@ class StudentsViewModel: ObservableObject {
                 return nil
             }
         } else if text.count == 2 {
-            // Bei zwei Buchstaben: Treffer am Anfang + begrenzte Anzahl
+            // With two characters: Only show exact two-character matches
             let searchText = text.lowercased()
-            let matches = allStudents.compactMap { student in
-                if student.firstName.lowercased().hasPrefix(searchText) ||
-                   student.lastName.lowercased().hasPrefix(searchText) {
+            searchResults = allStudents.compactMap { student in
+                if (student.firstName.lowercased() == searchText ||
+                    student.lastName.lowercased() == searchText) {
                     if let classObj = dataStore.getClass(id: student.classId) {
                         return SearchResult(student: student, className: classObj.name)
                     }
                 }
                 return nil
             }
-            // Begrenze auf maximal 10 Ergebnisse
-            searchResults = Array(matches.prefix(10))
         } else {
-            // Ab 3 Buchstaben: Normale Suche mit containment
+            // With 3+ characters: More comprehensive search
             let searchText = text.lowercased()
             let matches = allStudents.compactMap { student in
                 if student.firstName.lowercased().contains(searchText) ||
@@ -354,9 +390,10 @@ class StudentsViewModel: ObservableObject {
                 }
                 return nil
             }
-            // Sortierung nach Relevanz
+
+            // Sort by relevance
             searchResults = matches.sorted { (result1, result2) -> Bool in
-                // Exakte Übereinstimmungen bevorzugen
+                // Prioritize exact matches
                 let r1FirstNameMatch = result1.student.firstName.lowercased() == searchText
                 let r1LastNameMatch = result1.student.lastName.lowercased() == searchText
                 let r2FirstNameMatch = result2.student.firstName.lowercased() == searchText
@@ -369,12 +406,8 @@ class StudentsViewModel: ObservableObject {
                     return false
                 }
 
-                // Alphabetisch sortieren
+                // Alphabetical sort
                 return result1.student.sortableName < result2.student.sortableName
-            }
-            // Begrenze auf 20 Ergebnisse für bessere Performance
-            if searchResults.count > 20 {
-                searchResults = Array(searchResults.prefix(20))
             }
         }
 
@@ -390,12 +423,23 @@ class StudentsViewModel: ObservableObject {
 
     func updateSearchText(_ text: String) {
         searchText = text
-        loadStudentsForSelectedClass()
+
+        if text.isEmpty {
+            // Wenn kein Suchtext, zeige alle Studenten
+            filteredStudents = students
+        } else {
+            // Sonst filtere die Studenten
+            let searchTextLower = text.lowercased()
+            filteredStudents = students.filter { student in
+                student.firstName.lowercased().contains(searchTextLower) ||
+                student.lastName.lowercased().contains(searchTextLower)
+            }
+        }
     }
 
     func clearSearch() {
         searchText = ""
-        loadStudentsForSelectedClass()
+        filteredStudents = students  // Zurücksetzen auf alle Studenten
     }
 
     // MARK: - Fehlerbehandlung
@@ -437,6 +481,138 @@ class StudentsViewModel: ObservableObject {
         }
 
         return nil // Keine Fehler gefunden
+    }
+
+    // MARK: - StudentStatusManager Integration
+
+    func setupStatusSubscription() {
+        studentStatusManager.statusChangePublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak self] change in
+                print("DEBUG ViewModel: Received status change: \(change.type.description) for \(change.studentName), success: \(change.success)")
+                if change.success {
+                    // Update UI based on the type of change
+                    switch change.type {
+                    case .created, .updated, .deleted, .archived, .moved, .restored:
+                        // Force UI refresh immediately
+                        DispatchQueue.main.async {
+                            self?.loadStudentsForSelectedClass()
+                            self?.clearGlobalSearch()
+                            self?.objectWillChange.send()
+                        }
+                    }
+                } else {
+                    // Handle the failure case
+                    if let self = self {
+                        self.showError(message: "Operation '\(change.type.description)' failed for student: \(change.studentName)")
+                    }
+                }
+            }
+            .store(in: &statusCancellables)
+    }
+
+
+    // Verbesserte Methoden mit StudentStatusManager
+    func deleteStudentWithStatus(id: UUID) {
+        studentStatusManager.deleteStudents(ids: [id]) { successCount, failureCount in
+            if failureCount > 0 {
+                self.showError(message: "Der Schüler konnte nicht gelöscht werden.")
+            }
+
+            // UI wird automatisch durch den Publisher aktualisiert
+        }
+    }
+
+    func archiveStudentWithStatus(_ student: Student) {
+        studentStatusManager.archiveStudents(ids: [student.id]) { successCount, failureCount in
+            if failureCount > 0 {
+                self.showError(message: "Der Schüler konnte nicht archiviert werden.")
+            }
+
+            // UI wird automatisch durch den Publisher aktualisiert
+        }
+    }
+
+    func deleteMultipleStudentsWithStatus(studentIds: [UUID]) {
+        print("DEBUG ViewModel: deleteMultipleStudentsWithStatus called for \(studentIds.count) students with IDs: \(studentIds)")
+
+        // Clear previous errors
+        self.errorMessage = nil
+        self.showError = false
+
+        // Log the IDs we're trying to delete
+        studentIds.forEach { id in
+            if let student = dataStore.getStudent(id: id) {
+                print("DEBUG ViewModel: Will delete student: \(student.fullName) with ID: \(id)")
+            } else {
+                print("DEBUG ViewModel: WARNING - Student with ID \(id) not found!")
+            }
+        }
+
+        studentStatusManager.deleteStudents(ids: studentIds) { successCount, failureCount in
+            print("DEBUG ViewModel: Delete operation completed: \(successCount) successes, \(failureCount) failures")
+
+            // Show appropriate message
+            if failureCount > 0 {
+                let message = successCount > 0
+                    ? "\(successCount) Schüler gelöscht, \(failureCount) konnten nicht gelöscht werden."
+                    : "Keine Schüler konnten gelöscht werden."
+
+                self.showError(message: message)
+            }
+
+            // Force UI refresh regardless of success/failure
+            DispatchQueue.main.async {
+                self.loadStudentsForSelectedClass()
+                self.objectWillChange.send()
+            }
+        }
+    }
+
+    func archiveMultipleStudentsWithStatus(studentIds: [UUID]) {
+        print("DEBUG ViewModel: archiveMultipleStudentsWithStatus called for \(studentIds.count) students with IDs: \(studentIds)")
+
+        // Clear previous errors
+        self.errorMessage = nil
+        self.showError = false
+
+        // Log the IDs we're trying to archive
+        studentIds.forEach { id in
+            if let student = dataStore.getStudent(id: id) {
+                print("DEBUG ViewModel: Will archive student: \(student.fullName) with ID: \(id)")
+            } else {
+                print("DEBUG ViewModel: WARNING - Student with ID \(id) not found!")
+            }
+        }
+
+        studentStatusManager.archiveStudents(ids: studentIds) { successCount, failureCount in
+            print("DEBUG ViewModel: Archive operation completed: \(successCount) successes, \(failureCount) failures")
+
+            // Show appropriate message
+            if failureCount > 0 {
+                let message = successCount > 0
+                    ? "\(successCount) Schüler archiviert, \(failureCount) konnten nicht archiviert werden."
+                    : "Keine Schüler konnten archiviert werden."
+
+                self.showError(message: message)
+            }
+
+            // Force UI refresh regardless of success/failure
+            DispatchQueue.main.async {
+                self.loadStudentsForSelectedClass()
+                self.objectWillChange.send()
+            }
+        }
+    }
+
+    func moveStudentToClassWithStatus(studentId: UUID, newClassId: UUID) {
+        let success = studentStatusManager.moveStudentToClass(studentId, newClassId)
+
+        if !success {
+            showError(message: "Der Schüler konnte nicht in die neue Klasse verschoben werden.")
+        }
+
+        // UI wird automatisch durch den Publisher aktualisiert
     }
 
 }

@@ -229,7 +229,7 @@ struct ColumnMappingView: View {
         }
 
         DispatchQueue.global(qos: .userInitiated).async {
-            let result = importManager.importStudents()
+            _ = importManager.importStudents()
 
             DispatchQueue.main.async {
                 importInProgress = false

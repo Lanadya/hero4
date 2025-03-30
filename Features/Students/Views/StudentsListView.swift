@@ -1,10 +1,9 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+// Main StudentsListView with modifications to support the new action bar
 struct StudentsListView: View {
-
     @ObservedObject private var appState = AppState.shared
-    // Initialen Parameter für die Klassenauswahl hinzufügen
     @StateObject private var viewModel: StudentsViewModel
     @State private var showAddStudentModal = false
     @State private var showEditStudentModal = false
@@ -12,14 +11,14 @@ struct StudentsListView: View {
     @State private var navigateToSeatingPlan = false
     @State private var showImportSheet = false
     @State private var showClassChangeForSelectedStudents = false
+    @State private var showClassChangeAfterEdit: UUID? = nil
+    @State private var showClassChangeModal = false
 
-    // Für Multi-Select und Löschen
+    // For multi-select and deletion
     @State private var editMode: EditMode = .inactive
     @State private var selectedStudents = Set<UUID>()
-    @State private var confirmDeleteMultipleStudents = false
-    @State private var showMoveClassForSelectedStudents = false
 
-    // Für den Datei-Import
+    // For file import
     @State private var showFileImporter = false
     @State private var importFileType: FileImportType = .csv
     @State private var showColumnMappingView = false
@@ -27,16 +26,13 @@ struct StudentsListView: View {
     @StateObject private var importManager: ImportManager
     @State private var showImportHelp = false
 
-    // Für die TabView-Integration
+    // For TabView integration
     @Binding var selectedTab: Int
 
-    // Konstruktor mit der Option, eine initiale Klassen-ID zu übergeben und TabView-Integration
+    // Constructor with option to pass an initial class ID and TabView integration
     init(initialClassId: UUID? = nil, selectedTab: Binding<Int> = .constant(1)) {
         _viewModel = StateObject(wrappedValue: StudentsViewModel(initialClassId: initialClassId))
         _selectedTab = selectedTab
-
-        // Wir müssen den ImportManager mit einer initialen Klassen-ID erstellen,
-        // aber wir aktualisieren diese später, wenn viewModel.selectedClassId verfügbar ist
         _importManager = StateObject(wrappedValue: ImportManager(classId: initialClassId ?? UUID()))
     }
 
@@ -44,235 +40,48 @@ struct StudentsListView: View {
         NavigationView {
             VStack {
                 if viewModel.classes.isEmpty {
-                    // Keine Klassen vorhanden
-                    noClassesView
+                    // No classes available
+                    StudentsNoClassesView(selectedTab: $selectedTab)
                 } else {
-                    // Split-View für iPad
-                    HStack {
-                        // Linke Seite: Klassenliste und globale Suche
-                        VStack {
-                            // Globale Suche nach Schülern
-                            VStack(spacing: 0) {
-                                Text("Schülersuche")
-                                    .font(.headline)
-                                    .padding(.top)
+                    // Split-View for iPad
+                    HStack(spacing: 0) {
+                        // Left side: Class list and global search
+                        StudentsSidebarView(
+                                viewModel: viewModel,
+                                selectedStudent: $selectedStudent,
+                                showEditStudentModal: $showEditStudentModal
+                            )
+                            .frame(width: 250)
+                            .background(Color(.systemGroupedBackground))
 
-                                HStack {
-                                    Image(systemName: "magnifyingglass")
-                                        .foregroundColor(.gray)
-
-                                    TextField("Schülernamen suchen", text: Binding(
-                                        get: { viewModel.globalSearchText },
-                                        set: { viewModel.updateGlobalSearchText($0) }
-                                    ))
-                                    .autocapitalization(.none)
-                                    .disableAutocorrection(true)
-
-                                    if !viewModel.globalSearchText.isEmpty {
-                                        Button(action: {
-                                            viewModel.clearGlobalSearch()
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .foregroundColor(.gray)
-                                        }
-                                    }
-                                }
-                                .padding(8)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
-                                .padding(.horizontal)
-                                .padding(.bottom, 8)
-
-                                if !viewModel.searchResults.isEmpty {
-                                    ScrollView {
-                                        VStack(alignment: .leading, spacing: 10) {
-                                            ForEach(viewModel.searchResults) { result in
-                                                Button(action: {
-                                                    viewModel.selectClass(id: result.student.classId)
-                                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                                        selectedStudent = result.student
-                                                        showEditStudentModal = true
-                                                    }
-                                                }) {
-                                                    VStack(alignment: .leading) {
-                                                        Text(result.student.fullName)
-                                                            .font(.headline)
-                                                        Text("Klasse: \(result.className)")
-                                                            .font(.caption)
-                                                            .foregroundColor(.gray)
-                                                    }
-                                                    .padding(8)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .background(Color(.systemGray6))
-                                                    .cornerRadius(8)
-                                                }
-                                                .buttonStyle(PlainButtonStyle())
-                                            }
-                                        }
-                                        .padding(.horizontal)
-                                    }
-                                    .frame(height: min(CGFloat(viewModel.searchResults.count * 70), 200))
-                                }
-
-                                Divider()
-                            }
-
-                            Text("Klassen")
-                                .font(.headline)
-                                .padding(.top, 8)
-
-                            // Nach Wochentagen gruppierte Klassen
-                            List {
-                                ForEach(viewModel.classesByWeekday, id: \.weekday) { group in
-                                    Section(header: Text(group.weekday)) {
-                                        ForEach(group.classes) { classItem in
-                                            Button(action: {
-                                                viewModel.selectClass(id: classItem.id)
-                                                // Aktualisiere die ausgewählte Klassen-ID im ImportManager
-                                                importManager.selectedClassId = classItem.id
-                                                // Verlasse den Bearbeitungsmodus beim Klassenwechsel
-                                                editMode = .inactive
-                                                selectedStudents.removeAll()
-                                            }) {
-                                                HStack {
-                                                    Text(classItem.name)
-                                                        .foregroundColor(.primary)
-
-                                                    if let note = classItem.note, !note.isEmpty {
-                                                        Text(note)
-                                                            .font(.caption)
-                                                            .foregroundColor(.gray)
-                                                    }
-
-                                                    Spacer()
-
-                                                    if viewModel.selectedClassId == classItem.id {
-                                                        Image(systemName: "checkmark")
-                                                            .foregroundColor(.blue)
-                                                    }
-                                                }
-                                                .padding(.vertical, 4)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            .listStyle(InsetGroupedListStyle())
-                        }
-                        .frame(width: 250)
-                        .background(Color(.systemGroupedBackground))
-
-                        // Rechte Seite: Schülerliste oder Platzhalter
-                        if let selectedClass = viewModel.selectedClass {
-                            // Schülerliste für die ausgewählte Klasse
-                            studentListContent(for: selectedClass)
+                        // Right side: Student list or selected details
+                        if viewModel.selectedClass != nil {
+                            StudentsContentView(
+                                viewModel: viewModel,
+                                selectedStudents: $selectedStudents,
+                                editMode: $editMode,
+                                selectedStudent: $selectedStudent,
+                                showEditStudentModal: $showEditStudentModal,
+                                showAddStudentModal: $showAddStudentModal,
+                                showImportSheet: $showImportSheet,
+                                showImportHelp: $showImportHelp,
+                                showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents
+                            )
                         } else {
-                            // Platzhalter, wenn keine Klasse ausgewählt ist
-                            VStack {
-                                Text("Bitte wählen Sie eine Klasse aus")
-                                    .font(.title2)
-                                    .foregroundColor(.gray)
-                                    .padding()
-
-                                Spacer()
-                            }
-                            .frame(maxWidth: .infinity)
+                            StudentsSelectionPromptView()
                         }
                     }
                 }
             }
             .sheet(isPresented: $showClassChangeForSelectedStudents) {
-                VStack {
-                    // Fehlermeldung oben anzeigen
-                    if let errorMessage = viewModel.errorMessage, viewModel.showError {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle")
-                                .foregroundColor(.red)
-                            Text(errorMessage)
-                                .foregroundColor(.red)
-                                .multilineTextAlignment(.leading)
-                            Spacer()
-                        }
-                        .padding()
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(8)
-                        .padding(.horizontal)
-                        .padding(.top)
-                    }
-
-                    ClassSelectionView(
-                        classes: viewModel.classes.filter { $0.id != viewModel.selectedClassId },
-                        onClassSelected: { selectedClassId in
-                            // Überprüfe zuerst, ob Platz in der Zielklasse ist
-                            let currentStudentCount = viewModel.getStudentCountForClass(classId: selectedClassId)
-                            if currentStudentCount + selectedStudents.count > 40 {
-                                showClassSelectionError("Die Zielklasse hat nur Platz für \(40 - currentStudentCount) weitere Schüler. Sie haben \(selectedStudents.count) Schüler ausgewählt.")
-                                return
-                            }
-
-                            // Überprüfe auf doppelte Namen
-                            var duplicateNames: [String] = []
-                            for studentId in selectedStudents {
-                                if let student = viewModel.dataStore.getStudent(id: studentId) {
-                                    if !viewModel.isStudentNameUnique(firstName: student.firstName, lastName: student.lastName, classId: selectedClassId, exceptStudentId: student.id) {
-                                        duplicateNames.append("\(student.firstName) \(student.lastName)")
-                                    }
-                                }
-                            }
-
-                            if !duplicateNames.isEmpty {
-                                let namesStr = duplicateNames.joined(separator: ", ")
-                                showClassSelectionError("Folgende Schüler existieren bereits in der Zielklasse: \(namesStr)")
-                                return
-                            }
-
-                            // Verschiebe die Schüler
-                            for studentId in selectedStudents {
-                                viewModel.moveStudentToClass(studentId: studentId, newClassId: selectedClassId)
-                            }
-
-                            // Aktualisiere die Schülerliste und setze den State zurück
-                            viewModel.loadStudentsForSelectedClass()
-                            selectedStudents.removeAll()
-                            editMode = .inactive
-                            showClassChangeForSelectedStudents = false
-                        },
-                        onCancel: {
-                            // Beim Abbrechen auch den Edit-Mode zurücksetzen
-                            editMode = .inactive
-                            selectedStudents.removeAll()
-                            showClassChangeForSelectedStudents = false
-                        }
-                    )
-                }
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
+                MultiStudentClassChangeSheet(
+                    viewModel: viewModel,
+                    selectedStudents: $selectedStudents,
+                    editMode: $editMode,
+                    isPresented: $showClassChangeForSelectedStudents
+                )
             }
-
             .navigationBarTitle("Schülerverwaltung", displayMode: .inline)
-
-            .alert(isPresented: $viewModel.showError) {
-                Alert(
-                    title: Text("Fehler"),
-                    message: Text(viewModel.errorMessage ?? "Unbekannter Fehler"),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
-            .alert(isPresented: $confirmDeleteMultipleStudents) {
-                Alert(
-                    title: Text("Schüler löschen"),
-                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen? Dies kann nicht rückgängig gemacht werden."),
-                    primaryButton: .destructive(Text("Löschen")) {
-                        // Lösche alle ausgewählten Schüler
-                        for studentId in selectedStudents {
-                            viewModel.deleteStudent(id: studentId)
-                        }
-                        selectedStudents.removeAll()
-                        editMode = .inactive
-                    },
-                    secondaryButton: .cancel()
-                )
-            }
             .sheet(isPresented: $showAddStudentModal) {
                 if let classId = viewModel.selectedClassId, let className = viewModel.selectedClass?.name {
                     AddStudentView(
@@ -296,21 +105,14 @@ struct StudentsListView: View {
                     .presentationDragIndicator(.visible)
                 }
             }
-            .onChange(of: showEditStudentModal) { oldValue, isShowing in
-                if !isShowing {
-                    print("DEBUG: Modal geschlossen, setze Suche zurück")
-                    // Wenn das Modal geschlossen wird, Suche zurücksetzen
-                    viewModel.clearGlobalSearch()
-                }
-            }
-            .sheet(isPresented: $showMoveClassForSelectedStudents) {
+            .sheet(isPresented: $showClassChangeModal) {
                 if let student = selectedStudent {
                     ClassChangeView(
                         student: student,
                         viewModel: viewModel,
-                        isPresented: $showMoveClassForSelectedStudents
+                        isPresented: $showClassChangeModal
                     )
-                    .presentationDetents([.medium])
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
                 }
             }
@@ -329,10 +131,9 @@ struct StudentsListView: View {
                     message: Text("Wählen Sie eine CSV-Datei zum Importieren"),
                     buttons: [
                         .default(Text("CSV-Datei (.csv)")) {
-                            print("DEBUG: CSV-Option wurde ausgewählt")
                             importFileType = .csv
                             importManager.selectedFileType = .csv
-                            showFileImporter = true  // Dies öffnet den Datei-Picker
+                            showFileImporter = true
                         },
                         .cancel(Text("Abbrechen"))
                     ]
@@ -343,167 +144,74 @@ struct StudentsListView: View {
                 allowedContentTypes: importFileType.allowedContentTypes,
                 allowsMultipleSelection: false
             ) { result in
-                print("DEBUG: Datei-Importer wurde geöffnet")
                 do {
-                    guard let selectedFile = try result.get().first else {
-                        print("DEBUG: Keine Datei ausgewählt")
-                        return
-                    }
-
-                    print("DEBUG: Datei ausgewählt: \(selectedFile.lastPathComponent)")
-                    // Starte den Import-Prozess
+                    guard let selectedFile = try result.get().first else { return }
                     importManager.processSelectedFile(selectedFile)
-
-                    // Zeige die Mapping-Ansicht
                     showColumnMappingView = true
-
                 } catch {
-                    print("DEBUG: Fehler beim Auswählen der Datei: \(error.localizedDescription)")
                     viewModel.showError(message: "Fehler beim Auswählen der Datei: \(error.localizedDescription)")
                 }
             }
+            .sheet(isPresented: $showImportHelp) {
+                StudentsImportHelpSheet(isPresented: $showImportHelp)
+            }
+            .alert(isPresented: $viewModel.showError) {
+                Alert(
+                    title: Text("Fehler"),
+                    message: Text(viewModel.errorMessage ?? "Unbekannter Fehler"),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
-
         .onAppear {
-            // Lade die Schüler für die aktuell ausgewählte Klasse
             viewModel.loadStudentsForSelectedClass()
 
-            // Prüfe, ob eine Klasse aus UserDefaults geladen werden soll
             if let classIdString = UserDefaults.standard.string(forKey: "selectedClassForStudentsList"),
                let classId = UUID(uuidString: classIdString) {
-                // Wähle die Klasse im ViewModel aus
                 viewModel.selectClass(id: classId)
-                // Entferne den Eintrag aus UserDefaults, damit er nicht erneut verwendet wird
                 UserDefaults.standard.removeObject(forKey: "selectedClassForStudentsList")
             }
-        }
 
-        // In deiner StudentsListView, füge diese onAppear-Aktion hinzu:
-        .onAppear {
-            // Stelle sicher, dass die View vollständig initialisiert ist
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                // Dies könnte helfen, Timing-Probleme zu lösen
-                selectedStudent = nil // Setze explizit auf nil
-                showEditStudentModal = false // Stelle sicher, dass dies false ist
-            }
-        }
-
-        .onDisappear {
-            // Beim Verlassen der View die Suche zurücksetzen
-            viewModel.clearGlobalSearch()
-
-            // Bearbeitungsmodus zurücksetzen
-            editMode = .inactive
-            selectedStudents.removeAll()
-        }
-        // Zusätzliche onChange-Funktion um auf Tab-Wechsel zu reagieren
-        .onChange(of: selectedTab) { oldValue, newTab in
-            if newTab != 1 {  // 1 ist der Index des Schüler-Tabs
-                // Suchfeld zurücksetzen, wenn zu einem anderen Tab gewechselt wird
-                viewModel.clearGlobalSearch()
-
-                // Bearbeitungsmodus zurücksetzen
-                editMode = .inactive
-                selectedStudents.removeAll()
-            }
-        }
-        // Aktualisiere die Schülerliste, wenn der Import abgeschlossen ist
-        .onChange(of: refreshStudentList) { oldValue, refresh in
-            if refresh {
-                viewModel.loadStudentsForSelectedClass()
-                refreshStudentList = false
-            }
-        }
-        // Aktualisiere den ImportManager, wenn sich die ausgewählte Klasse ändert
-        .onChange(of: viewModel.selectedClassId) { oldValue, newClassId in
-            if let classId = newClassId {
-                importManager.selectedClassId = classId
-            }
-        }
-        // Neuer onChange-Handler für selectedStudents
-        .onChange(of: selectedStudents) { oldValue, newSelection in
-            // Wenn alle Schüler abgewählt wurden, setze den Edit-Mode zurück
-            if newSelection.isEmpty && editMode == .active {
-                editMode = .inactive
-            }
-        }
-        .sheet(isPresented: $showImportHelp) {
-            VStack(alignment: .leading, spacing: 8) {
-                // Zusätzlicher Spacer oben für Sicherheitsabstand
-                Spacer().frame(height: 12)
-
-                // Header mit Titel und Schließen-Button
-                HStack {
-                    Text("CSV-Import Hilfe")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-
-                    Spacer()
-
-                    Button(action: {
-                        showImportHelp = false
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
-                            .font(.title2)
+            // Setup notification for ClassChangeView
+            NotificationCenter.default.addObserver(
+                forName: Notification.Name("OpenClassChangeView"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                if let studentIdString = notification.userInfo?["studentId"] as? String,
+                   let studentId = UUID(uuidString: studentIdString),
+                   let student = viewModel.dataStore.getStudent(id: studentId) {
+                    selectedStudent = student
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showClassChangeModal = true
                     }
                 }
-                .padding(.bottom, 12)
-
-                // Kompakter Hilfetext
-                Text("So erstellen Sie eine CSV-Datei für den Import:")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .padding(.bottom, 4)
-
-                Group {
-                    Text("1. Öffnen Sie Excel oder ein Tabellenkalkulationsprogramm")
-                    Text("2. Erstellen Sie diese Spalten: Vorname, Nachname, Notizen (optional)")
-                    Text("3. Speichern Sie die Datei als .csv-Datei")
-                }
-                .font(.callout)
-                .foregroundColor(.primary)
-
-                Divider()
-                    .padding(.vertical, 8)
-
-                Text("Hinweise:")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .padding(.bottom, 2)
-
-                Group {
-                    Text("• Die erste Zeile muss Spaltenüberschriften enthalten")
-                    Text("• Es können maximal 40 Schüler pro Klasse importiert werden")
-                    Text("• Schüler mit identischen Namen werden übersprungen")
-                }
-                .font(.callout)
-                .foregroundColor(.secondary)
-
-                // Zusätzlicher Spacer unten für Sicherheitsabstand
-                Spacer().frame(height: 20)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-            .presentationDetents([.height(320)])  // Erhöhte Höhe
-            .presentationDragIndicator(.visible)
+        }
+        .onDisappear {
+            viewModel.clearGlobalSearch()
+            editMode = .inactive
+            selectedStudents.removeAll()
+
+            NotificationCenter.default.removeObserver(
+                self,
+                name: Notification.Name("OpenClassChangeView"),
+                object: nil
+            )
         }
     }
+}
 
-    // Hilfsfunktion für Fehlermeldungen in der ClassSelectionView
-    private func showClassSelectionError(_ message: String) {
-        NotificationCenter.default.post(
-            name: Notification.Name("ClassSelectionError"),
-            object: nil,
-            userInfo: ["message": message]
-        )
-    }
 
-    // MARK: - Subviews
-    private var noClassesView: some View {
+// MARK: - Subviews
+struct StudentsNoClassesView: View {
+    @Binding var selectedTab: Int
+
+    var body: some View {
         VStack(spacing: 20) {
+            Spacer()
+
             Image(systemName: "person.3.fill")
                 .font(.system(size: 60))
                 .foregroundColor(.blue)
@@ -518,7 +226,6 @@ struct StudentsListView: View {
                 .padding(.horizontal, 40)
 
             Button(action: {
-                // Direkt zur Stundenplanseite (Tab 0) navigieren
                 selectedTab = 0
             }) {
                 HStack {
@@ -535,66 +242,323 @@ struct StudentsListView: View {
         }
         .padding(.top, 60)
     }
+}
 
-    private func studentListContent(for classItem: Class) -> some View {
-        return VStack {
-            // Header mit Klassenname und Kontrollen
-            HStack(alignment: .top, spacing: 16) {
-                // LINKE SEITE: Klasseninformationsblock
-                VStack(alignment: .leading, spacing: 4) {
-                    // Klassenname
-                    Text("Klasse: \(classItem.name)")
-                        .font(.headline)
-                        .lineLimit(1)
+struct StudentsSidebarView: View {
+    @ObservedObject var viewModel: StudentsViewModel
+    @Binding var selectedStudent: Student?
+    @Binding var showEditStudentModal: Bool
 
-                    // Notiz (falls vorhanden)
-                    if let note = classItem.note, !note.isEmpty {
-                        Text(note)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .lineLimit(1)
+    var body: some View {
+        VStack(spacing: 0) {
+            // Globale Suche
+            VStack(spacing: 0) {
+                Text("Schülersuche")
+                    .font(.headline)
+                    .padding(.top)
+
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+
+                    TextField("Schülernamen suchen", text: Binding(
+                        get: { viewModel.globalSearchText },
+                        set: { viewModel.updateGlobalSearchText($0) }
+                    ))
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+
+                    if !viewModel.globalSearchText.isEmpty {
+                        Button(action: {
+                            viewModel.clearGlobalSearch()
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
+                        }
                     }
-
-                    // Schüleranzahl
-                    Text("\(viewModel.students.count) Schüler")
-                        .font(.caption)
-                        .foregroundColor(viewModel.students.count >= 40 ? .red : .gray)
                 }
-                .frame(width: 180, alignment: .leading) // Feste Breite für den Informationsblock
+                .padding(8)
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+
+                // Suchergebnisse
+                if !viewModel.searchResults.isEmpty {
+                    StudentsSearchResultsView(
+                        viewModel: viewModel,
+                        selectedStudent: $selectedStudent,
+                        showEditStudentModal: $showEditStudentModal
+                    )
+                }
+
+                Divider()
+                    .padding(.vertical, 8)
+            }
+
+            // Klassenliste
+            StudentsClassesListView(viewModel: viewModel)
+        }
+    }
+}
+
+struct StudentsSearchResultsView: View {
+    @ObservedObject var viewModel: StudentsViewModel
+    @Binding var selectedStudent: Student?
+    @Binding var showEditStudentModal: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Kopfzeile mit Anzahl der Ergebnisse
+            HStack {
+                Text("\(viewModel.searchResults.count) Ergebnisse")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
                 Spacer()
 
-                // RECHTE SEITE: Aktionsbuttons in einer Reihe
-                HStack(spacing: 10) {
-                    // Auswählen-Button
-                    if !viewModel.students.isEmpty {
+                if viewModel.searchResults.count > 2 {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Text("scrollen")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 4)
+
+            // Scrollbare Ergebnisliste
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(viewModel.searchResults) { result in
                         Button(action: {
-                            editMode = editMode.isEditing ? .inactive : .active
-                            if editMode == .inactive {
-                                selectedStudents.removeAll()
+                            viewModel.selectClass(id: result.student.classId)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                selectedStudent = result.student
+                                showEditStudentModal = true
                             }
                         }) {
-                            VStack(spacing: 2) {
-                                Image(systemName: editMode.isEditing ? "checkmark.circle" : "person.2.fill")
-                                    .font(.system(size: 16))
-                                Text(editMode.isEditing ? "Auswahl beenden" : "Auswählen")
+                            VStack(alignment: .leading) {
+                                Text(result.student.fullName)
+                                    .font(.headline)
+                                Text("Klasse: \(result.className)")
                                     .font(.caption)
-                                    .lineLimit(1)
+                                    .foregroundColor(.gray)
                             }
-                            .frame(width: 80, height: 50)
-                            .background(Color.blue.opacity(0.15))
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.systemGray6))
                             .cornerRadius(8)
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
+                }
+                .padding(.horizontal)
+            }
+            .frame(height: min(CGFloat(viewModel.searchResults.count * 70), 150))
+        }
+    }
+}
 
-                    // Hinzufügen-Button
+struct StudentsClassesListView: View {
+    @ObservedObject var viewModel: StudentsViewModel
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack {
+                Text("Klassen")
+                    .font(.headline)
+
+                Spacer()
+
+                if viewModel.classes.count > 5 {
+                    Text("scrollen")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Image(systemName: "arrow.up.arrow.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal)
+
+            CompactClassListView(
+                classes: viewModel.classes,
+                selectedClassId: viewModel.selectedClassId,
+                onClassSelected: { classId in
+                    viewModel.selectClass(id: classId)
+                }
+            )
+            .frame(maxHeight: .infinity)
+        }
+    }
+}
+
+struct StudentsSelectionPromptView: View {
+    var body: some View {
+        VStack {
+            Spacer()
+            Text("Bitte wählen Sie eine Klasse aus der linken Seitenleiste")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding()
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
+    }
+}
+
+struct StudentsContentView: View {
+    @ObservedObject var viewModel: StudentsViewModel
+    @Binding var selectedStudents: Set<UUID>
+    @Binding var editMode: EditMode
+    @Binding var selectedStudent: Student?
+    @Binding var showEditStudentModal: Bool
+    @Binding var showAddStudentModal: Bool
+    @Binding var showImportSheet: Bool
+    @Binding var showImportHelp: Bool
+    @Binding var showClassChangeForSelectedStudents: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if let classItem = viewModel.selectedClass {
+                // Header with class info and controls
+                StudentsClassHeaderView(
+                    classItem: classItem,
+                    viewModel: viewModel,
+                    editMode: $editMode,
+                    selectedStudents: $selectedStudents,
+                    showAddStudentModal: $showAddStudentModal,
+                    showImportSheet: $showImportSheet,
+                    showImportHelp: $showImportHelp
+                )
+
+                if viewModel.isLoading {
+                    Spacer()
+                    ProgressView("Laden...")
+                    Spacer()
+                } else if viewModel.students.isEmpty {
+                    StudentsEmptyView(
+                        showAddStudentModal: $showAddStudentModal,
+                        showImportSheet: $showImportSheet
+                    )
+                } else {
+                    // This is the key change - define a simple callback to handle class change
+                    StudentsListContent(
+                        viewModel: viewModel,
+                        selectedStudents: $selectedStudents,
+                        editMode: $editMode,
+                        selectedStudent: $selectedStudent,
+                        showEditStudentModal: $showEditStudentModal,
+                        showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents,
+                        confirmDeleteMultipleStudents: .constant(false) // We no longer use this binding
+                    )
+                }
+            } else {
+                Text("Keine Klasse ausgewählt")
+                    .foregroundColor(.secondary)
+                    .padding()
+            }
+        }
+    }
+}
+
+struct StudentsClassHeaderView: View {
+    let classItem: Class
+    @ObservedObject var viewModel: StudentsViewModel
+    @Binding var editMode: EditMode
+    @Binding var selectedStudents: Set<UUID>
+    @Binding var showAddStudentModal: Bool
+    @Binding var showImportSheet: Bool
+    @Binding var showImportHelp: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            // LINKE SEITE: Klasseninformationsblock
+            VStack(alignment: .leading, spacing: 4) {
+                // Klassenname
+                Text("Klasse: \(classItem.name)")
+                    .font(.headline)
+                    .lineLimit(1)
+
+                // Notiz (falls vorhanden)
+                if let note = classItem.note, !note.isEmpty {
+                    Text(note)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .lineLimit(1)
+                }
+
+                // Schüleranzahl
+                Text("\(viewModel.students.count) Schüler")
+                    .font(.caption)
+                    .foregroundColor(viewModel.students.count >= 40 ? .red : .gray)
+            }
+            .frame(width: 180, alignment: .leading)
+
+            Spacer()
+
+            // RECHTE SEITE: Aktionsbuttons
+            HStack(spacing: 10) {
+                // Auswählen-Button
+                if !viewModel.students.isEmpty {
                     Button(action: {
-                        showAddStudentModal = true
+                        editMode = editMode.isEditing ? .inactive : .active
+                        if editMode == .inactive {
+                            selectedStudents.removeAll()
+                        }
                     }) {
                         VStack(spacing: 2) {
-                            Image(systemName: "person.badge.plus")
+                            Image(systemName: editMode.isEditing ? "checkmark.circle" : "person.2.fill")
                                 .font(.system(size: 16))
-                            Text("Hinzufügen")
+                            Text(editMode.isEditing ? "Auswahl beenden" : "Auswählen")
+                                .font(.caption)
+                                .lineLimit(1)
+                        }
+                        .frame(width: 80, height: 50)
+                        .background(Color.blue.opacity(0.15))
+                        .cornerRadius(8)
+                    }
+                }
+
+                // Hinzufügen-Button
+                Button(action: {
+                    showAddStudentModal = true
+                }) {
+                    VStack(spacing: 2) {
+                        Image(systemName: "person.badge.plus")
+                            .font(.system(size: 16))
+                        Text("Hinzufügen")
+                            .font(.caption)
+                            .lineLimit(1)
+                    }
+                    .frame(width: 80, height: 50)
+                    .background(Color.blue.opacity(0.15))
+                    .cornerRadius(8)
+                }
+                .disabled(viewModel.students.count >= 40)
+
+                // Import-Button mit Info-Symbol
+                HStack(alignment: .top, spacing: 2) {
+                    Button(action: {
+                        let currentStudentCount = viewModel.getStudentCountForClass(classId: viewModel.selectedClassId ?? UUID())
+                        if currentStudentCount >= 40 {
+                            viewModel.showError(message: "Diese Klasse hat bereits 40 Schüler. Es können keine weiteren Schüler hinzugefügt werden.")
+                            return
+                        }
+
+                        showImportSheet = true
+                    }) {
+                        VStack(spacing: 2) {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 16))
+                            Text("Importieren")
                                 .font(.caption)
                                 .lineLimit(1)
                         }
@@ -604,313 +568,512 @@ struct StudentsListView: View {
                     }
                     .disabled(viewModel.students.count >= 40)
 
-                    // Import-Button mit Info-Symbol
-                    HStack(alignment: .top, spacing: 2) {
-                        Button(action: {
-                            print("DEBUG: Import-Button geklickt")
-                            // Prüfen, ob das Klassenlimit bereits erreicht ist
-                            let currentStudentCount = viewModel.getStudentCountForClass(classId: viewModel.selectedClassId ?? UUID())
-                            if currentStudentCount >= 40 {
-                                viewModel.showError(message: "Diese Klasse hat bereits 40 Schüler. Es können keine weiteren Schüler hinzugefügt werden.")
-                                return
-                            }
-
-                            // Direkt die CSV-Import-Option wählen und Datei-Auswahl öffnen
-                            importFileType = .csv
-                            importManager.selectedFileType = .csv
-                            showFileImporter = true
-                        }) {
-                            VStack(spacing: 2) {
-                                Image(systemName: "square.and.arrow.down")
-                                    .font(.system(size: 16))
-                                Text("Importieren")
-                                    .font(.caption)
-                                    .lineLimit(1)
-                            }
-                            .frame(width: 80, height: 50)
-                            .background(Color.blue.opacity(0.15))
-                            .cornerRadius(8)
-                        }
-                        .disabled(viewModel.students.count >= 40)
-
-                        // Information Icon als hochgestellter Button ohne Hintergrund
-                        Button(action: {
-                            showImportHelp = true
-                        }) {
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 12))
-                                .foregroundColor(.blue)
-                        }
-                        .padding(.top, 2)
+                    Button(action: {
+                        showImportHelp = true
+                    }) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 12))
+                            .foregroundColor(.blue)
                     }
-                }
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color.white)
-            .shadow(radius: 1)
-
-            if viewModel.isLoading {
-                Spacer()
-                ProgressView("Laden...")
-                Spacer()
-            } else if viewModel.students.isEmpty {
-                VStack(spacing: 20) {
-                    Spacer()
-
-                    Image(systemName: "person.3.fill")
-                        .font(.system(size: 40))
-                        .foregroundColor(.gray)
-
-                    Text("Keine Schüler in dieser Klasse")
-                        .font(.headline)
-
-                    Text("Tippen Sie auf einen der Buttons, um Schüler hinzuzufügen.")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-
-                    // Verbesserte Buttons
-                    HStack(spacing: 20) {
-                        Button(action: {
-                            showAddStudentModal = true
-                        }) {
-                            VStack {
-                                Image(systemName: "person.badge.plus")
-                                    .font(.system(size: 24))
-                                    .padding(.bottom, 4)
-                                Text("Einzeln hinzufügen")
-                                    .font(.caption)
-                            }
-                            .frame(width: 150)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        }
-
-                        Button(action: {
-                            showImportSheet = true
-                        }) {
-                            VStack {
-                                Image(systemName: "square.and.arrow.down")
-                                    .font(.system(size: 24))
-                                    .padding(.bottom, 4)
-                                Text("Aus Datei importieren")
-                                    .font(.caption)
-                            }
-                            .frame(width: 150)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        }
-                    }
-                    .padding(.top, 8)
-
-                    Spacer()
-                }
-            } else {
-                // Verbesserte tabellarische Schülerliste
-                VStack {
-                    // Header-Zeile für die Tabelle
-                    HStack {
-                        if editMode == .active {
-                            Button(action: {
-                                if selectedStudents.count == viewModel.students.count {
-                                    // Alle abwählen
-                                    selectedStudents.removeAll()
-                                } else {
-                                    // Alle auswählen
-                                    selectedStudents = Set(viewModel.students.map { $0.id })
-                                }
-                            }) {
-                                Image(systemName: selectedStudents.count == viewModel.students.count ?
-                                        "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(selectedStudents.count > 0 ? .blue : .gray)
-                                    .frame(width: 30, alignment: .center)
-                            }
-                        }
-
-                        Text("Nachname")
-                            .font(.headline)
-                            .frame(width: 130, alignment: .leading)
-                        Text("Vorname")
-                            .font(.headline)
-                            .frame(width: 130, alignment: .leading)
-                        Text("Notizen")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-
-
-                    // Schülerliste mit verbessertem Multi-Select
-                    List {
-                        ForEach(viewModel.students) { student in
-                            ZStack {
-                                // Hintergrund für Auswahlzustand
-                                if selectedStudents.contains(student.id) {
-                                    Rectangle()
-                                        .fill(Color.blue.opacity(0.1))
-                                        .cornerRadius(6)
-                                }
-
-                                HStack {
-                                    // Checkbox im Edit-Modus
-                                    if editMode == .active {
-                                        Image(systemName: selectedStudents.contains(student.id) ? "checkmark.circle.fill" : "circle")
-                                            .foregroundColor(selectedStudents.contains(student.id) ? .blue : .gray)
-                                            .frame(width: 30, alignment: .center)
-                                    }
-
-                                    // Schüler-Informationen
-                                    HStack {
-                                        Text(student.lastName)
-                                            .frame(width: 130, alignment: .leading)
-                                        Text(student.firstName)
-                                            .frame(width: 130, alignment: .leading)
-                                        if let notes = student.notes, !notes.isEmpty {
-                                            Text(notes)
-                                                .font(.caption)
-                                                .foregroundColor(.gray)
-                                                .lineLimit(1)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                        } else {
-                                            Spacer()
-                                        }
-                                    }
-                                }
-                                .padding(.vertical, 8)
-                            }
-                            .contentShape(Rectangle()) // Macht den gesamten Bereich klickbar
-                            .onTapGesture {
-                                if editMode == .inactive {
-                                    selectedStudent = student
-                                    showEditStudentModal = true
-                                } else {
-                                    if selectedStudents.contains(student.id) {
-                                        selectedStudents.remove(student.id)
-                                    } else {
-                                        selectedStudents.insert(student.id)
-                                    }
-                                }
-                            }
-                            .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
-                        }
-                        .onDelete { indexSet in
-                            if editMode == .inactive {
-                                for index in indexSet {
-                                    let student = viewModel.students[index]
-                                    viewModel.deleteStudent(id: student.id)
-                                }
-                            }
-                        }
-                    }
-                    .listStyle(PlainListStyle())
-                    .environment(\.editMode, $editMode)
-                }
-
-                // Multi-Select Aktionsleiste am unteren Bildschirmrand
-                if editMode == .active {
-                    VStack {
-                        Divider()
-
-                        HStack(spacing: 16) {
-                            // Löschen-Button
-                            Button(action: {
-                                if !selectedStudents.isEmpty {
-                                    confirmDeleteMultipleStudents = true
-                                }
-                            }) {
-                                VStack {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 18))
-                                    Text("Löschen")
-                                        .font(.caption)
-                                }
-                                .frame(minWidth: 60)
-                                .foregroundColor(selectedStudents.isEmpty ? .gray : .red)
-                            }
-                            .disabled(selectedStudents.isEmpty)
-
-                            // Archivieren-Button
-                            Button(action: {
-                                guard !selectedStudents.isEmpty else { return }
-
-                                for studentId in selectedStudents {
-                                    if let student = viewModel.dataStore.getStudent(id: studentId) {
-                                        viewModel.archiveStudent(student)
-                                    }
-                                }
-
-                                selectedStudents.removeAll()
-                                editMode = .inactive
-                            }) {
-                                VStack {
-                                    Image(systemName: "archivebox")
-                                        .font(.system(size: 18))
-                                    Text("Archivieren")
-                                        .font(.caption)
-                                }
-                                .frame(minWidth: 60)
-                                .foregroundColor(selectedStudents.isEmpty ? .gray : .orange)
-                            }
-                            .disabled(selectedStudents.isEmpty)
-
-                            // Klasse-wechseln-Button
-                            Button(action: {
-                                if !selectedStudents.isEmpty {
-                                    viewModel.showError = false
-                                    viewModel.errorMessage = nil
-
-                                    NotificationCenter.default.post(
-                                        name: Notification.Name("ClassSelectionClearError"),
-                                        object: nil
-                                    )
-
-                                    showClassChangeForSelectedStudents = true
-                                }
-                            }) {
-                                VStack {
-                                    Image(systemName: "arrow.right.circle")
-                                        .font(.system(size: 18))
-                                    Text("Klasse ändern")
-                                        .font(.caption)
-                                }
-                                .frame(minWidth: 60)
-                                .foregroundColor(selectedStudents.isEmpty ? .gray : .blue)
-                            }
-                            .disabled(selectedStudents.isEmpty)
-
-                            Spacer()
-
-                            // Ausgewählte Anzahl anzeigen
-                            Text("\(selectedStudents.count) ausgewählt")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                                .padding(.trailing, 8)
-
-                            // Beenden-Button
-                            Button(action: {
-                                editMode = .inactive
-                                selectedStudents.removeAll()
-                            }) {
-                                Text("Beenden")
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                        .background(Color(.systemBackground))
-                    }
+                    .padding(.top, 2)
                 }
             }
         }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color.white)
+        .shadow(radius: 1)
     }
+}
+
+struct StudentsEmptyView: View {
+    @Binding var showAddStudentModal: Bool
+    @Binding var showImportSheet: Bool
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            Image(systemName: "person.3.fill")
+                .font(.system(size: 40))
+                .foregroundColor(.gray)
+
+            Text("Keine Schüler in dieser Klasse")
+                .font(.headline)
+
+            Text("Tippen Sie auf einen der Buttons, um Schüler hinzuzufügen.")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            HStack(spacing: 20) {
+                Button(action: {
+                    showAddStudentModal = true
+                }) {
+                    VStack {
+                        Image(systemName: "person.badge.plus")
+                            .font(.system(size: 24))
+                            .padding(.bottom, 4)
+                        Text("Einzeln hinzufügen")
+                            .font(.caption)
+                    }
+                    .frame(width: 150)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+
+                Button(action: {
+                    showImportSheet = true
+                }) {
+                    VStack {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 24))
+                            .padding(.bottom, 4)
+                        Text("Aus Datei importieren")
+                            .font(.caption)
+                    }
+                    .frame(width: 150)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+            }
+            .padding(.top, 8)
+
+            Spacer()
+        }
     }
+}
+
+struct StudentsListHeader: View {
+    let editMode: EditMode
+    @Binding var selectedStudents: Set<UUID>
+    let students: [Student]
+
+    var body: some View {
+        HStack {
+            if editMode == .active {
+                // In edit mode, show selection controls
+                Button(action: {
+                    if selectedStudents.count == students.count {
+                        selectedStudents.removeAll()
+                    } else {
+                        selectedStudents = Set(students.map { $0.id })
+                    }
+                }) {
+                    Text(selectedStudents.count == students.count ? "Deselect All" : "Select All")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
+
+                Spacer()
+
+                Text("\(selectedStudents.count) selected")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            } else {
+                // In normal mode, show column headers
+                Text("Name")
+                    .font(.headline)
+                    .padding(.leading, 8)
+
+                Spacer()
+            }
+        }
+        .padding(.vertical, 8)
+        .background(Color(.systemGray6))
+    }
+}
+
+struct StudentsListContent: View {
+    @ObservedObject var viewModel: StudentsViewModel
+    @Binding var selectedStudents: Set<UUID>
+    @Binding var editMode: EditMode
+    @Binding var selectedStudent: Student?
+    @Binding var showEditStudentModal: Bool
+    @Binding var showClassChangeForSelectedStudents: Bool
+    @Binding var confirmDeleteMultipleStudents: Bool
+
+    // Add a state for tracking operation progress
+    @State private var isProcessingOperation = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Table header
+            StudentsListHeader(editMode: editMode, selectedStudents: $selectedStudents, students: viewModel.students)
+
+            // Student list
+            List {
+                ForEach(viewModel.students) { student in
+                    StudentsRow(
+                        student: student,
+                        isSelected: selectedStudents.contains(student.id),
+                        editMode: editMode,
+                        onSelect: {
+                            if editMode == .inactive {
+                                selectedStudent = student
+                                showEditStudentModal = true
+                            } else {
+                                if selectedStudents.contains(student.id) {
+                                    selectedStudents.remove(student.id)
+                                } else {
+                                    selectedStudents.insert(student.id)
+                                }
+                            }
+                        }
+                    )
+                    .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                    // Disable interaction during processing
+                    .disabled(isProcessingOperation)
+                }
+                .onDelete { indexSet in
+                    if editMode == .inactive {
+                        for index in indexSet {
+                            let student = viewModel.students[index]
+                            viewModel.deleteStudent(id: student.id)
+                        }
+                    }
+                }
+            }
+            .listStyle(PlainListStyle())
+            .environment(\.editMode, $editMode)
+            // Slightly dim the list during processing
+            .opacity(isProcessingOperation ? 0.7 : 1.0)
+
+            // Multi-select action bar - improved version
+            if editMode == .active {
+                MultiSelectActionBar(
+                    selectedStudents: $selectedStudents,
+                    confirmDeleteMultipleStudents: $confirmDeleteMultipleStudents,
+                    showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents,
+                    viewModel: viewModel,
+                    editMode: $editMode
+                )
+            }
+        }
+        // Listen for notifications about the completion of operations
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StudentOperationCompleted"))) { _ in
+            // Reset processing state
+            isProcessingOperation = false
+
+            // If the operation was successful, reset selection
+            if !viewModel.showError {
+                selectedStudents.removeAll()
+                editMode = .inactive
+            }
+        }
+    }
+}
+
+// A new custom ActionBar that handles all the operations
+struct MultiSelectActionBar: View {
+    @Binding var selectedStudents: Set<UUID>
+    @Binding var confirmDeleteMultipleStudents: Bool
+    @Binding var showClassChangeForSelectedStudents: Bool
+    @ObservedObject var viewModel: StudentsViewModel
+    @Binding var editMode: EditMode
+
+    @State private var isProcessing = false
+    @State private var activeAlert: AlertType? = nil
+
+    enum AlertType: Identifiable {
+        case delete, archive
+        var id: Self { self }
+    }
+
+    var body: some View {
+        VStack {
+            Divider()
+
+            HStack(spacing: 16) {
+                // Delete button
+                Button(action: {
+                    if !selectedStudents.isEmpty && !isProcessing {
+                        activeAlert = .delete
+                    }
+                }) {
+                    VStack {
+                        Image(systemName: "trash")
+                            .font(.system(size: 18))
+                        Text("Löschen")
+                            .font(.caption)
+                    }
+                    .frame(minWidth: 60)
+                    .foregroundColor(selectedStudents.isEmpty || isProcessing ? .gray : .red)
+                }
+                .disabled(selectedStudents.isEmpty || isProcessing)
+
+                // Archive button
+                Button(action: {
+                    if !selectedStudents.isEmpty && !isProcessing {
+                        activeAlert = .archive
+                    }
+                }) {
+                    VStack {
+                        Image(systemName: "archivebox")
+                            .font(.system(size: 18))
+                        Text("Archivieren")
+                            .font(.caption)
+                    }
+                    .frame(minWidth: 60)
+                    .foregroundColor(selectedStudents.isEmpty || isProcessing ? .gray : .orange)
+                }
+                .disabled(selectedStudents.isEmpty || isProcessing)
+
+                // Class change button
+                Button(action: {
+                    if !selectedStudents.isEmpty && !isProcessing {
+                        showClassChangeForSelectedStudents = true
+                    }
+                }) {
+                    VStack {
+                        Image(systemName: "arrow.right.circle")
+                            .font(.system(size: 18))
+                        Text("Klasse ändern")
+                            .font(.caption)
+                    }
+                    .frame(minWidth: 60)
+                    .foregroundColor(selectedStudents.isEmpty || isProcessing ? .gray : .blue)
+                }
+                .disabled(selectedStudents.isEmpty || isProcessing)
+
+                Spacer()
+
+                Text("\(selectedStudents.count) ausgewählt")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .padding(.trailing, 8)
+
+                Button(action: {
+                    editMode = .inactive
+                    selectedStudents.removeAll()
+                }) {
+                    Text("Beenden")
+                        .fontWeight(.medium)
+                        .foregroundColor(.blue)
+                }
+                .disabled(isProcessing)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(Color(.systemBackground))
+            .overlay(
+                Group {
+                    if isProcessing {
+                        HStack {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle())
+                            Text("Verarbeite...")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .padding(.leading, 4)
+                        }
+                    }
+                }
+            )
+        }
+        .alert(item: $activeAlert) { alertType in
+            switch alertType {
+            case .delete:
+                return Alert(
+                    title: Text("Schüler löschen"),
+                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen? Dies kann nicht rückgängig gemacht werden."),
+                    primaryButton: .destructive(Text("Löschen")) {
+                        processDeleteOperation()
+                    },
+                    secondaryButton: .cancel()
+                )
+            case .archive:
+                return Alert(
+                    title: Text("Schüler archivieren"),
+                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") archivieren? Archivierte Schüler und deren Bewertungen werden in der regulären Ansicht nicht mehr angezeigt."),
+                    primaryButton: .default(Text("Archivieren")) {
+                        processArchiveOperation()
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
+        }
+    }
+
+    private func processDeleteOperation() {
+        guard !selectedStudents.isEmpty else { return }
+
+        isProcessing = true
+        print("DEBUG MultiSelectActionBar: Starting batch delete for \(selectedStudents.count) students")
+
+        // Use the view model to delete students
+        viewModel.deleteMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
+
+        // Reset after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            isProcessing = false
+            NotificationCenter.default.post(name: Notification.Name("StudentOperationCompleted"), object: nil)
+        }
+    }
+
+    private func processArchiveOperation() {
+        guard !selectedStudents.isEmpty else { return }
+
+        isProcessing = true
+        print("DEBUG MultiSelectActionBar: Starting batch archive for \(selectedStudents.count) students")
+
+        // Use the view model to archive students
+        viewModel.archiveMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
+
+        // Reset after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            isProcessing = false
+            NotificationCenter.default.post(name: Notification.Name("StudentOperationCompleted"), object: nil)
+        }
+    }
+}
+
+    struct StudentsImportHelpSheet: View {
+                           @Binding var isPresented: Bool
+
+                           var body: some View {
+                               VStack(alignment: .leading, spacing: 8) {
+                                   Spacer().frame(height: 12)
+
+                                   HStack {
+                                       Text("CSV-Import Hilfe")
+                                           .font(.headline)
+                                           .foregroundColor(.primary)
+
+                                       Spacer()
+
+                                       Button(action: {
+                                           isPresented = false
+                                       }) {
+                                           Image(systemName: "xmark.circle.fill")
+                                               .foregroundColor(.gray)
+                                               .font(.title2)
+                                       }
+                                   }
+                                   .padding(.bottom, 12)
+
+                                   Text("So erstellen Sie eine CSV-Datei für den Import:")
+                                       .font(.subheadline)
+                                       .fontWeight(.medium)
+                                       .padding(.bottom, 4)
+
+                                   Group {
+                                       Text("1. Öffnen Sie Excel oder ein Tabellenkalkulationsprogramm")
+                                       Text("2. Erstellen Sie diese Spalten: Vorname, Nachname, Notizen (optional)")
+                                       Text("3. Speichern Sie die Datei als .csv-Datei")
+                                   }
+                                   .font(.callout)
+                                   .foregroundColor(.primary)
+
+                                   Divider()
+                                       .padding(.vertical, 8)
+
+                                   Text("Hinweise:")
+                                       .font(.subheadline)
+                                       .fontWeight(.medium)
+                                       .padding(.bottom, 2)
+
+                                   Group {
+                                       Text("• Die erste Zeile muss Spaltenüberschriften enthalten")
+                                       Text("• Es können maximal 40 Schüler pro Klasse importiert werden")
+                                       Text("• Schüler mit identischen Namen werden übersprungen")
+                                   }
+                                   .font(.callout)
+                                   .foregroundColor(.secondary)
+
+                                   Spacer().frame(height: 20)
+                               }
+                               .padding(.horizontal, 24)
+                               .padding(.vertical, 16)
+                               .frame(maxWidth: .infinity, alignment: .topLeading)
+                               .presentationDetents([.height(320)])
+                               .presentationDragIndicator(.visible)
+                           }
+                       }
+
+struct MultiStudentClassChangeSheet: View {
+    @ObservedObject var viewModel: StudentsViewModel
+    @Binding var selectedStudents: Set<UUID>
+    @Binding var editMode: EditMode
+    @Binding var isPresented: Bool
+    @State private var errorMessage: String? = nil
+    @State private var selectedClassId: UUID? = nil
+    @State private var showConfirmation = false
+
+    var body: some View {
+        VStack {
+            if let errorMessage = errorMessage {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(.red)
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                }
+                .padding()
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(8)
+                .padding(.horizontal)
+                .padding(.top)
+            }
+
+            ClassSelectionView(
+                classes: viewModel.classes.filter { $0.id != viewModel.selectedClassId },
+                onClassSelected: { newClassId in
+                    // Prüfe potenzielle Fehler vor der eigentlichen Verschiebung
+                    if let error = viewModel.validateMoveStudents(studentIds: Array(selectedStudents), toClassId: newClassId) {
+                        errorMessage = error
+                        return
+                    }
+
+                    // Speichere die ausgewählte Klassen-ID und zeige die Bestätigung an
+                    selectedClassId = newClassId
+                    showConfirmation = true
+                },
+                onCancel: {
+                    selectedStudents.removeAll()
+                    editMode = .inactive
+                    isPresented = false
+                }
+            )
+        }
+        .alert(isPresented: $showConfirmation) {
+            Alert(
+                title: Text("Schüler verschieben"),
+                message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") in eine andere Klasse verschieben? Bisherige Bewertungen der Schüler werden dabei archiviert."),
+                primaryButton: .default(Text("Verschieben")) {
+                    if let targetClassId = selectedClassId {
+                        // Wenn keine Fehler, verschiebe alle ausgewählten Schüler
+                        for studentId in selectedStudents {
+                            viewModel.moveStudentToClassWithStatus(studentId: studentId, newClassId: targetClassId)
+                        }
+
+                        // Aktualisiere UI und setze Zustände zurück
+                        selectedStudents.removeAll()
+                        editMode = .inactive
+                        isPresented = false
+                    }
+                },
+                secondaryButton: .cancel()
+            )
+        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ClassSelectionError"))) { notification in
+            if let message = notification.userInfo?["message"] as? String {
+                errorMessage = message
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ClassSelectionClearError"))) { _ in
+            errorMessage = nil
+        }
+    }
+}
+
+

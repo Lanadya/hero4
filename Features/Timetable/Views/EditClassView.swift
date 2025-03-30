@@ -238,3 +238,4 @@ struct EditClassView: View {
         return formatter.string(from: date)
     }
 }
+
