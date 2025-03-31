@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -12,11 +13,14 @@ struct StudentsListView: View {
     @State private var showImportSheet = false
     @State private var showClassChangeForSelectedStudents = false
     @State private var showClassChangeAfterEdit: UUID? = nil
-    @State private var showClassChangeModal = false
 
     // For multi-select and deletion
     @State private var editMode: EditMode = .inactive
     @State private var selectedStudents = Set<UUID>()
+    // In your StudentsListView struct
+    @State private var activeAlert: AlertType? = nil
+    @State private var showMultiSelectOperations = false
+    @State private var showClassChangeModal = false
 
     // For file import
     @State private var showFileImporter = false
@@ -65,7 +69,9 @@ struct StudentsListView: View {
                                 showAddStudentModal: $showAddStudentModal,
                                 showImportSheet: $showImportSheet,
                                 showImportHelp: $showImportHelp,
-                                showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents
+                                showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents,
+                                activeAlert: $activeAlert,
+                                showMultiSelectOperations: $showMultiSelectOperations
                             )
                         } else {
                             StudentsSelectionPromptView()
@@ -139,6 +145,16 @@ struct StudentsListView: View {
                     ]
                 )
             }
+            .sheet(isPresented: $showMultiSelectOperations) {
+                StudentMultiSelectOperationsView(
+                    viewModel: viewModel,
+                    selectedStudents: $selectedStudents,
+                    editMode: $editMode,
+                    isPresented: $showMultiSelectOperations,
+                    showClassChangeView: $showClassChangeForSelectedStudents
+                )
+            }
+
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: importFileType.allowedContentTypes,
@@ -201,6 +217,7 @@ struct StudentsListView: View {
             )
         }
     }
+
 }
 
 
@@ -424,6 +441,8 @@ struct StudentsContentView: View {
     @Binding var showImportSheet: Bool
     @Binding var showImportHelp: Bool
     @Binding var showClassChangeForSelectedStudents: Bool
+    @Binding var activeAlert: AlertType?
+    @Binding var showMultiSelectOperations: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -457,7 +476,8 @@ struct StudentsContentView: View {
                         selectedStudent: $selectedStudent,
                         showEditStudentModal: $showEditStudentModal,
                         showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents,
-                        confirmDeleteMultipleStudents: .constant(false) // We no longer use this binding
+                        activeAlert: $activeAlert,
+                        showMultiSelectOperations: $showMultiSelectOperations
                     )
                 }
             } else {
@@ -510,6 +530,7 @@ struct StudentsClassHeaderView: View {
                 if !viewModel.students.isEmpty {
                     Button(action: {
                         editMode = editMode.isEditing ? .inactive : .active
+                        print("DEBUG: EditMode geändert zu \(editMode)")
                         if editMode == .inactive {
                             selectedStudents.removeAll()
                         }
@@ -696,9 +717,10 @@ struct StudentsListContent: View {
     @Binding var selectedStudent: Student?
     @Binding var showEditStudentModal: Bool
     @Binding var showClassChangeForSelectedStudents: Bool
-    @Binding var confirmDeleteMultipleStudents: Bool
+    @Binding var activeAlert: AlertType?
+    @Binding var showMultiSelectOperations: Bool
 
-    // Add a state for tracking operation progress
+    // State for tracking operation progress
     @State private var isProcessingOperation = false
 
     var body: some View {
@@ -723,11 +745,11 @@ struct StudentsListContent: View {
                                 } else {
                                     selectedStudents.insert(student.id)
                                 }
+                                print("DEBUG: selectedStudents aktualisiert: \(selectedStudents.count) Schüler ausgewählt")
                             }
                         }
                     )
                     .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
-                    // Disable interaction during processing
                     .disabled(isProcessingOperation)
                 }
                 .onDelete { indexSet in
@@ -741,26 +763,24 @@ struct StudentsListContent: View {
             }
             .listStyle(PlainListStyle())
             .environment(\.editMode, $editMode)
-            // Slightly dim the list during processing
             .opacity(isProcessingOperation ? 0.7 : 1.0)
 
-            // Multi-select action bar - improved version
+            // Multi-select action bar with DIRECT alert handling
             if editMode == .active {
                 MultiSelectActionBar(
                     selectedStudents: $selectedStudents,
-                    confirmDeleteMultipleStudents: $confirmDeleteMultipleStudents,
                     showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents,
-                    viewModel: viewModel,
-                    editMode: $editMode
+                    editMode: $editMode,
+                    showOperationsView: $showMultiSelectOperations,
+                    showOperationsSheet: $showMultiSelectOperations,
+                    viewModel: viewModel
                 )
             }
         }
-        // Listen for notifications about the completion of operations
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StudentOperationCompleted"))) { _ in
-            // Reset processing state
+            print("DEBUG StudentsListContent: Received StudentOperationCompleted")
             isProcessingOperation = false
 
-            // If the operation was successful, reset selection
             if !viewModel.showError {
                 selectedStudents.removeAll()
                 editMode = .inactive
@@ -769,232 +789,70 @@ struct StudentsListContent: View {
     }
 }
 
-// A new custom ActionBar that handles all the operations
-struct MultiSelectActionBar: View {
-    @Binding var selectedStudents: Set<UUID>
-    @Binding var confirmDeleteMultipleStudents: Bool
-    @Binding var showClassChangeForSelectedStudents: Bool
-    @ObservedObject var viewModel: StudentsViewModel
-    @Binding var editMode: EditMode
+// IMPORTANT: These view structs are now at the file level, not nested inside other structs
 
-    @State private var isProcessing = false
-    @State private var activeAlert: AlertType? = nil
-
-    enum AlertType: Identifiable {
-        case delete, archive
-        var id: Self { self }
-    }
+struct StudentsImportHelpSheet: View {
+    @Binding var isPresented: Bool
 
     var body: some View {
-        VStack {
-            Divider()
+        VStack(alignment: .leading, spacing: 8) {
+            Spacer().frame(height: 12)
 
-            HStack(spacing: 16) {
-                // Delete button
-                Button(action: {
-                    if !selectedStudents.isEmpty && !isProcessing {
-                        activeAlert = .delete
-                    }
-                }) {
-                    VStack {
-                        Image(systemName: "trash")
-                            .font(.system(size: 18))
-                        Text("Löschen")
-                            .font(.caption)
-                    }
-                    .frame(minWidth: 60)
-                    .foregroundColor(selectedStudents.isEmpty || isProcessing ? .gray : .red)
-                }
-                .disabled(selectedStudents.isEmpty || isProcessing)
-
-                // Archive button
-                Button(action: {
-                    if !selectedStudents.isEmpty && !isProcessing {
-                        activeAlert = .archive
-                    }
-                }) {
-                    VStack {
-                        Image(systemName: "archivebox")
-                            .font(.system(size: 18))
-                        Text("Archivieren")
-                            .font(.caption)
-                    }
-                    .frame(minWidth: 60)
-                    .foregroundColor(selectedStudents.isEmpty || isProcessing ? .gray : .orange)
-                }
-                .disabled(selectedStudents.isEmpty || isProcessing)
-
-                // Class change button
-                Button(action: {
-                    if !selectedStudents.isEmpty && !isProcessing {
-                        showClassChangeForSelectedStudents = true
-                    }
-                }) {
-                    VStack {
-                        Image(systemName: "arrow.right.circle")
-                            .font(.system(size: 18))
-                        Text("Klasse ändern")
-                            .font(.caption)
-                    }
-                    .frame(minWidth: 60)
-                    .foregroundColor(selectedStudents.isEmpty || isProcessing ? .gray : .blue)
-                }
-                .disabled(selectedStudents.isEmpty || isProcessing)
+            HStack {
+                Text("CSV-Import Hilfe")
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
                 Spacer()
 
-                Text("\(selectedStudents.count) ausgewählt")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .padding(.trailing, 8)
-
                 Button(action: {
-                    editMode = .inactive
-                    selectedStudents.removeAll()
+                    isPresented = false
                 }) {
-                    Text("Beenden")
-                        .fontWeight(.medium)
-                        .foregroundColor(.blue)
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                        .font(.title2)
                 }
-                .disabled(isProcessing)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color(.systemBackground))
-            .overlay(
-                Group {
-                    if isProcessing {
-                        HStack {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle())
-                            Text("Verarbeite...")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                                .padding(.leading, 4)
-                        }
-                    }
-                }
-            )
-        }
-        .alert(item: $activeAlert) { alertType in
-            switch alertType {
-            case .delete:
-                return Alert(
-                    title: Text("Schüler löschen"),
-                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen? Dies kann nicht rückgängig gemacht werden."),
-                    primaryButton: .destructive(Text("Löschen")) {
-                        processDeleteOperation()
-                    },
-                    secondaryButton: .cancel()
-                )
-            case .archive:
-                return Alert(
-                    title: Text("Schüler archivieren"),
-                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") archivieren? Archivierte Schüler und deren Bewertungen werden in der regulären Ansicht nicht mehr angezeigt."),
-                    primaryButton: .default(Text("Archivieren")) {
-                        processArchiveOperation()
-                    },
-                    secondaryButton: .cancel()
-                )
+            .padding(.bottom, 12)
+
+            Text("So erstellen Sie eine CSV-Datei für den Import:")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .padding(.bottom, 4)
+
+            Group {
+                Text("1. Öffnen Sie Excel oder ein Tabellenkalkulationsprogramm")
+                Text("2. Erstellen Sie diese Spalten: Vorname, Nachname, Notizen (optional)")
+                Text("3. Speichern Sie die Datei als .csv-Datei")
             }
+            .font(.callout)
+            .foregroundColor(.primary)
+
+            Divider()
+                .padding(.vertical, 8)
+
+            Text("Hinweise:")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .padding(.bottom, 2)
+
+            Group {
+                Text("• Die erste Zeile muss Spaltenüberschriften enthalten")
+                Text("• Es können maximal 40 Schüler pro Klasse importiert werden")
+                Text("• Schüler mit identischen Namen werden übersprungen")
+            }
+            .font(.callout)
+            .foregroundColor(.secondary)
+
+            Spacer().frame(height: 20)
         }
-    }
-
-    private func processDeleteOperation() {
-        guard !selectedStudents.isEmpty else { return }
-
-        isProcessing = true
-        print("DEBUG MultiSelectActionBar: Starting batch delete for \(selectedStudents.count) students")
-
-        // Use the view model to delete students
-        viewModel.deleteMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
-
-        // Reset after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            isProcessing = false
-            NotificationCenter.default.post(name: Notification.Name("StudentOperationCompleted"), object: nil)
-        }
-    }
-
-    private func processArchiveOperation() {
-        guard !selectedStudents.isEmpty else { return }
-
-        isProcessing = true
-        print("DEBUG MultiSelectActionBar: Starting batch archive for \(selectedStudents.count) students")
-
-        // Use the view model to archive students
-        viewModel.archiveMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
-
-        // Reset after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            isProcessing = false
-            NotificationCenter.default.post(name: Notification.Name("StudentOperationCompleted"), object: nil)
-        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .presentationDetents([.height(320)])
+        .presentationDragIndicator(.visible)
     }
 }
-
-    struct StudentsImportHelpSheet: View {
-                           @Binding var isPresented: Bool
-
-                           var body: some View {
-                               VStack(alignment: .leading, spacing: 8) {
-                                   Spacer().frame(height: 12)
-
-                                   HStack {
-                                       Text("CSV-Import Hilfe")
-                                           .font(.headline)
-                                           .foregroundColor(.primary)
-
-                                       Spacer()
-
-                                       Button(action: {
-                                           isPresented = false
-                                       }) {
-                                           Image(systemName: "xmark.circle.fill")
-                                               .foregroundColor(.gray)
-                                               .font(.title2)
-                                       }
-                                   }
-                                   .padding(.bottom, 12)
-
-                                   Text("So erstellen Sie eine CSV-Datei für den Import:")
-                                       .font(.subheadline)
-                                       .fontWeight(.medium)
-                                       .padding(.bottom, 4)
-
-                                   Group {
-                                       Text("1. Öffnen Sie Excel oder ein Tabellenkalkulationsprogramm")
-                                       Text("2. Erstellen Sie diese Spalten: Vorname, Nachname, Notizen (optional)")
-                                       Text("3. Speichern Sie die Datei als .csv-Datei")
-                                   }
-                                   .font(.callout)
-                                   .foregroundColor(.primary)
-
-                                   Divider()
-                                       .padding(.vertical, 8)
-
-                                   Text("Hinweise:")
-                                       .font(.subheadline)
-                                       .fontWeight(.medium)
-                                       .padding(.bottom, 2)
-
-                                   Group {
-                                       Text("• Die erste Zeile muss Spaltenüberschriften enthalten")
-                                       Text("• Es können maximal 40 Schüler pro Klasse importiert werden")
-                                       Text("• Schüler mit identischen Namen werden übersprungen")
-                                   }
-                                   .font(.callout)
-                                   .foregroundColor(.secondary)
-
-                                   Spacer().frame(height: 20)
-                               }
-                               .padding(.horizontal, 24)
-                               .padding(.vertical, 16)
-                               .frame(maxWidth: .infinity, alignment: .topLeading)
-                               .presentationDetents([.height(320)])
-                               .presentationDragIndicator(.visible)
-                           }
-                       }
 
 struct MultiStudentClassChangeSheet: View {
     @ObservedObject var viewModel: StudentsViewModel
@@ -1075,5 +933,3 @@ struct MultiStudentClassChangeSheet: View {
         }
     }
 }
-
-

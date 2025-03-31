@@ -1,22 +1,22 @@
-//
-//  AlertType.swift
-//  hero4
-//
-//  Created by Nina Klee on 25.03.25.
-//
-
+// AlertType.swift
 import Foundation
 import SwiftUI
 
-// Enum für Fehlerbehandlung
 enum AlertType: Identifiable {
     case info
     case error(String)
+    case delete
+    case archive
+    case classChange
 
+    // Common id implementation
     var id: Int {
         switch self {
         case .info: return 0
         case .error: return 1
+        case .delete: return 2
+        case .archive: return 3
+        case .classChange: return 4
         }
     }
 }

@@ -552,7 +552,7 @@ class StudentsViewModel: ObservableObject {
         studentStatusManager.deleteStudents(ids: studentIds) { successCount, failureCount in
             print("DEBUG ViewModel: Delete operation completed: \(successCount) successes, \(failureCount) failures")
 
-            // Show appropriate message
+            // Show appropriate message based on results
             if failureCount > 0 {
                 let message = successCount > 0
                     ? "\(successCount) Schüler gelöscht, \(failureCount) konnten nicht gelöscht werden."
@@ -588,7 +588,7 @@ class StudentsViewModel: ObservableObject {
         studentStatusManager.archiveStudents(ids: studentIds) { successCount, failureCount in
             print("DEBUG ViewModel: Archive operation completed: \(successCount) successes, \(failureCount) failures")
 
-            // Show appropriate message
+            // Show appropriate message based on results
             if failureCount > 0 {
                 let message = successCount > 0
                     ? "\(successCount) Schüler archiviert, \(failureCount) konnten nicht archiviert werden."

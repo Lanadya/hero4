@@ -12,20 +12,21 @@ struct EditStudentView: View {
     @State private var showValidationError: Bool = false
     @State private var validationErrorMessage: String = ""
     @State private var isSaving: Bool = false
- 
 
-    // Alert handling with enum to manage multiple alerts properly
-    enum ActiveAlert: Identifiable {
-        case delete, archive
+    @State private var activeAlert: AlertType?
 
-        var id: Int {
-            switch self {
-            case .delete: return 0
-            case .archive: return 1
-            }
-        }
-    }
-    @State private var activeAlert: ActiveAlert?
+//    // Alert handling with enum to manage multiple alerts properly
+//    enum ActiveAlert: Identifiable {
+//        case delete, archive
+//
+//        var id: Int {
+//            switch self {
+//            case .delete: return 0
+//            case .archive: return 1
+//            }
+//        }
+//    }
+//    @State private var activeAlert: ActiveAlert?
 
     // Initialization
     init(student: Student, viewModel: StudentsViewModel, isPresented: Binding<Bool>) {
@@ -256,6 +257,9 @@ struct EditStudentView: View {
                         },
                         secondaryButton: .cancel(Text("Abbrechen"))
                     )
+                default:
+                        // Handle other cases or provide a default alert
+                        return Alert(title: Text(""), message: Text(""), dismissButton: .default(Text("OK")))
                 }
             }
         }

@@ -284,7 +284,6 @@ class DataStore: ObservableObject {
 
     func archiveStudent(_ student: Student) -> Bool {
         print("DEBUG DataStore: Archiving student: \(student.fullName) with ID: \(student.id)")
-
         var updatedStudent = student
         updatedStudent.isArchived = true
         return updateStudent(updatedStudent)

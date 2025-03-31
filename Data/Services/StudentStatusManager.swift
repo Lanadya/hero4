@@ -95,45 +95,27 @@ class StudentStatusManager {
         }
     }
 
-    // Spezifische Operationen
-    func createStudent(_ student: Student) -> Bool {
-        dataStore.addStudent(student)
+    // MARK: - Specific Operations
 
-        statusChangePublisher.send(StudentStatusChange(
-            studentId: student.id,
-            studentName: student.fullName,
-            type: .created,
-            success: true
-        ))
-
-        return true
-    }
-
-    func updateStudent(_ student: Student) -> Bool {
-        // Try to update the student - explicitly check dataStore.updateStudent result
-        // Note: We need to make sure updateStudent in DataStore returns a Bool
-        let updated = dataStore.updateStudent(student)
-
-        // Send status change notification
-        statusChangePublisher.send(StudentStatusChange(
-            studentId: student.id,
-            studentName: student.fullName,
-            type: .updated,
-            success: updated
-        ))
-
-        return updated
-    }
-
+    // Enhanced delete implementation with more detailed logging
     func deleteStudents(ids: [UUID], onComplete: @escaping (Int, Int) -> Void) {
-        print("DEBUG StatusManager: deleteStudents called with \(ids.count) students")
+        print("DEBUG StatusManager: deleteStudents called with \(ids.count) students: \(ids)")
+
+        // Make more detailed logs
+        for id in ids {
+            if let student = dataStore.getStudent(id: id) {
+                print("DEBUG StatusManager: Will attempt to delete student: \(student.fullName) (ID: \(id))")
+            } else {
+                print("DEBUG StatusManager: Warning: Student with ID \(id) not found before deletion attempt")
+            }
+        }
 
         performStatusChange(
             for: ids,
             operation: { studentId -> Bool in
                 print("DEBUG StatusManager: Executing DELETE operation for student ID: \(studentId)")
                 let result = self.dataStore.deleteStudent(id: studentId)
-                print("DEBUG StatusManager: Delete result: \(result ? "SUCCESS" : "FAILURE")")
+                print("DEBUG StatusManager: Delete result for \(studentId): \(result ? "SUCCESS" : "FAILURE")")
                 return result
             },
             changeType: .deleted,
@@ -141,8 +123,18 @@ class StudentStatusManager {
         )
     }
 
+    // Enhanced archive implementation with more detailed logging
     func archiveStudents(ids: [UUID], onComplete: @escaping (Int, Int) -> Void) {
-        print("DEBUG StatusManager: archiveStudents called with \(ids.count) students")
+        print("DEBUG StatusManager: archiveStudents called with \(ids.count) students: \(ids)")
+
+        // Make more detailed logs
+        for id in ids {
+            if let student = dataStore.getStudent(id: id) {
+                print("DEBUG StatusManager: Will attempt to archive student: \(student.fullName) (ID: \(id))")
+            } else {
+                print("DEBUG StatusManager: Warning: Student with ID \(id) not found before archive attempt")
+            }
+        }
 
         performStatusChange(
             for: ids,
@@ -157,7 +149,7 @@ class StudentStatusManager {
                 archivedStudent.isArchived = true
 
                 let result = self.dataStore.updateStudent(archivedStudent)
-                print("DEBUG StatusManager: Archive result: \(result ? "SUCCESS" : "FAILURE")")
+                print("DEBUG StatusManager: Archive result for \(studentId): \(result ? "SUCCESS" : "FAILURE")")
                 return result
             },
             changeType: .archived,
@@ -167,10 +159,12 @@ class StudentStatusManager {
 
     func moveStudentToClass(_ studentId: UUID, _ newClassId: UUID) -> Bool {
         guard let student = dataStore.getStudent(id: studentId) else {
+            print("DEBUG StatusManager: Cannot move student \(studentId) - not found")
             return false
         }
 
         let oldClassId = student.classId
+        print("DEBUG StatusManager: Moving student \(student.fullName) from class \(oldClassId) to \(newClassId)")
 
         // 1. Archiviere Bewertungen aus der alten Klasse
         let ratingsToArchive = dataStore.getRatingsForStudent(studentId: studentId)
@@ -180,15 +174,18 @@ class StudentStatusManager {
             rating.isArchived = true
             dataStore.updateRating(rating)
         }
+        print("DEBUG StatusManager: Archived \(ratingsToArchive.count) ratings for student \(studentId)")
 
         // 2. Aktualisiere die Klasse des Schülers
         var updatedStudent = student
         updatedStudent.classId = newClassId
-        dataStore.updateStudent(updatedStudent)
+        let updateResult = dataStore.updateStudent(updatedStudent)
+        print("DEBUG StatusManager: Updated student class: \(updateResult)")
 
         // 3. Passe die Sitzposition an
         if let oldPosition = dataStore.getSeatingPosition(studentId: studentId, classId: oldClassId) {
             dataStore.deleteSeatingPosition(id: oldPosition.id)
+            print("DEBUG StatusManager: Deleted old seating position")
         }
 
         // 4. Erstelle eine neue Sitzposition
@@ -199,6 +196,7 @@ class StudentStatusManager {
             yPos: 0
         )
         dataStore.addSeatingPosition(newPosition)
+        print("DEBUG StatusManager: Created new seating position")
 
         // 5. Sende Statusänderungsbenachrichtigung
         statusChangePublisher.send(StudentStatusChange(
