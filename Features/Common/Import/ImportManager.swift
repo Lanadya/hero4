@@ -9,10 +9,15 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum FileImportType {
+// ================ LOCAL TYPE DEFINITIONS ================
+// IMPORTANT: These are strictly local to this file
+// DO NOT IMPORT these from other files
+
+// IM = ImportManager prefix to avoid name collisions
+enum IM_FileImportType {
     case csv
     case excel
-
+    
     var allowedContentTypes: [UTType] {
         switch self {
         case .csv:
@@ -21,7 +26,7 @@ enum FileImportType {
             return [UTType.spreadsheet]
         }
     }
-
+    
     var description: String {
         switch self {
         case .csv:
@@ -32,7 +37,7 @@ enum FileImportType {
     }
 }
 
-enum ImportError: Error, LocalizedError {
+enum IM_ImportError: Error, LocalizedError {
     case accessDenied
     case invalidFile
     case noData
@@ -43,7 +48,7 @@ enum ImportError: Error, LocalizedError {
     case duplicateEntry(String)
     case classLimitReached
     case unknownError(Error)
-
+    
     var errorDescription: String? {
         switch self {
         case .accessDenied:
@@ -69,12 +74,11 @@ enum ImportError: Error, LocalizedError {
         }
     }
 }
-
 class ImportManager: ObservableObject {
-    @Published var selectedFileType: FileImportType = .csv
+    @Published var selectedFileType: IM_FileImportType = .csv
     @Published var showFileImporter = false
     @Published var isProcessing = false
-    @Published var error: ImportError?
+    @Published var error: IM_ImportError?
     @Published var showError = false
 
     // Daten aus der importierten Datei
@@ -123,7 +127,7 @@ class ImportManager: ObservableObject {
                 try processExcelData(fileData)
             }
 
-        } catch let importError as ImportError {
+        } catch let importError as IM_ImportError {
             displayError(importError)
         } catch {
             displayError(.unknownError(error))
@@ -134,28 +138,28 @@ class ImportManager: ObservableObject {
 
     private func processCSVData(_ data: Data) throws {
         guard let content = String(data: data, encoding: .utf8) else {
-            throw ImportError.invalidFile
+            throw IM_ImportError.invalidFile
         }
 
         // Einfache CSV-Verarbeitung (für komplexere Fälle sollte eine Bibliothek wie SwiftCSV verwendet werden)
         var rows = content.components(separatedBy: "\n")
 
         guard !rows.isEmpty else {
-            throw ImportError.noData
+            throw IM_ImportError.noData
         }
 
         // Entferne leere Zeilen
         rows = rows.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
         guard let headerRow = rows.first else {
-            throw ImportError.noData
+            throw IM_ImportError.noData
         }
 
         // Spaltenüberschriften extrahieren
         columnHeaders = parseCSVRow(headerRow)
 
         guard !columnHeaders.isEmpty else {
-            throw ImportError.invalidHeader
+            throw IM_ImportError.invalidHeader
         }
 
         // Datenzeilen extrahieren
@@ -172,7 +176,7 @@ class ImportManager: ObservableObject {
     private func processExcelData(_ data: Data) throws {
         // In einer echten App würden wir hier eine Excel-Bibliothek verwenden
         // Da dies eine Demo ist, werfen wir eine Fehlermeldung
-        throw ImportError.parseError("Excel-Import wird in einer späteren Version implementiert.")
+        throw IM_ImportError.parseError("Excel-Import wird in einer späteren Version implementiert.")
     }
 
     // In ImportManager.swift - Finden Sie diese Funktion und ersetzen Sie sie
@@ -253,7 +257,7 @@ class ImportManager: ObservableObject {
                 // Index der Spalten finden
                 guard let firstNameIndex = columnHeaders.firstIndex(of: firstNameCol),
                       let lastNameIndex = columnHeaders.firstIndex(of: lastNameCol) else {
-                    throw ImportError.invalidHeader
+                    throw IM_ImportError.invalidHeader
                 }
 
                 // Daten extrahieren
@@ -269,12 +273,12 @@ class ImportManager: ObservableObject {
 
                 // Validieren
                 if firstName.isEmpty && lastName.isEmpty {
-                    throw ImportError.missingFirstName
+                    throw IM_ImportError.missingFirstName
                 }
 
                 // Prüfen auf doppelte Namen
                 if !dataStore.isStudentNameUnique(firstName: firstName, lastName: lastName, classId: selectedClassId) {
-                    throw ImportError.duplicateEntry("\(firstName) \(lastName)")
+                    throw IM_ImportError.duplicateEntry("\(firstName) \(lastName)")
                 }
 
                 // Neuen Schüler erstellen
@@ -291,7 +295,7 @@ class ImportManager: ObservableObject {
                 dataStore.addStudent(student)
                 successCount += 1
 
-            } catch ImportError.duplicateEntry(let name) {
+            } catch IM_ImportError.duplicateEntry(let name) {
                 print("Duplikat gefunden in Zeile \(rowIndex + 2): \(name)")
                 failureCount += 1
                 continue
@@ -308,7 +312,7 @@ class ImportManager: ObservableObject {
         return (successCount, failureCount)
     }
 
-    private func displayError(_ error: ImportError) {
+    private func displayError(_ error: IM_ImportError) {
         self.error = error
         self.showError = true
     }

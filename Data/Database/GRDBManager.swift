@@ -65,7 +65,7 @@ class GRDBManager {
 
     func deleteClass(id: UUID) throws {
         try AppDatabase.shared.write { db in
-            _ = try Class
+            try Class
                 .filter(Class.Columns.id == id.uuidString)
                 .deleteAll(db)
         }
@@ -109,7 +109,7 @@ class GRDBManager {
 
     func deleteStudent(id: UUID) throws {
         try AppDatabase.shared.write { db in
-            _ = try Student
+            try Student
                 .filter(Student.Columns.id == id.uuidString)
                 .deleteAll(db)
         }
@@ -157,7 +157,7 @@ class GRDBManager {
 
     func deleteSeatingPosition(id: UUID) throws {
         try AppDatabase.shared.write { db in
-            _ = try SeatingPosition
+            try SeatingPosition
                 .filter(SeatingPosition.Columns.id == id.uuidString)
                 .deleteAll(db)
         }
@@ -210,7 +210,7 @@ class GRDBManager {
 
     func deleteRating(id: UUID) throws {
         try AppDatabase.shared.write { db in
-            _ = try Rating
+            try Rating
                 .filter(Rating.Columns.id == id.uuidString)
                 .deleteAll(db)
         }

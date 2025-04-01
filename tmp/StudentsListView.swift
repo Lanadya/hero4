@@ -1,55 +1,8 @@
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
-// Import the centralized color definitions from ColorExtensions.swift directly
-// until proper module system is set up
 
-// ================ LOCAL TYPE DEFINITIONS ================
-// IMPORTANT: These are strictly local to this file
-// DO NOT IMPORT these from other files
-
-// SLV = StudentsListView prefix to avoid name collisions
-enum SLV_FileImportType {
-    case csv
-    case excel
-    
-    var allowedContentTypes: [UTType] {
-        switch self {
-        case .csv:
-            return [UTType.commaSeparatedText]
-        case .excel:
-            return [UTType.spreadsheet]
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .csv:
-            return "CSV"
-        case .excel:
-            return "Excel"
-        }
-    }
-}
-
-// Enum wird nicht mehr verwendet, aber als Referenz aufbewahrt für zukünftige Erweiterungen
-// enum SLV_AlertType: Identifiable {
-//     case info
-//     case error(String)
-//     case delete
-//     case archive
-//     case classChange
-//     
-//     var id: Int {
-//         switch self {
-//         case .info: return 0
-//         case .error: return 1
-//         case .delete: return 2
-//         case .archive: return 3
-//         case .classChange: return 4
-//         }
-//     }
-// }
+import Features.Common.Components
 
 // Main StudentsListView with modifications to support the new action bar
 struct StudentsListView: View {
@@ -66,14 +19,13 @@ struct StudentsListView: View {
     // For multi-select and deletion
     @State private var editMode: EditMode = .inactive
     @State private var selectedStudents = Set<UUID>()
-    // Multiselect verwendet direkt die MultiSelectActionBar mit eingebauten Alerts
-    // Keine separaten Modal-Dialoge mehr notwendig
-    // @State private var showMultiSelectOperations = false  -- entfernt
+    @State private var activeAlert: AlertType? = nil
+    @State private var showMultiSelectOperations = false
     @State private var showClassChangeModal = false
 
     // For file import
     @State private var showFileImporter = false
-    @State private var importFileType: SLV_FileImportType = .csv
+    @State private var importFileType: FileImportType = .csv
     @State private var showColumnMappingView = false
     @State private var refreshStudentList = false
     @StateObject private var importManager: ImportManager
@@ -89,32 +41,22 @@ struct StudentsListView: View {
         _importManager = StateObject(wrappedValue: ImportManager(classId: initialClassId ?? UUID()))
     }
 
-    // Selects a student for detail view, ensuring that the student data is up-to-date
-    // Making this function non-private ensures it's accessible from other views
+    // Add this function here, after your property declarations but before the body
     func selectStudentForDetail(_ student: Student) {
         print("DEBUG: Student selected for detail: \(student.fullName) (ID: \(student.id))")
-        
-        // EXTREM WICHTIG: Die Reihenfolge dieser Schritte ist kritisch, um das "nil student" Problem zu lösen.
-        // Wir erzwingen die korrekte Reihenfolge mit Thread.sleep(0), um das UI zu aktualisieren.
-        
-        // 1. Zuerst den ursprünglichen Studenten zuweisen (sofortige Wirkung)
-        self.selectedStudent = student
-        
-        // 2. Thread.sleep(0) gibt der UI-Engine Zeit, den selectedStudent zu aktualisieren
-        Thread.sleep(forTimeInterval: 0)
-        
-        // 3. Wir bestätigen, dass der Student gesetzt ist
-        print("DEBUG: Initial student set, checking if valid: \(self.selectedStudent != nil)")
-        
-        // 4. ERST DANN das Modal öffnen mit dem Originalstudenten
-        self.showEditStudentModal = true
-        
-        // 5. Dann im Hintergrund den frischen Studenten laden, falls möglich
+
+        // Force refresh student data before showing the modal
+        if let refreshedStudent = viewModel.dataStore.getStudent(id: student.id) {
+            selectedStudent = refreshedStudent
+            print("DEBUG: Student data refreshed for detail view")
+        } else {
+            selectedStudent = student
+            print("DEBUG: Using original student data for detail view")
+        }
+
+        // Add a small delay to ensure the UI has time to update
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if let refreshedStudent = self.viewModel.dataStore.getStudent(id: student.id) {
-                self.selectedStudent = refreshedStudent
-                print("DEBUG: Successfully refreshed student data for \(refreshedStudent.fullName)")
-            }
+            self.showEditStudentModal = true
         }
     }
 
@@ -131,8 +73,7 @@ struct StudentsListView: View {
                         StudentsSidebarView(
                                 viewModel: viewModel,
                                 selectedStudent: $selectedStudent,
-                                showEditStudentModal: $showEditStudentModal,
-                                onSelectStudent: selectStudentForDetail
+                                showEditStudentModal: $showEditStudentModal
                             )
                             .frame(width: 250)
                             .background(Color(.systemGroupedBackground))
@@ -149,8 +90,8 @@ struct StudentsListView: View {
                                 showImportSheet: $showImportSheet,
                                 showImportHelp: $showImportHelp,
                                 showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents,
-                                // showMultiSelectOperations entfernt - wir verwenden direkte Alerts in MultiSelectActionBar
-                                onSelectStudent: selectStudentForDetail
+                                activeAlert: $activeAlert,
+                                showMultiSelectOperations: $showMultiSelectOperations
                             )
                         } else {
                             StudentsSelectionPromptView()
@@ -181,7 +122,7 @@ struct StudentsListView: View {
             }
             .sheet(isPresented: $showEditStudentModal) {
                 if let student = selectedStudent {
-                    // print("DEBUG: Opening EditStudentModal for \(student.fullName)")
+                    print("DEBUG: Opening EditStudentModal for \(student.fullName)")
                     EditStudentView(
                         student: student,
                         viewModel: viewModel,
@@ -198,27 +139,14 @@ struct StudentsListView: View {
                         Text("Fehler: Kein Schüler ausgewählt")
                             .foregroundColor(.red)
                             .padding()
-                        
-                        Text("Dieser Fehler sollte nicht auftreten. Bitte versuchen Sie es erneut.")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .padding(.horizontal)
 
                         Button("Schließen") {
-                            // In diesem Fall sofort schließen
                             showEditStudentModal = false
                         }
-                        .buttonStyle(BorderedButtonStyle())
                         .padding()
                     }
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
-                    .onAppear {
-                        // Nach 1,5 Sekunden automatisch schließen
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            showEditStudentModal = false
-                        }
-                    }
                 }
             }
             .sheet(isPresented: $showClassChangeModal) {
@@ -248,14 +176,22 @@ struct StudentsListView: View {
                     buttons: [
                         .default(Text("CSV-Datei (.csv)")) {
                             importFileType = .csv
-                            importManager.selectedFileType = .csv // Both have .csv case
+                            importManager.selectedFileType = .csv
                             showFileImporter = true
                         },
                         .cancel(Text("Abbrechen"))
                     ]
                 )
             }
-            // Sheet für MultiSelectOperationsView entfernt - wir verwenden jetzt direkte Alerts in MultiSelectActionBar
+            .sheet(isPresented: $showMultiSelectOperations) {
+                StudentMultiSelectOperationsView(
+                    viewModel: viewModel,
+                    selectedStudents: $selectedStudents,
+                    editMode: $editMode,
+                    isPresented: $showMultiSelectOperations,
+                    showClassChangeView: $showClassChangeForSelectedStudents
+                )
+            }
 
             .fileImporter(
                 isPresented: $showFileImporter,
@@ -280,24 +216,37 @@ struct StudentsListView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            // Alte Alert-Struktur entfernt, wir verwenden jetzt nur noch die Modal-Lösung
-            // mit StudentMultiSelectOperationsView
+            .alert(item: $activeAlert) { alertType in
+                switch alertType {
+                case .delete:
+                    return Alert(
+                        title: Text("Schüler löschen"),
+                        message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen?"),
+                        primaryButton: .destructive(Text("Löschen")) {
+                            viewModel.deleteMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
+                        },
+                        secondaryButton: .cancel()
+                    )
+                case .archive:
+                    return Alert(
+                        title: Text("Schüler archivieren"),
+                        message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") archivieren?"),
+                        primaryButton: .default(Text("Archivieren")) {
+                            viewModel.archiveMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
+                        },
+                        secondaryButton: .cancel()
+                    )
+                }
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             viewModel.loadStudentsForSelectedClass()
 
-            // Klassenwahl aus UserDefaults wiederherstellen, falls vorhanden
             if let classIdString = UserDefaults.standard.string(forKey: "selectedClassForStudentsList"),
                let classId = UUID(uuidString: classIdString) {
                 viewModel.selectClass(id: classId)
                 UserDefaults.standard.removeObject(forKey: "selectedClassForStudentsList")
-            } else {
-                // Synchronisiere mit der im Sitzplan aktiven Klasse, falls keine explizite Vorgabe
-                if let classIdString = UserDefaults.standard.string(forKey: "activeSeatingPlanClassId"),
-                   let classId = UUID(uuidString: classIdString) {
-                    viewModel.selectClass(id: classId)
-                }
             }
 
             // Setup notification for ClassChangeView
@@ -309,9 +258,10 @@ struct StudentsListView: View {
                 if let studentIdString = notification.userInfo?["studentId"] as? String,
                    let studentId = UUID(uuidString: studentIdString),
                    let student = viewModel.dataStore.getStudent(id: studentId) {
-                    // Sofort Modal öffnen ohne Verzögerung
                     selectedStudent = student
-                    showClassChangeModal = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showClassChangeModal = true
+                    }
                 }
             }
         }
@@ -320,16 +270,11 @@ struct StudentsListView: View {
             editMode = .inactive
             selectedStudents.removeAll()
 
-            // In SwiftUI, we don't need to explicitly remove observers
-            // since the observer is automatically deallocated when the view disappears
-            // This code is left commented to show the intent
-            /*
             NotificationCenter.default.removeObserver(
-                NotificationCenter.default, 
+                self,
                 name: Notification.Name("OpenClassChangeView"),
                 object: nil
             )
-            */
         }
     }
 
@@ -346,7 +291,7 @@ struct StudentsNoClassesView: View {
 
             Image(systemName: "person.3.fill")
                 .font(.system(size: 60))
-                .foregroundColor(.heroSecondary)
+                .foregroundColor(.blue)
 
             Text("Keine Klassen vorhanden")
                 .font(.title2)
@@ -380,10 +325,7 @@ struct StudentsSidebarView: View {
     @ObservedObject var viewModel: StudentsViewModel
     @Binding var selectedStudent: Student?
     @Binding var showEditStudentModal: Bool
-    
-    // Callback-Funktion für die Studentenauswahl
-    var onSelectStudent: (Student) -> Void
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Globale Suche
@@ -394,7 +336,7 @@ struct StudentsSidebarView: View {
 
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
 
                     TextField("Schülernamen suchen", text: Binding(
                         get: { viewModel.globalSearchText },
@@ -408,7 +350,7 @@ struct StudentsSidebarView: View {
                             viewModel.clearGlobalSearch()
                         }) {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.gray)
                         }
                     }
                 }
@@ -423,8 +365,7 @@ struct StudentsSidebarView: View {
                     StudentsSearchResultsView(
                         viewModel: viewModel,
                         selectedStudent: $selectedStudent,
-                        showEditStudentModal: $showEditStudentModal,
-                        onSelectStudent: onSelectStudent
+                        showEditStudentModal: $showEditStudentModal
                     )
                 }
 
@@ -442,10 +383,7 @@ struct StudentsSearchResultsView: View {
     @ObservedObject var viewModel: StudentsViewModel
     @Binding var selectedStudent: Student?
     @Binding var showEditStudentModal: Bool
-    
-    // Callback for selecting a student (will be provided by StudentsListView)
-    var onSelectStudent: (Student) -> Void
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Kopfzeile mit Anzahl der Ergebnisse
@@ -475,15 +413,16 @@ struct StudentsSearchResultsView: View {
                     ForEach(viewModel.searchResults) { result in
                         Button(action: {
                             viewModel.selectClass(id: result.student.classId)
-                            // Unmittelbar Schüler auswählen ohne Verzögerung
-                            onSelectStudent(result.student)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                selectStudentForDetail(result.student)
+                            }
                         }) {
                             VStack(alignment: .leading) {
                                 Text(result.student.fullName)
                                     .font(.headline)
                                 Text("Klasse: \(result.className)")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.gray)
                             }
                             .padding(8)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -561,10 +500,8 @@ struct StudentsContentView: View {
     @Binding var showImportSheet: Bool
     @Binding var showImportHelp: Bool
     @Binding var showClassChangeForSelectedStudents: Bool
-    // showMultiSelectOperations entfernt - wir verwenden direkte Alerts in MultiSelectActionBar
-    
-    // Callback für die Studentenauswahl
-    var onSelectStudent: (Student) -> Void
+    @Binding var activeAlert: AlertType?
+    @Binding var showMultiSelectOperations: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -598,8 +535,8 @@ struct StudentsContentView: View {
                         selectedStudent: $selectedStudent,
                         showEditStudentModal: $showEditStudentModal,
                         showClassChangeForSelectedStudents: $showClassChangeForSelectedStudents,
-                        // showMultiSelectOperations entfernt - wir verwenden direkte Alerts
-                        onSelectStudent: onSelectStudent
+                        activeAlert: $activeAlert,
+                        showMultiSelectOperations: $showMultiSelectOperations
                     )
                 }
             } else {
@@ -633,7 +570,7 @@ struct StudentsClassHeaderView: View {
                 if let note = classItem.note, !note.isEmpty {
                     Text(note)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                         .lineLimit(1)
                 }
 
@@ -665,7 +602,7 @@ struct StudentsClassHeaderView: View {
                                 .lineLimit(1)
                         }
                         .frame(width: 80, height: 50)
-                        .background(Color.heroSecondary.opacity(0.15))
+                        .background(Color.blue.opacity(0.15))
                         .cornerRadius(8)
                     }
                 }
@@ -682,7 +619,7 @@ struct StudentsClassHeaderView: View {
                             .lineLimit(1)
                     }
                     .frame(width: 80, height: 50)
-                    .background(Color.heroSecondary.opacity(0.15))
+                    .background(Color.blue.opacity(0.15))
                     .cornerRadius(8)
                 }
                 .disabled(viewModel.students.count >= 40)
@@ -706,7 +643,7 @@ struct StudentsClassHeaderView: View {
                                 .lineLimit(1)
                         }
                         .frame(width: 80, height: 50)
-                        .background(Color.heroSecondary.opacity(0.15))
+                        .background(Color.blue.opacity(0.15))
                         .cornerRadius(8)
                     }
                     .disabled(viewModel.students.count >= 40)
@@ -716,7 +653,7 @@ struct StudentsClassHeaderView: View {
                     }) {
                         Image(systemName: "info.circle")
                             .font(.system(size: 12))
-                            .foregroundColor(.heroSecondary)
+                            .foregroundColor(.blue)
                     }
                     .padding(.top, 2)
                 }
@@ -780,7 +717,7 @@ struct StudentsEmptyView: View {
                     }
                     .frame(width: 150)
                     .padding()
-                    .background(Color.accentGreen)
+                    .background(Color.green)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                 }
@@ -810,7 +747,7 @@ struct StudentsListHeader: View {
                 }) {
                     Text(selectedStudents.count == students.count ? "Deselect All" : "Select All")
                         .font(.subheadline)
-                        .foregroundColor(.heroSecondary)
+                        .foregroundColor(.blue)
                 }
 
                 Spacer()
@@ -839,10 +776,8 @@ struct StudentsListContent: View {
     @Binding var selectedStudent: Student?
     @Binding var showEditStudentModal: Bool
     @Binding var showClassChangeForSelectedStudents: Bool
-    // showMultiSelectOperations entfernt - wir verwenden direkte Alerts in MultiSelectActionBar
-    
-    // Callback-Funktion, die aus dem Hauptview übergeben wird
-    var onSelectStudent: (Student) -> Void
+    @Binding var activeAlert: AlertType?
+    @Binding var showMultiSelectOperations: Bool
 
     // State for tracking operation progress
     @State private var isProcessingOperation = false
@@ -861,8 +796,8 @@ struct StudentsListContent: View {
                         editMode: editMode,
                         onSelect: {
                             if editMode == .inactive {
-                                // Callback verwenden, um den Studenten auszuwählen
-                                onSelectStudent(student)
+                                selectedStudent = student
+                                showEditStudentModal = true
                             } else {
                                 if selectedStudents.contains(student.id) {
                                     selectedStudents.remove(student.id)
@@ -889,7 +824,7 @@ struct StudentsListContent: View {
             .environment(\.editMode, $editMode)
             .opacity(isProcessingOperation ? 0.7 : 1.0)
 
-            // Multi-select action bar with operation sheet handling
+            // Multi-select action bar with DIRECT alert handling
             if editMode == .active {
                 MultiSelectActionBar(
                     selectedStudents: $selectedStudents,
@@ -897,21 +832,24 @@ struct StudentsListContent: View {
                     editMode: $editMode,
                     onDeleteTapped: {
                         print("DEBUG: Delete tapped in parent view")
-                        // Nichts tun - Alert wird direkt in MultiSelectActionBar angezeigt
+                        activeAlert = .delete
                     },
                     onArchiveTapped: {
                         print("DEBUG: Archive tapped in parent view")
-                        // Nichts tun - Alert wird direkt in MultiSelectActionBar angezeigt
+                        activeAlert = .archive
                     },
                     viewModel: viewModel
                 )
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StudentOperationCompleted"))) { notification in
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StudentOperationCompleted"))) { _ in
             print("DEBUG StudentsListContent: Received StudentOperationCompleted")
-            // Nur isProcessingOperation zurücksetzen - das Zurücksetzen der Auswahl 
-            // und des Bearbeitungsmodus erfolgt jetzt direkt in MultiSelectActionBar
             isProcessingOperation = false
+
+            if !viewModel.showError {
+                selectedStudents.removeAll()
+                editMode = .inactive
+            }
         }
     }
 }
@@ -936,7 +874,7 @@ struct StudentsImportHelpSheet: View {
                     isPresented = false
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                         .font(.title2)
                 }
             }

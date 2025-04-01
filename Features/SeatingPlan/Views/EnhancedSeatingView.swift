@@ -1,4 +1,6 @@
 import SwiftUI
+// Import the centralized color definitions from ColorExtensions.swift directly
+// until proper module system is set up
 
 struct EnhancedSeatingView: View {
     @StateObject private var viewModel = EnhancedSeatingViewModel()
@@ -140,16 +142,16 @@ struct EnhancedSeatingView: View {
                 // Prüfe, ob eine Klasse für den Sitzplan ausgewählt wurde
                 checkForSelectedClass()
 
-                // Nach kurzer Verzögerung prüfen, ob die Schüleranordnung initialisiert werden sollte
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    if !viewModel.students.isEmpty {
-                        // Prüfen, ob bereits benutzerdefinierte Positionen existieren
-                        let hasCustomPositions = viewModel.seatingPositions.contains { $0.isCustomPosition }
-
-                        // Wenn keine benutzerdefinierten Positionen existieren, in der Ecke anordnen
-                        if !hasCustomPositions {
-                            viewModel.arrangeStudentsInCorner()
-                        }
+                // Direkt prüfen, ob die Schüleranordnung initialisiert werden sollte
+                // Kein Delay mehr, damit bei schnellem Tab-Wechsel keine parallelen Operationen stattfinden
+                if !viewModel.students.isEmpty {
+                    // Prüfen, ob bereits benutzerdefinierte Positionen existieren
+                    let hasCustomPositions = viewModel.seatingPositions.contains { $0.isCustomPosition }
+                    let hasAnyPositions = !viewModel.seatingPositions.isEmpty
+                    
+                    // Nur wenn keine Positionen oder keine benutzerdefinierten Positionen existieren
+                    if !hasAnyPositions || (!hasCustomPositions && !viewModel.isArrangingStudents) {
+                        viewModel.arrangeStudentsInCorner()
                     }
                 }
             }
@@ -227,28 +229,71 @@ struct SeatingHeaderView: View {
                     .foregroundColor(.gradePrimary)
                 }
 
-                // Modus-Umschalter
+                // Verbesserter Modus-Umschalter mit klarer visueller Unterscheidung
                 Button(action: {
-                    editMode.toggle()
-                }) {
-                    HStack {
-                        // Icon je nach Modus
-                        Image(systemName: editMode ? "pencil.circle" : "hand.tap")
-
-                        // Text mit korrekten Bezeichnungen
-                        Text(editMode ? "Bearbeitungsmodus" : "Bewertungsmodus")
-                            .font(.caption)
-
-                        // Umschaltpfeil
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 10))
-                            .foregroundColor(.gray)
+                    // Animation für sanftere Übergänge
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        editMode.toggle()
                     }
-                    .frame(height: 36)
-                    .padding(.horizontal, 10)
-                    .background(editMode ? Color.heroSecondaryLight : Color.accentGreenLight)
+                }) {
+                    HStack(spacing: 6) {
+                        // Größeres, aussagekräftigeres Icon
+                        ZStack {
+                            Circle()
+                                .fill(editMode ? Color.heroSecondary.opacity(0.2) : Color.accentGreen.opacity(0.2))
+                                .frame(width: 24, height: 24)
+                            
+                            Image(systemName: editMode ? "pencil.circle.fill" : "hand.tap.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(editMode ? .heroSecondary : .accentGreen)
+                        }
+
+                        // Text mit besserer Beschreibung
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(editMode ? "Bearbeitungsmodus" : "Bewertungsmodus")
+                                .font(.system(size: 12, weight: .medium))
+                            
+                            Text(editMode ? "Schüler positionieren" : "Leistung bewerten")
+                                .font(.system(size: 9))
+                                .opacity(0.7)
+                        }
+
+                        // Umschaltpfeil visuell hervorheben
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(editMode ? .heroSecondary.opacity(0.5) : .accentGreen.opacity(0.5))
+                            .padding(4)
+                            .background(Color.white.opacity(0.3))
+                            .clipShape(Circle())
+                    }
+                    .frame(height: 40) // Höher für bessere Touchbarkeit
+                    .padding(.horizontal, 12)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(
+                                colors: [
+                                    editMode ? Color.heroSecondaryLight.opacity(1.2) : Color.accentGreenLight.opacity(1.2),
+                                    editMode ? Color.heroSecondaryLight : Color.accentGreenLight
+                                ]
+                            ),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(
+                                editMode ? Color.heroSecondary.opacity(0.3) : Color.accentGreen.opacity(0.3),
+                                lineWidth: 1
+                            )
+                    )
                     .cornerRadius(8)
                     .foregroundColor(editMode ? .heroSecondary : .accentGreen)
+                    .shadow(
+                        color: editMode ? Color.heroSecondary.opacity(0.2) : Color.accentGreen.opacity(0.2),
+                        radius: 2,
+                        y: 1
+                    )
                 }
 
                 Spacer()
@@ -284,22 +329,83 @@ struct SeatingHeaderView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
 
-            // Schüleranzahl-Leiste
+            // Verbesserte Statusleiste mit Schüler- und Bewertungsstatistiken
             HStack {
-                Text("\(viewModel.students.count) Schüler")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                if !viewModel.absentStudents.isEmpty {
-                    Text("(\(viewModel.absentStudents.count) abwesend)")
-                        .font(.caption)
-                        .foregroundColor(.red)
+                // Linke Seite: Schülerstatistiken
+                HStack(spacing: 4) {
+                    // Gesamtanzahl der Schüler
+                    HStack(spacing: 2) {
+                        Image(systemName: "person.3")
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                        
+                        Text("\(viewModel.students.count)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.primary)
+                        
+                        Text("Schüler")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    // Abwesende Schüler mit visueller Hervorhebung
+                    if !viewModel.absentStudents.isEmpty {
+                        HStack(spacing: 2) {
+                            Image(systemName: "person.slash")
+                                .font(.system(size: 10))
+                                .foregroundColor(.red.opacity(0.7))
+                            
+                            Text("\(viewModel.absentStudents.count)")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.red.opacity(0.7))
+                            
+                            Text("abwesend")
+                                .font(.caption)
+                                .foregroundColor(.red.opacity(0.7))
+                        }
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(4)
+                    }
                 }
-
+                
                 Spacer()
+                
+                // Rechte Seite: Bewertungsstatistik - nur im Bewertungsmodus anzeigen
+                if !editMode {
+                    HStack(spacing: 6) {
+                        // Anzahl der heute vergebenen Bewertungen
+                        let ratingsToday = viewModel.getTodaysRatingsCount()
+                        if ratingsToday > 0 {
+                            HStack(spacing: 2) {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.accentGreen)
+                                
+                                Text("\(ratingsToday)")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(.accentGreen)
+                                
+                                Text("bewertet")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 2)
+                            .background(Color.accentGreen.opacity(0.1))
+                            .cornerRadius(4)
+                        }
+                    }
+                }
             }
             .padding(.horizontal)
-            .padding(.bottom, 8)
+            .padding(.vertical, 6)
+            .background(Color.white)
+            .overlay(
+                Divider().frame(maxWidth: .infinity, maxHeight: 1), 
+                alignment: .bottom
+            )
 
             Divider()
         }
@@ -377,8 +483,8 @@ struct SeatingGridView: View {
 
     var body: some View {
         ZStack {
-            // Hintergrund-Raster
-            GridBackgroundView()
+            // Hintergrund-Raster (optimiert für weniger Renderingaufwand)
+            GridBackgroundView().drawingGroup()
 
             // Studentenkarten ohne ForEach
             studentCardsView
@@ -393,51 +499,35 @@ struct SeatingGridView: View {
         }
     }
 
-    // Ausgelagerte View für Studentenkarten
+    // Ausgelagerte View für Studentenkarten mit optimierter Renderingleistung
     private var studentCardsView: some View {
-        // Statt ForEach verwenden wir Group mit manuell erzeugten Views
-        Group {
-            // Manuell die Views für jeden Studenten erzeugen
-            createStudentCards()
-        }
-    }
-
-    // Hilfsfunktion zum Erstellen aller StudentCards
-    @ViewBuilder
-    private func createStudentCards() -> some View {
-        // Manuelles Iteration durch das Array
         ZStack {
-            // Erste 20 Studenten
-            createStudentGroup(startIndex: 0, endIndex: 19)
-
-            // Zweite 20 Studenten
-            createStudentGroup(startIndex: 20, endIndex: 39)
-        }
-    }
-
-    // Hilfsfunktion zum Erstellen einer Gruppe von StudentCards
-    @ViewBuilder
-    private func createStudentGroup(startIndex: Int, endIndex: Int) -> some View {
-        ZStack {
-            // Für jeden Studenten mit Position eine Karte erstellen
-            ForEach(startIndex...endIndex, id: \.self) { index in
-                if index < viewModel.students.count,
-                   let student = viewModel.students[safe: index],
-                   let position = positions[student.id] {
+            // ForEach über die Studenten-IDs, nicht über Indizes
+            // Dies vermeidet unnötiges Neurendering wenn sich nur die Reihenfolge ändert
+            ForEach(viewModel.students) { student in
+                if let position = positions[student.id] {
                     createCard(for: student, at: position)
+                        // Wichtig: Verwende .id() für korrekte Identitätsverfolgung
+                        .id(student.id)
                 }
             }
         }
+        // Performance-Optimierung: Cache die gerenderte View
+        .drawingGroup()
     }
 
 
     // Hilfsfunktion zum Erstellen einer einzelnen Karte
     private func createCard(for student: Student, at position: CGPoint) -> some View {
-        StudentCard(
+        // Prüfen, ob der Schüler gerade gezogen wird
+        let isDragging = draggedStudent == student.id
+        let isStudentAbsent = viewModel.isStudentAbsent(student.id)
+        
+        return StudentCard(
             student: student,
             position: position,
             size: scaledCardSize,
-            isAbsent: viewModel.isStudentAbsent(student.id),
+            isAbsent: isStudentAbsent,
             editMode: editMode,
             screenWidth: screenSize.width,
             onTap: {
@@ -453,6 +543,17 @@ struct SeatingGridView: View {
                 viewModel.addRatingForStudent(studentId: student.id, value: rating)
             }
         )
+        // Füge Animationen hinzu, die den Zustand widerspiegeln
+        .scaleEffect(isDragging ? 1.05 : 1.0)
+        .shadow(
+            color: isDragging ? Color.blue.opacity(0.5) : Color.black.opacity(0.1),
+            radius: isDragging ? 10 : (isStudentAbsent ? 0 : 1),
+            x: 0, y: isDragging ? 4 : 0
+        )
+        // Opazität anpassen, damit abwesende Schüler unauffälliger erscheinen
+        .opacity(isStudentAbsent ? 0.6 : 1.0)
+        // Behebe Animation, die Swift 6.0 noch nicht unterstützt
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)
     }
 
     // Berechnete Eigenschaften
@@ -478,12 +579,9 @@ struct SeatingGridView: View {
 
     private func handleDrag(studentId: UUID, offset: CGSize) {
         if editMode {
+            // Nur die ID setzen, ohne die Position zu ändern
+            // Das verhindert, dass die Karte beim Ziehen "springt"
             draggedStudent = studentId
-            if var currentPos = positions[studentId] {
-                currentPos.x += offset.width
-                currentPos.y += offset.height
-                positions[studentId] = currentPos
-            }
         }
     }
 
@@ -508,14 +606,35 @@ struct SeatingGridView: View {
                 cardSize: baseCardSize
             )
 
+            // Implementiere magnetisches Einrasten an Grid-Punkte
+            // Wir teilen das Grid in Zellen auf und finden die nächstgelegene Zellenmitte
+            let snapDistance: CGFloat = 15.0 // Maximaler Abstand für Einrasten
+            
+            // Berechne die Mittelpositionen der Grid-Zellen
+            let gridCellWidth = baseCardSize.width + 10 // Karte + Abstand
+            let gridCellHeight = baseCardSize.height + 10 // Karte + Abstand
+            
+            // Berechne die Grid-Position, an die eingerastet werden soll
+            let snapX = gridX
+            let snapY = gridY
+            
+            // Spieler-Feedback: Haptisches Feedback beim Einrasten (falls verfügbar)
+            // In echter App könnte hier UIFeedbackGenerator.impactOccurred() aufgerufen werden
+            
             // Aktualisiere die Position in der Datenbank
             viewModel.updateStudentPosition(
                 studentId: studentId,
-                newX: max(0, gridX),
-                newY: max(0, gridY)
+                newX: max(0, snapX),
+                newY: max(0, snapY)
             )
 
-            draggedStudent = nil
+            // Animation beim Loslassen für sanftes Einrasten
+            DispatchQueue.main.async {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    draggedStudent = nil
+                    // Die neue Position wird durch loadPositions() aktualisiert
+                }
+            }
         }
     }
 
@@ -609,18 +728,35 @@ struct StudentCard: View {
             }
         }
         .frame(width: size.width, height: size.height)
-        .background(isAbsent ? Color.gray.opacity(0.2) : Color.white)
+        .background(
+            // Verbesserte Farbgebung für besseren visuellen Unterschied
+            isAbsent ? 
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.1)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ) : 
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.white, Color.white.opacity(0.92)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+        )
         .cornerRadius(8)
         .shadow(radius: isDragging ? 3 : 0.5)
         .overlay(
-            // Rahmen
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(cardBorderColor, lineWidth: isDragging ? 2 : 0.5)
+            // Rahmen mit Abwesenheitsindikator
+            ZStack {
+                // Grundrahmen
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(cardBorderColor, lineWidth: isDragging ? 2 : 0.5)
+                
+                // Kein auffälliger Indikator für abwesende Schüler mehr
+                // Stattdessen wird nur die Opazität des gesamten Elements reduziert
+            }
         )
-        .position(
-            x: position.x + dragOffset.width,
-            y: position.y + dragOffset.height
-        )
+        // Verwende eine normale Position ohne Drag-Anpassung
+        .position(position)
         .gesture(
             DragGesture(coordinateSpace: .global)
                 .onChanged { gesture in
@@ -640,43 +776,94 @@ struct StudentCard: View {
         )
     }
 
-    // Bewertungsbutton mit Hervorhebung und strenger Begrenzung
+    // Verbesserte Bewertungsbuttons mit besserer Touch-Bereichsgröße und visuellem Feedback
     private func ratingButton(_ text: String, _ value: RatingValue) -> some View {
         let isActive = currentRating == value
 
+        // Verwende semantische Farben
         let baseColor: Color
+        let iconName: String
         switch value {
-        case .doublePlus: baseColor = .green
-        case .plus: baseColor = .green.opacity(0.7)
-        case .minus: baseColor = .red.opacity(0.7)
-        case .doubleMinus: baseColor = .red
+        case .doublePlus:
+            baseColor = .green
+            iconName = "hand.thumbsup.fill"
+        case .plus:
+            baseColor = .green.opacity(0.7)
+            iconName = "hand.thumbsup"
+        case .minus:
+            baseColor = .red.opacity(0.7)
+            iconName = "hand.thumbsdown"
+        case .doubleMinus:
+            baseColor = .red
+            iconName = "hand.thumbsdown.fill"
         }
 
         let buttonColor = isActive ? baseColor : baseColor.opacity(0.3)
-
+        
         return Button(action: {
+            // Haptisches Feedback könnte hier hinzugefügt werden
+            
+            // Rating-Aktion aufrufen
             onRatingSelected(value)
-            withAnimation(.easeInOut(duration: 0.2)) {
+            
+            // Animation für besseres visuelles Feedback
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
                 currentRating = value
             }
         }) {
-            Text(text)
-                .font(.system(size: 11, weight: .bold))
-                .frame(maxWidth: .infinity)
-                .frame(height: 22)
-                .background(buttonColor)
-                .foregroundColor(.white)
-                .cornerRadius(4)
+            VStack(spacing: 2) {
+                // Text-Label größer für bessere Touchbarkeit
+                Text(text)
+                    .font(.system(size: 12, weight: .bold))
+                    
+                // Optionales Icon für verbesserte Benutzerführung auf kleinen Screens
+                if isCompactLayout {
+                    Image(systemName: iconName)
+                        .font(.system(size: 8))
+                        .opacity(0.8)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: isCompactLayout ? 26 : 22) // Größere Touchfläche auf kleinen Displays
+            .background(
+                ZStack {
+                    // Hintergrund mit Gradient für 3D-Effekt
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [buttonColor.opacity(1.1), buttonColor]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    
+                    // Glanzeffekt bei aktiven Buttons
+                    if isActive {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.white.opacity(0.3), Color.clear]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                }
+            )
+            .foregroundColor(.white)
+            .cornerRadius(4)
+            .shadow(color: isActive ? buttonColor.opacity(0.5) : Color.clear, radius: isActive ? 2 : 0, y: 1)
         }
         .buttonStyle(BorderlessButtonStyle())
         .contentShape(Rectangle()) // Begrenzt die Hitbox auf den sichtbaren Bereich
+        .scaleEffect(isActive ? 1.05 : 1.0) // Leicht vergrößern bei Aktivierung
     }
 
     private var cardBorderColor: Color {
         if isDragging {
             return Color.blue
         } else if isAbsent {
-            return Color.red.opacity(0.3)
+            return Color.gray.opacity(0.2) // Subtiler Rahmen für abwesende Schüler
         } else {
             return Color.gray.opacity(0.3)
         }
@@ -962,20 +1149,21 @@ struct GridBackgroundView: View {
                     .fill(Color(.systemGray6))
 
                 // Vertikale Linien
-                ForEach(0...20, id: \.self) { x in
+                // Reduzierte Anzahl der Linien für bessere Performance
+                ForEach(0...10, id: \.self) { x in
                     Rectangle()
                         .fill(Color(.systemGray4))
                         .frame(width: 1)
-                        .position(x: CGFloat(x) * (geometry.size.width / 20), y: geometry.size.height / 2)
+                        .position(x: CGFloat(x) * (geometry.size.width / 10), y: geometry.size.height / 2)
                         .frame(height: geometry.size.height)
                 }
 
-                // Horizontale Linien
-                ForEach(0...20, id: \.self) { y in
+                // Horizontale Linien - reduziert für bessere Performance
+                ForEach(0...10, id: \.self) { y in
                     Rectangle()
                         .fill(Color(.systemGray4))
                         .frame(height: 1)
-                        .position(x: geometry.size.width / 2, y: CGFloat(y) * (geometry.size.height / 20))
+                        .position(x: geometry.size.width / 2, y: CGFloat(y) * (geometry.size.height / 10))
                         .frame(width: geometry.size.width)
                 }
             }

@@ -51,5 +51,8 @@ struct StudentsRow: View {
             .padding(.vertical, 6)
         }
         .buttonStyle(PlainButtonStyle())
+        // Falls im Bearbeitungsmodus, ignoriere die Klick-Geste für den gesamten Eintrag
+        // nur das Checkbox-Symbol soll klickbar sein
+        .allowsHitTesting(editMode == .inactive || (editMode == .active && isSelected == false))
     }
 }

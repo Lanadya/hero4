@@ -1,16 +1,26 @@
 import SwiftUI
+import Foundation
+// Import the centralized color definitions from ColorExtensions.swift directly
+// until proper module system is set up
+
+// Define a local operation type for this view's functionality
 
 struct StudentMultiSelectOperationsView: View {
     @ObservedObject var viewModel: StudentsViewModel
     @Binding var selectedStudents: Set<UUID>
     @Binding var editMode: EditMode
     @Binding var isPresented: Bool
-    @Binding var showClassChangeView: Bool  // Add this binding
+    @Binding var showClassChangeView: Bool  // Binding for the class change view
+    
+    // WICHTIG: Wir trennen absichtlich den selectedStudent vom Hauptview,
+    // um ungewollte Interaktionen zwischen Einzelauswahl und Multiselect zu vermeiden
+    // Wir verwenden hier eine separate Variable nur für die Multiselect-Ansicht
 
     @State private var operationType: OperationType? = nil
     @State private var isProcessing = false
     @State private var errorMessage: String? = nil
 
+    // View-specific operation type
     enum OperationType: Identifiable {
         case delete, archive, move
 
@@ -95,18 +105,18 @@ struct StudentMultiSelectOperationsView: View {
                     HStack {
                         Image(systemName: "arrow.right.circle")
                             .font(.title2)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.heroSecondary)
                         VStack(alignment: .leading) {
                             Text("Klasse wechseln")
                                 .font(.headline)
-                            Text("\(selectedStudents.count) ausgewählte Schüler in andere Klasse verschieben")
+                            Text("Mehrere Schüler in andere Klasse verschieben")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                         Spacer()
                     }
                     .padding()
-                    .background(Color.blue.opacity(0.1))
+                    .background(Color.heroSecondary.opacity(0.1))
                     .cornerRadius(10)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -139,8 +149,9 @@ struct StudentMultiSelectOperationsView: View {
             case .delete:
                 return Alert(
                     title: Text("Schüler löschen"),
-                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen? Dies kann nicht rückgängig gemacht werden."),
+                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") löschen? Diese Aktion kann nicht rückgängig gemacht werden und alle zugehörigen Daten (Noten, Sitzpositionen) werden ebenfalls gelöscht."),
                     primaryButton: .destructive(Text("Löschen")) {
+                        print("DEBUG: Delete confirmed in StudentMultiSelectOperationsView")
                         executeDeleteOperation()
                     },
                     secondaryButton: .cancel()
@@ -148,8 +159,9 @@ struct StudentMultiSelectOperationsView: View {
             case .archive:
                 return Alert(
                     title: Text("Schüler archivieren"),
-                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") archivieren?"),
+                    message: Text("Möchten Sie wirklich \(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler" : "Schüler") archivieren? Archivierte Schüler und deren Bewertungen werden in der regulären Ansicht nicht mehr angezeigt, können aber im Archiv-Tab eingesehen werden."),
                     primaryButton: .default(Text("Archivieren")) {
+                        print("DEBUG: Archive confirmed in StudentMultiSelectOperationsView")
                         executeArchiveOperation()
                     },
                     secondaryButton: .cancel()
@@ -165,6 +177,36 @@ struct StudentMultiSelectOperationsView: View {
                 )
             }
         }
+        .onAppear {
+            print("DEBUG: MultiSelectOperationsView appeared with operation: \(viewModel.multiSelectOperation)")
+            // Automatically set the operation type based on the ViewModel's state
+            switch viewModel.multiSelectOperation {
+            case .delete:
+                print("DEBUG: Setting operationType to .delete")
+                DispatchQueue.main.async {
+                    self.operationType = .delete
+                }
+            case .archive:
+                print("DEBUG: Setting operationType to .archive")
+                DispatchQueue.main.async {
+                    self.operationType = .archive
+                }
+            case .move:
+                print("DEBUG: Setting operationType to .move")
+                DispatchQueue.main.async {
+                    self.operationType = .move
+                }
+            case .none:
+                print("DEBUG: No operation type set")
+                // Do nothing, let user select an operation
+                break
+            }
+            
+            // Reset ViewModel state after a delay to ensure alert is shown
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                viewModel.multiSelectOperation = .none
+            }
+        }
     }
 
     // MARK: - Operation Handlers
@@ -173,13 +215,28 @@ struct StudentMultiSelectOperationsView: View {
         print("DEBUG MultiSelectView: Löschvorgang für \(selectedStudents.count) Schüler startet")
         isProcessing = true
 
-        viewModel.deleteMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
+        let success = viewModel.deleteMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
+        
+        // Mehr Details über den Erfolg oder Misserfolg anzeigen
+        let message: String
+        if success {
+            message = "\(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler wurde" : "Schüler wurden") erfolgreich gelöscht."
+        } else {
+            message = "Beim Löschen der Schüler ist ein Fehler aufgetreten. Einige oder alle Schüler konnten nicht gelöscht werden."
+        }
+        
+        // Zeige dem Benutzer ein Feedback-Alert
+        viewModel.showError(message: message)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.isProcessing = false
             self.isPresented = false
-            print("DEBUG MultiSelectView: Löschvorgang abgeschlossen")
-            NotificationCenter.default.post(name: Notification.Name("StudentOperationCompleted"), object: nil)
+            print("DEBUG MultiSelectView: Löschvorgang abgeschlossen, Erfolg: \(success)")
+            NotificationCenter.default.post(
+                name: Notification.Name("StudentOperationCompleted"),
+                object: nil,
+                userInfo: ["success": success]
+            )
         }
     }
 
@@ -187,13 +244,28 @@ struct StudentMultiSelectOperationsView: View {
         print("DEBUG MultiSelectView: Archivierungsvorgang für \(selectedStudents.count) Schüler startet")
         isProcessing = true
 
-        viewModel.archiveMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
+        let success = viewModel.archiveMultipleStudentsWithStatus(studentIds: Array(selectedStudents))
+        
+        // Mehr Details über den Erfolg oder Misserfolg anzeigen
+        let message: String
+        if success {
+            message = "\(selectedStudents.count) \(selectedStudents.count == 1 ? "Schüler wurde" : "Schüler wurden") erfolgreich archiviert."
+        } else {
+            message = "Beim Archivieren der Schüler ist ein Fehler aufgetreten. Einige oder alle Schüler konnten nicht archiviert werden."
+        }
+        
+        // Zeige dem Benutzer ein Feedback-Alert
+        viewModel.showError(message: message)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.isProcessing = false
             self.isPresented = false
-            print("DEBUG MultiSelectView: Archivierungsvorgang abgeschlossen")
-            NotificationCenter.default.post(name: Notification.Name("StudentOperationCompleted"), object: nil)
+            print("DEBUG MultiSelectView: Archivierungsvorgang abgeschlossen, Erfolg: \(success)")
+            NotificationCenter.default.post(
+                name: Notification.Name("StudentOperationCompleted"),
+                object: nil,
+                userInfo: ["success": success]
+            )
         }
     }
 

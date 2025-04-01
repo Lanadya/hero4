@@ -57,14 +57,18 @@ class DataStore: ObservableObject {
             }
         }
 
-        func addClass(_ class: Class) {
+        // Aktualisiert: Gibt die ID der neuen Klasse zurück, damit wir in addSampleData() verfolgen können, welche Klassen neu sind
+        @discardableResult
+        func addClass(_ class: Class) -> UUID? {
             do {
                 let updatedClass = try dbManager.saveClass(`class`)
                 classes.append(updatedClass)
                 print("DEBUG DataStore: Klasse \(updatedClass.name) hinzugefügt")
                 objectWillChange.send()
+                return updatedClass.id  // Gibt die ID zurück
             } catch {
                 print("ERROR DataStore: Fehler beim Hinzufügen der Klasse: \(error)")
+                return nil
             }
         }
 
@@ -563,6 +567,10 @@ class DataStore: ObservableObject {
         }
 
         func addSampleData() {
+            // Speichere IDs der neu erstellten Beispielklassen
+            // WICHTIG: Nur zu diesen Klassen Beispielschüler hinzufügen
+            var newSampleClassIds: [UUID] = []
+            
             // Beispielklassen hinzufügen
             let sampleClasses = [
                 Class(name: "10a", note: "Mathe", row: 2, column: 1),
@@ -573,15 +581,18 @@ class DataStore: ObservableObject {
 
             for sampleClass in sampleClasses {
                 if validateClassPositionIsAvailable(row: sampleClass.row, column: sampleClass.column) {
-                    addClass(sampleClass)
+                    let newClassId = addClass(sampleClass)
+                    if newClassId != nil {
+                        print("DEBUG DataStore: Neue Beispielklasse hinzugefügt: \(sampleClass.name) mit ID \(newClassId!)")
+                        newSampleClassIds.append(newClassId!)
+                    }
                 }
             }
 
-            // Beispielschüler hinzufügen
-            if !classes.isEmpty {
-                for classObj in classes {
-                    addSampleStudentsToClass(classId: classObj.id)
-                }
+            // Nur zu den neu erstellten Beispielklassen Schüler hinzufügen
+            print("DEBUG DataStore: Füge Schüler nur zu \(newSampleClassIds.count) neuen Beispielklassen hinzu")
+            for classId in newSampleClassIds {
+                addSampleStudentsToClass(classId: classId)
             }
         }
 

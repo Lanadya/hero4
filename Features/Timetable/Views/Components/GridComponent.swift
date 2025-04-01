@@ -1,4 +1,6 @@
 import SwiftUI
+// Import the centralized color definitions from ColorExtensions.swift directly
+// until proper module system is set up
 
 enum CellType {
     case unusable

@@ -1,5 +1,30 @@
 
 import SwiftUI
+// Import the centralized color definitions from ColorExtensions.swift directly
+// until proper module system is set up
+
+// ================ LOCAL TYPE DEFINITIONS ================
+// IMPORTANT: These are strictly local to this file
+// DO NOT IMPORT these from other files
+
+// CV = ClassesView prefix to avoid name collisions
+enum CV_AlertType: Identifiable {
+    case info
+    case error(String)
+    case delete
+    case archive
+    case classChange
+    
+    var id: Int {
+        switch self {
+        case .info: return 0
+        case .error: return 1
+        case .delete: return 2
+        case .archive: return 3
+        case .classChange: return 4
+        }
+    }
+}
 
 struct ClassesView: View {
     @StateObject private var viewModel = TimetableViewModel()
@@ -9,7 +34,9 @@ struct ClassesView: View {
     // Separate state variables for different information displays
     @State private var showInfoDialog = false  // Only for the button-triggered info
     @State private var showFirstLaunchInfo = false  // Only for the first-launch overlay
-    @State private var activeAlert: AlertType? = nil
+    
+    // Use local alert type
+    @State private var activeAlert: CV_AlertType? = nil
 
     // Add flag to track if initialization has already happened
     @State private var hasInitialized = false
@@ -179,7 +206,7 @@ struct HeaderView: View {
 struct DebugControlsView: View {
     @Binding var showDebugControls: Bool
     @ObservedObject var viewModel: TimetableViewModel
-    @Binding var activeAlert: AlertType?
+    @Binding var activeAlert: CV_AlertType?
 
     var body: some View {
         HStack {

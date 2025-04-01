@@ -20,20 +20,20 @@ class RatingRepository {
     }
 
     func addRating(_ rating: Rating) throws {
-     _ = try dbQueue.write { db in
+        try dbQueue.write { db in
             try rating.insert(db)
         }
     }
 
     func updateRating(_ rating: Rating) throws {
-    _ = try dbQueue.write { db in
+        try dbQueue.write { db in
             try rating.update(db)
         }
     }
 
     func deleteRating(id: UUID) throws {
         try dbQueue.write { db in
-        _ = try Rating.filter(Rating.Columns.id == id.uuidString).deleteAll(db)
+            try Rating.filter(Rating.Columns.id == id.uuidString).deleteAll(db)
         }
     }
 }

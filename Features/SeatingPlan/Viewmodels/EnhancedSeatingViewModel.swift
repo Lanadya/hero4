@@ -12,6 +12,13 @@ class EnhancedSeatingViewModel: ObservableObject {
     @Published var absentStudents: Set<UUID> = [] // Variable for absent students
     @Published var errorMessage: String?
     @Published var showError: Bool = false
+    
+    // Interner Status zum Tracking gleichzeitiger Operationen
+    var isArrangingStudents = false
+    var isLoadingClass = false
+    
+    // Speichert den Zeitpunkt der letzten Anordnung pro Klassenraum
+    private var lastArrangementTimes: [String: Date] = [:]
 
     // DataStore reference
     let dataStore = DataStore.shared
@@ -60,12 +67,37 @@ class EnhancedSeatingViewModel: ObservableObject {
 
     func selectClass(_ id: UUID?) {
         print("DEBUG: Selecting class: \(id?.uuidString ?? "none")")
+        
+        // Vermeiden von Überladung wenn dieselbe Klasse erneut ausgewählt wird
+        if selectedClassId == id && !students.isEmpty {
+            print("DEBUG: Klasse ist bereits ausgewählt - kein erneutes Laden nötig")
+            return
+        }
+        
+        // Verhindern von parallelen Ladeprozessen
+        if isLoadingClass {
+            print("DEBUG: Klassenladung läuft bereits - wird abgebrochen")
+            return
+        }
+        
+        isLoadingClass = true
         selectedClassId = id
+        
+        // Aktive Klasse in UserDefaults speichern für App-übergreifende Synchronisation
+        if let id = id {
+            UserDefaults.standard.set(id.uuidString, forKey: "activeSeatingPlanClassId")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "activeSeatingPlanClassId")
+        }
+        
         updateSelectedClass()
         loadStudentsForSelectedClass()
         loadSeatingPositionsForSelectedClass()
         // Reset absence status when changing classes
         absentStudents.removeAll()
+        
+        // Ladezustand zurücksetzen
+        isLoadingClass = false
     }
 
     private func updateSelectedClass() {
@@ -246,6 +278,24 @@ class EnhancedSeatingViewModel: ObservableObject {
         // Update UI
         objectWillChange.send()
     }
+    
+    /// Gibt die Anzahl der heute vergebenen Bewertungen zurück
+    func getTodaysRatingsCount() -> Int {
+        guard let classId = selectedClassId else { return 0 }
+        
+        // Heutiges Datum
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        // Alle Bewertungen für die aktuelle Klasse laden
+        let allRatings = dataStore.ratings.filter { rating in
+            rating.classId == classId &&
+            !rating.isArchived &&
+            calendar.isDate(rating.date, inSameDayAs: today)
+        }
+        
+        return allRatings.count
+    }
 
     func isStudentAbsent(_ studentId: UUID) -> Bool {
         return absentStudents.contains(studentId)
@@ -253,14 +303,18 @@ class EnhancedSeatingViewModel: ObservableObject {
 
     // Update student notes
     func updateStudentNotes(studentId: UUID, notes: String) {
-        if let index = students.firstIndex(where: { $0.id == studentId }) {
+        if let index = students.firstIndex(where
+                                           : { $0.id == studentId }) {
             var updatedStudent = students[index]
             updatedStudent.notes = notes.isEmpty ? nil : notes
 
             // Update student in database
-            dataStore.updateStudent(updatedStudent)
-
-            print("DEBUG: Updated notes for student \(studentId)")
+            let success = dataStore.updateStudent(updatedStudent)
+            if success {
+                print("DEBUG: Updated notes for student \(studentId)")
+            } else {
+                print("ERROR: Failed to update notes for student \(studentId)")
+            }
         }
     }
 
@@ -273,19 +327,44 @@ class EnhancedSeatingViewModel: ObservableObject {
 
         // Load existing positions
         seatingPositions = dataStore.seatingPositions.filter { $0.classId == classId }
-        print("DEBUG: Loaded \(seatingPositions.count) seating positions")
+        print("DEBUG: Loaded \(seatingPositions.count) seating positions for class \(classId)")
+        
+        // Prüfen, ob bereits ein Sitzplan existiert
+        let hasCustomPositions = seatingPositions.contains { $0.isCustomPosition }
+        let hasAnyPositions = !seatingPositions.isEmpty
+        
+        // WICHTIG: Nur einmal pro Klassenwechsel die Schüler anordnen und Wiederholungen vermeiden
+        if !hasAnyPositions || (!hasCustomPositions && students.count > 0 && !isArrangingStudents) {
+            // Lasse mindestens 10 Sekunden zwischen wiederholten Anordnungen vergehen
+            let now = Date()
+            let classId = selectedClassId?.uuidString ?? "unknown"
+            
+            if let lastArrangement = lastArrangementTimes[classId], 
+               now.timeIntervalSince(lastArrangement) < 10.0 {
+                print("DEBUG: Skipping arrangement - already arranged recently")
+                return
+            }
+            
+            // Bei Erstanlage (keine Positionen) oder wenn keine benutzerdefinierten Positionen existieren,
+            // aber Schüler vorhanden sind, arrangiere die Schüler in der Ecke
+            print("DEBUG: No custom seating plan exists - arranging students in corner")
+            arrangeStudentsInCorner()
+            
+            // Zeitpunkt der letzten Anordnung für diese Klasse speichern
+            lastArrangementTimes[classId] = now
+        } else {
+            // For students without a position, create a default position
+            for student in students {
+                if !seatingPositions.contains(where: { $0.studentId == student.id }) {
+                    // Create a default position
+                    let defaultPosition = createDefaultPosition(for: student.id, classId: classId)
+                    seatingPositions.append(defaultPosition)
 
-        // For students without a position, create a default position
-        for student in students {
-            if !seatingPositions.contains(where: { $0.studentId == student.id }) {
-                // Create a default position
-                let defaultPosition = createDefaultPosition(for: student.id, classId: classId)
-                seatingPositions.append(defaultPosition)
-
-                // Add the position to the DataStore
-                var positions = dataStore.seatingPositions
-                positions.append(defaultPosition)
-                dataStore.seatingPositions = positions
+                    // Add the position to the DataStore
+                    var positions = dataStore.seatingPositions
+                    positions.append(defaultPosition)
+                    dataStore.seatingPositions = positions
+                }
             }
         }
     }
@@ -293,6 +372,15 @@ class EnhancedSeatingViewModel: ObservableObject {
     // Arrange students initially in the corner of the room
     func arrangeStudentsInCorner() {
         guard let classId = selectedClassId else { return }
+        
+        // Wenn bereits eine Anordnung läuft, diese nicht erneut starten
+        if isArrangingStudents {
+            print("DEBUG: Already arranging students - skipping duplicate request")
+            return
+        }
+        
+        // Anordnungsprozess starten und tracken
+        isArrangingStudents = true
         print("DEBUG: Arranging students in corner")
 
         // Sort students by last name
@@ -302,8 +390,13 @@ class EnhancedSeatingViewModel: ObservableObject {
         let hasCustomPositions = seatingPositions.contains { $0.isCustomPosition }
         if hasCustomPositions {
             print("DEBUG: Skipping arrangement - Custom positions already exist")
+            isArrangingStudents = false
             return
         }
+        
+        // Batch-Operationen vorbereiten, um die Datenbank-Schreibvorgänge zu optimieren
+        var positionsToUpdate: [SeatingPosition] = []
+        var positionsToAdd: [SeatingPosition] = []
 
         // Starting position in the corner (top left)
         let startX = 0
@@ -315,24 +408,14 @@ class EnhancedSeatingViewModel: ObservableObject {
             let xPos = startX + (index % 3)
             let yPos = startY + (index / 3)
 
-            // Create or update position
+            // Create or update position in Batches
             if let existingPosition = seatingPositions.first(where: { $0.studentId == student.id }) {
                 var updatedPosition = existingPosition
                 updatedPosition.xPos = xPos
                 updatedPosition.yPos = yPos
-                updatedPosition.isCustomPosition = false // Don't mark as custom
-
-                // Save the position to our local array and DataStore
-                if let index = seatingPositions.firstIndex(where: { $0.id == existingPosition.id }) {
-                    seatingPositions[index] = updatedPosition
-
-                    // Update in DataStore array
-                    var positions = dataStore.seatingPositions
-                    if let dsIndex = positions.firstIndex(where: { $0.id == existingPosition.id }) {
-                        positions[dsIndex] = updatedPosition
-                        dataStore.seatingPositions = positions
-                    }
-                }
+                updatedPosition.isCustomPosition = false
+                
+                positionsToUpdate.append(updatedPosition)
             } else {
                 // Create new position
                 let newPosition = SeatingPosition(
@@ -342,18 +425,40 @@ class EnhancedSeatingViewModel: ObservableObject {
                     yPos: yPos,
                     isCustomPosition: false
                 )
-                seatingPositions.append(newPosition)
-
-                // Add to DataStore array
-                var positions = dataStore.seatingPositions
-                positions.append(newPosition)
-                dataStore.seatingPositions = positions
+                positionsToAdd.append(newPosition)
             }
         }
+        
+        // Batch-Update der lokalen Array
+        for position in positionsToUpdate {
+            if let index = seatingPositions.firstIndex(where: { $0.id == position.id }) {
+                seatingPositions[index] = position
+            }
+        }
+        seatingPositions.append(contentsOf: positionsToAdd)
+        
+        // Batch-Update der DataStore-Array - alle in einem Schritt
+        var positions = dataStore.seatingPositions
+        
+        // Zuerst Updates
+        for position in positionsToUpdate {
+            if let index = positions.firstIndex(where: { $0.id == position.id }) {
+                positions[index] = position
+            }
+        }
+        
+        // Dann Neuzugänge
+        positions.append(contentsOf: positionsToAdd)
+        
+        // Nur ein einziger Schreibvorgang
+        dataStore.seatingPositions = positions
 
-        // Notify of changes
+        // Notify of changes - nach allem
         objectWillChange.send()
         print("DEBUG: Arranged \(sortedStudents.count) students in the corner")
+        
+        // Anordnungsprozess beenden
+        isArrangingStudents = false
     }
 
     // Reload seating positions for the currently selected class
@@ -385,35 +490,24 @@ class EnhancedSeatingViewModel: ObservableObject {
         )
     }
 
-    // Update a student's position
+    // Update a student's position with Batch-Operationen
     func updateStudentPosition(studentId: UUID, newX: Int, newY: Int) {
         guard let classId = selectedClassId else { return }
-
-        // Find the existing position
+        
+        // Finde die bestehende Position oder erstelle eine neue
+        var updatedPosition: SeatingPosition
+        var isNewPosition = false
+        
         if let existingPosition = seatingPositions.first(where: { $0.studentId == studentId }) {
-            // Create an updated position
-            var updatedPosition = existingPosition
+            // Position aktualisieren
+            updatedPosition = existingPosition
             updatedPosition.xPos = newX
             updatedPosition.yPos = newY
             updatedPosition.lastUpdated = Date()
             updatedPosition.isCustomPosition = true
-
-            // Update the local array
-            if let index = seatingPositions.firstIndex(where: { $0.id == existingPosition.id }) {
-                seatingPositions[index] = updatedPosition
-
-                // Update in DataStore array
-                var positions = dataStore.seatingPositions
-                if let dsIndex = positions.firstIndex(where: { $0.id == existingPosition.id }) {
-                    positions[dsIndex] = updatedPosition
-                    dataStore.seatingPositions = positions
-                }
-            }
-
-            print("DEBUG: Updated position for student \(studentId) to (\(newX), \(newY))")
         } else {
-            // Create a new position if none exists
-            let newPosition = SeatingPosition(
+            // Neue Position erstellen
+            updatedPosition = SeatingPosition(
                 studentId: studentId,
                 classId: classId,
                 xPos: newX,
@@ -421,15 +515,55 @@ class EnhancedSeatingViewModel: ObservableObject {
                 lastUpdated: Date(),
                 isCustomPosition: true
             )
-            seatingPositions.append(newPosition)
-
-            // Add to DataStore array
-            var positions = dataStore.seatingPositions
-            positions.append(newPosition)
-            dataStore.seatingPositions = positions
-
-            print("DEBUG: Created new position for student \(studentId) at (\(newX), \(newY))")
+            isNewPosition = true
         }
+        
+        // Optimierte Aktualisierung der lokalen Arrays und der Datenbank
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Lokale Array aktualisieren
+            if isNewPosition {
+                self.seatingPositions.append(updatedPosition)
+            } else if let index = self.seatingPositions.firstIndex(where: { $0.id == updatedPosition.id }) {
+                self.seatingPositions[index] = updatedPosition
+            }
+            
+            // DataStore Array aktualisieren - Nur einmal pro Student pro 100ms
+            // Dies verhindert zu viele Schreibvorgänge bei Drag-Operationen
+            throttledPersistPosition(updatedPosition, isNew: isNewPosition)
+            
+            print("DEBUG: \(isNewPosition ? "Created" : "Updated") position for student \(studentId) to (\(newX), \(newY))")
+        }
+    }
+    
+    // Dictionary zur Verfolgung der letzten Persistierungszeit pro StudentID
+    private var lastPersistTimes: [UUID: Date] = [:]
+    
+    // Gedrosselte Persistierungsfunktion für Positionen
+    private func throttledPersistPosition(_ position: SeatingPosition, isNew: Bool) {
+        let now = Date()
+        let throttleInterval: TimeInterval = 0.1 // 100ms
+        
+        // Nur aktualisieren, wenn seit der letzten Persistierung die Mindestzeit vergangen ist
+        if let lastTime = lastPersistTimes[position.studentId], 
+           now.timeIntervalSince(lastTime) < throttleInterval {
+            return
+        }
+        
+        // Zeit aktualisieren
+        lastPersistTimes[position.studentId] = now
+        
+        // Daten persistieren
+        var positions = dataStore.seatingPositions
+        
+        if isNew {
+            positions.append(position)
+        } else if let index = positions.firstIndex(where: { $0.id == position.id }) {
+            positions[index] = position
+        }
+        
+        dataStore.seatingPositions = positions
     }
 
     // Arrange students in a grid automatically
@@ -471,19 +605,27 @@ class EnhancedSeatingViewModel: ObservableObject {
         print("Archiving student: \(student.fullName)")
         var updatedStudent = student
         updatedStudent.isArchived = true
-        dataStore.updateStudent(updatedStudent)
-
-        // Update list
-        loadStudentsForSelectedClass()
+        let success = dataStore.updateStudent(updatedStudent)
+        
+        if success {
+            // Update list
+            loadStudentsForSelectedClass()
+        } else {
+            print("ERROR: Failed to archive student \(student.fullName)")
+        }
     }
 
     // Delete student
     func deleteStudent(id: UUID) {
         print("Deleting student with ID: \(id)")
-        dataStore.deleteStudent(id: id)
-
-        // Update list
-        loadStudentsForSelectedClass()
+        let success = dataStore.deleteStudent(id: id)
+        
+        if success {
+            // Update list
+            loadStudentsForSelectedClass()
+        } else {
+            print("ERROR: Failed to delete student with ID: \(id)")
+        }
 
         // Also remove corresponding seating position and absence status
         if let positionIndex = seatingPositions.firstIndex(where: { $0.studentId == id }) {

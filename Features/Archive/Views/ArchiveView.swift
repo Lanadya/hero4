@@ -250,14 +250,19 @@ struct ArchivedStudentsView: View {
     private func restoreStudent(_ student: Student) {
         var updatedStudent = student
         updatedStudent.isArchived = false
-        DataStore.shared.updateStudent(updatedStudent)
-        loadArchivedStudents()
+        let success = DataStore.shared.updateStudent(updatedStudent)
+        if success {
+            loadArchivedStudents()
+        }
     }
 
     private func deleteArchivedStudents(at offsets: IndexSet) {
         for index in offsets {
             let student = archivedStudents[index]
-            DataStore.shared.deleteStudent(id: student.id)
+            let success = DataStore.shared.deleteStudent(id: student.id)
+            if !success {
+                print("Failed to delete student: \(student.fullName)")
+            }
         }
         loadArchivedStudents()
     }

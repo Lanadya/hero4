@@ -1,5 +1,28 @@
 import SwiftUI
 
+// ================ LOCAL TYPE DEFINITIONS ================
+// IMPORTANT: These are strictly local to this file
+// DO NOT IMPORT these from other files
+
+// ESV = EditStudentView prefix to avoid name collisions
+enum ESV_AlertType: Identifiable {
+    case info
+    case error(String)
+    case delete
+    case archive
+    case classChange
+    
+    var id: Int {
+        switch self {
+        case .info: return 0
+        case .error: return 1
+        case .delete: return 2
+        case .archive: return 3
+        case .classChange: return 4
+        }
+    }
+}
+
 struct EditStudentView: View {
     let student: Student
     @ObservedObject var viewModel: StudentsViewModel
@@ -12,8 +35,9 @@ struct EditStudentView: View {
     @State private var showValidationError: Bool = false
     @State private var validationErrorMessage: String = ""
     @State private var isSaving: Bool = false
-
-    @State private var activeAlert: AlertType?
+    
+    // Use shared alert type
+    @State private var activeAlert: ESV_AlertType?
 
 //    // Alert handling with enum to manage multiple alerts properly
 //    enum ActiveAlert: Identifiable {
@@ -327,23 +351,39 @@ struct EditStudentView: View {
         isSaving = true
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.viewModel.archiveStudentWithStatus(self.student)
+            let success = self.viewModel.archiveStudentWithStatus(self.student)
             self.isSaving = false
-            // Modal schließen
-            self.isPresented = false
+            if success {
+                // Modal schließen
+                self.isPresented = false
+            } else {
+                // Error is already displayed by the ViewModel
+                // Just keep the modal open
+            }
         }
     }
 
     // Delete student
     private func deleteStudent() {
         print("DEBUG: deleteStudent()-Methode aufgerufen für ID: \(student.id)")
+        
+        isSaving = true
 
-        // Verwende die neue StatusManager-Methode
-        viewModel.deleteStudentWithStatus(id: student.id)
-
-        // Modal schließen
-        isPresented = false
-        print("DEBUG: Modal geschlossen")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Verwende die neue StatusManager-Methode
+            let success = self.viewModel.deleteStudentWithStatus(id: self.student.id)
+            self.isSaving = false
+            
+            if success {
+                // Modal schließen
+                self.isPresented = false
+                print("DEBUG: Student gelöscht, Modal geschlossen")
+            } else {
+                // Error is already displayed by the ViewModel
+                // Just keep the modal open
+                print("DEBUG: Fehler beim Löschen, Modal bleibt offen")
+            }
+        }
     }
 }
 

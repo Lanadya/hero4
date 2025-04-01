@@ -54,13 +54,13 @@ class ClassRepository {
     }
 
     func deleteClass(id: UUID) throws {
-        _ = try dbQueue.write { db in
+        try dbQueue.write { db in
             try Class.filter(Column("id") == id.uuidString).deleteAll(db)
         }
     }
 
     func deleteAll() throws {
-        _ = try dbQueue.write { db in
+        try dbQueue.write { db in
             try Class.deleteAll(db)
         }
     }

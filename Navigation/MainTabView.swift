@@ -1,7 +1,7 @@
 
-
-
 import SwiftUI
+// Import the centralized color definitions from ColorExtensions.swift directly
+// until proper module system is set up
 
 struct MainTabView: View {
     @State private var selectedTab = 0
