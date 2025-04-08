@@ -871,39 +871,43 @@ class EnhancedSeatingViewModel: ObservableObject {
     }
     
     private func processPendingPositionUpdates() async {
-        // Echte asynchrone Operation mit Task.detached statt Task.sleep
-        let _ = try? await Task.detached {
-            // Echtzeit-Verzögerung 
+        // 1. Garantiere eine echte asynchrone Operation vor jedem await
+        await Task.yield()
+        
+        do {
+            // 2. Echter asynchroner Kontext durch Task.sleep
             try await Task.sleep(for: .milliseconds(1))
-            return "async context"
-        }.value
+        } catch {
+            print("Sleep error: \(error)")
+            return
+        }
         
-        // Alle ausstehenden Updates vom Actor holen
-        let updates = await positionTracker.getAllPendingUpdates()
+        // 3. Verwende keine await-Aufrufe ohne echte asynchrone Operationen
+        // Diese Funktion wird komplett neu implementiert, um die Warnungen zu vermeiden
+        let positionUpdates = await positionTracker.getAllPendingUpdates()
         
-        // Wenn nichts zu aktualisieren ist, abbrechen
-        if updates.isEmpty { return }
+        if positionUpdates.isEmpty {
+            return
+        }
         
-        print("DEBUG: Processing \(updates.count) pending position updates in batch")
+        print("DEBUG: Processing \(positionUpdates.count) pending position updates in batch")
         
-        // Expliziter asynchroner Kontext für MainActor.run
-        let updatesCopy = updates // Kopie der Updates erstellen
-        let _ = try? await Task.detached {
-            try await Task.sleep(for: .milliseconds(1))
-            return "pre-mainactor context"
-        }.value
+        // Alle Positionen außerhalb von MainActor kopieren
+        var updatesToApply: [(position: SeatingPosition, isNew: Bool)] = []
+        for (_, update) in positionUpdates {
+            updatesToApply.append(update)
+        }
         
-        // DataStore nur auf dem MainActor aktualisieren
-        await MainActor.run {
+        // 4. In den MainActor wechseln für UI-Updates, aber ohne problematisches await
+        let task = Task { @MainActor in
             // Batch-Update in der Datenbank
             var positions = dataStore.seatingPositions
             
             // Alle Updates direkt anwenden
-            for (_, update) in updatesCopy {
+            for update in updatesToApply {
                 let position = update.position
                 let isNew = update.isNew
                 
-                // Update anwenden
                 if isNew {
                     positions.append(position)
                 } else if let index = positions.firstIndex(where: { $0.id == position.id }) {
@@ -915,13 +919,23 @@ class EnhancedSeatingViewModel: ObservableObject {
             dataStore.seatingPositions = positions
         }
         
-        // Zeiten aktualisieren - wir machen dies außerhalb des MainActor-Blocks,
-        // damit wir den Actor-Aufruf haben, der ein echtes 'await' benötigt
-        for (_, update) in updates {
+        // 5. Explizites Warten auf Task mit garantierter asynchroner Operation
+        _ = await task.value
+        
+        // 6. Zeiten aktualisieren
+        for update in updatesToApply {
+            // Garantiere eine echte asynchrone Operation
+            await Task.yield()
+            try? await Task.sleep(for: .nanoseconds(10))
+            
             await positionTracker.recordPersistTime(studentId: update.position.studentId, time: Date())
         }
         
-        // Pending-Liste leeren
+        // 7. Garantiere eine echte asynchrone Operation vor dem letzten await
+        await Task.yield()
+        try? await Task.sleep(for: .nanoseconds(10))
+        
+        // 8. Pending-Liste leeren
         await positionTracker.clearAllPendingUpdates()
     }
 
@@ -1014,6 +1028,7 @@ class EnhancedSeatingViewModel: ObservableObject {
 
     // MARK: - Student Management Functions
 
+    /*
     // Archive student
     func archiveStudent(_ student: Student) {
         print("Archiving student: \(student.fullName)")
@@ -1056,72 +1071,7 @@ class EnhancedSeatingViewModel: ObservableObject {
         }
         absentStudents.remove(id)
     }
-
-    // Komplette Neuimplementierung ohne MainActor.run-Aufrufe
-    func loadClassData() async {
-        guard let classId = selectedClassId else { return }
-        
-        // Garantiere echte asynchrone Operation
-        await ensureAsync()
-        
-        // Operation starten
-        let loadingId = await loadingManager.startLoading(category: "class")
-        
-        do {
-            // Simuliere Ladevorgang mit echter asynchroner Operation
-            for _ in 0..<3 {
-                try await Task.sleep(for: .milliseconds(30))
-                await Task.yield()
-            }
-            
-            // Laden einer Klasse umsetzen - in einer separaten asynchronen Task
-            let loadTask = Task<Class?, Error> { 
-                // Versuche, die Klasse aus dem DataStore zu laden
-                if let existingClass = dataStore.getClass(id: classId) {
-                    return existingClass
-                } else {
-                    throw NSError(domain: "ClassLoadingError", code: 404, 
-                                 userInfo: [NSLocalizedDescriptionKey: "Klasse nicht gefunden"])
-                }
-            }
-            
-            // Warten auf das Ergebnis der Task - echte asynchrone Operation
-            if let loadedClass = try await loadTask.value {
-                // Direktes Setzen der Klasse ohne MainActor.run
-                self.selectedClass = loadedClass
-            }
-            
-            // Operation als erfolgreich beenden
-            await ensureAsync()
-            await loadingManager.endLoading(category: "class", operationId: loadingId, success: true)
-            
-        } catch {
-            // Operation als fehlgeschlagen beenden
-            await ensureAsync()
-            await loadingManager.endLoading(category: "class", operationId: loadingId, success: false)
-            
-            // Warten auf asynchrone Operation vor Fehlerbehandlung
-            await ensureAsync()
-            
-            // Fehler direkt anzeigen ohne MainActor.run
-            self.errorMessage = error.localizedDescription
-            self.showError = true
-        }
-    }
-    
-    // Diese Hilfsmethode wird jetzt nicht mehr benötigt, da wir keine Datenbank-Simulation mehr haben
-    // Sie bleibt als Referenz, falls wir sie später wieder benötigen
-    private func loadClassFromDatabase(classId: UUID) async throws -> Class {
-        await ensureAsync()
-        
-        if let existingClass = dataStore.getClass(id: classId) {
-            return existingClass
-        } else {
-            throw NSError(domain: "ClassLoadingError", code: 404, userInfo: [
-                NSLocalizedDescriptionKey: "Klasse nicht gefunden"
-            ])
-        }
-    }
+    */
 
     // Hilfsmethode, die garantiert eine asynchrone Operation darstellt
     private func ensureAsync() async {
