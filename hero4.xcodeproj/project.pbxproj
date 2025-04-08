@@ -1,0 +1,868 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AF49DCBC2DA51CF80010364F /* StudentsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCAD2DA51CF80010364F /* StudentsListView.swift */; };
+		AF49DCBD2DA51CF80010364F /* ResultsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC952DA51CF80010364F /* ResultsViewModel.swift */; };
+		AF49DCBE2DA51CF80010364F /* ArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC872DA51CF80010364F /* ArchiveView.swift */; };
+		AF49DCBF2DA51CF80010364F /* RatingValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC732DA51CF80010364F /* RatingValue.swift */; };
+		AF49DCC02DA51CF80010364F /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC812DA51CF80010364F /* DataStore.swift */; };
+		AF49DCC22DA51CF80010364F /* RepositoryImplementation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC7D2DA51CF80010364F /* RepositoryImplementation.swift */; };
+		AF49DCC32DA51CF80010364F /* TimetableViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCB02DA51CF80010364F /* TimetableViewModel.swift */; };
+		AF49DCC42DA51CF80010364F /* EnhancedSeatingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC9C2DA51CF80010364F /* EnhancedSeatingViewModel.swift */; };
+		AF49DCC52DA51CF80010364F /* CompactClassListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC8C2DA51CF80010364F /* CompactClassListView.swift */; };
+		AF49DCC62DA51CF80010364F /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC672DA51CF80010364F /* AppState.swift */; };
+		AF49DCC72DA51CF80010364F /* StudentRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC7F2DA51CF80010364F /* StudentRepository.swift */; };
+		AF49DCC82DA51CF80010364F /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC702DA51CF80010364F /* BackupManager.swift */; };
+		AF49DCC92DA51CF80010364F /* ArchiveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC852DA51CF80010364F /* ArchiveViewModel.swift */; };
+		AF49DCCA2DA51CF80010364F /* EditClassView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCB62DA51CF80010364F /* EditClassView.swift */; };
+		AF49DCCB2DA51CF80010364F /* StudentStatusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC822DA51CF80010364F /* StudentStatusManager.swift */; };
+		AF49DCCC2DA51CF80010364F /* InfoDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC8E2DA51CF80010364F /* InfoDialogView.swift */; };
+		AF49DCCD2DA51CF80010364F /* Rating.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC762DA51CF80010364F /* Rating.swift */; };
+		AF49DCCE2DA51CF80010364F /* ClassesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCB52DA51CF80010364F /* ClassesView.swift */; };
+		AF49DCCF2DA51CF80010364F /* ColumnMappingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC902DA51CF80010364F /* ColumnMappingView.swift */; };
+		AF49DCD02DA51CF80010364F /* RatingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC7C2DA51CF80010364F /* RatingRepository.swift */; };
+		AF49DCD12DA51CF80010364F /* AddStudentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCA82DA51CF80010364F /* AddStudentView.swift */; };
+		AF49DCD22DA51CF80010364F /* EditStudentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCAA2DA51CF80010364F /* EditStudentView.swift */; };
+		AF49DCD32DA51CF80010364F /* Student.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC792DA51CF80010364F /* Student.swift */; };
+		AF49DCD42DA51CF80010364F /* SeatingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC7E2DA51CF80010364F /* SeatingRepository.swift */; };
+		AF49DCD52DA51CF80010364F /* CompactUnifiedClassSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC8D2DA51CF80010364F /* CompactUnifiedClassSelectionView.swift */; };
+		AF49DCD62DA51CF80010364F /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC6D2DA51CF80010364F /* DatabaseMigrations.swift */; };
+		AF49DCD72DA51CF80010364F /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC6F2DA51CF80010364F /* AppDatabase.swift */; };
+		AF49DCD82DA51CF80010364F /* GridComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCB22DA51CF80010364F /* GridComponent.swift */; };
+		AF49DCDA2DA51CF80010364F /* ClassChangeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCA92DA51CF80010364F /* ClassChangeView.swift */; };
+		AF49DCDB2DA51CF80010364F /* StudentsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCA62DA51CF80010364F /* StudentsRow.swift */; };
+		AF49DCDC2DA51CF80010364F /* SP_Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC9F2DA51CF80010364F /* SP_Components.swift */; };
+		AF49DCDD2DA51CF80010364F /* AddClassView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCB42DA51CF80010364F /* AddClassView.swift */; };
+		AF49DCDE2DA51CF80010364F /* AlertType.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC8A2DA51CF80010364F /* AlertType.swift */; };
+		AF49DCDF2DA51CF80010364F /* EnhancedSeatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCA12DA51CF80010364F /* EnhancedSeatingView.swift */; };
+		AF49DCE12DA51CF80010364F /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC712DA51CF80010364F /* GRDBManager.swift */; };
+		AF49DCE22DA51CF80010364F /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC982DA51CF80010364F /* ResultsView.swift */; };
+		AF49DCE32DA51CF80010364F /* StudentMultiSelectOperationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCAC2DA51CF80010364F /* StudentMultiSelectOperationsView.swift */; };
+		AF49DCE42DA51CF80010364F /* MultiSelectActionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCAB2DA51CF80010364F /* MultiSelectActionBar.swift */; };
+		AF49DCE52DA51CF80010364F /* ClassRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC7B2DA51CF80010364F /* ClassRepository.swift */; };
+		AF49DCE62DA51CF80010364F /* Class.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC752DA51CF80010364F /* Class.swift */; };
+		AF49DCE72DA51CF80010364F /* SeatingPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC772DA51CF80010364F /* SeatingPosition.swift */; };
+		AF49DCE82DA51CF80010364F /* SharedTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC782DA51CF80010364F /* SharedTypes.swift */; };
+		AF49DCE92DA51CF80010364F /* ImportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC912DA51CF80010364F /* ImportManager.swift */; };
+		AF49DCEA2DA51CF80010364F /* StudentsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCA42DA51CF80010364F /* StudentsViewModel.swift */; };
+		AF49DCEB2DA51CF80010364F /* ClassSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DC8B2DA51CF80010364F /* ClassSelectionView.swift */; };
+		AF49DCEC2DA51CF80010364F /* EnhancedSeatingViewModel.swift.old in Resources */ = {isa = PBXBuildFile; fileRef = AF49DC9D2DA51CF80010364F /* EnhancedSeatingViewModel.swift.old */; };
+		AF49DCED2DA51CF80010364F /* ResultsViewModel.swift.old in Resources */ = {isa = PBXBuildFile; fileRef = AF49DC962DA51CF80010364F /* ResultsViewModel.swift.old */; };
+		AF49DCEF2DA51D930010364F /* hero4App.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCEE2DA51D930010364F /* hero4App.swift */; };
+		AF49DCF22DA51E210010364F /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49DCF02DA51E210010364F /* MainTabView.swift */; };
+		AFCCF1A72DA56D72008E3568 /* CoreUtilities in Frameworks */ = {isa = PBXBuildFile; productRef = AFCCF1A62DA56D72008E3568 /* CoreUtilities */; };
+		AFCCF1AA2DA56EA6008E3568 /* CorePackage in Frameworks */ = {isa = PBXBuildFile; productRef = AFCCF1A92DA56EA6008E3568 /* CorePackage */; };
+		AFF0D3EA2DA518BF00E3C4C4 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = AFF0D3E92DA518BF00E3C4C4 /* GRDB */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		AF49DC672DA51CF80010364F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		AF49DC6B2DA51CF80010364F /* CorePackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = CorePackage; sourceTree = "<group>"; };
+		AF49DC6C2DA51CF80010364F /* CoreUtilities */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = CoreUtilities; sourceTree = "<group>"; };
+		AF49DC6D2DA51CF80010364F /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
+		AF49DC6F2DA51CF80010364F /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
+		AF49DC702DA51CF80010364F /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
+		AF49DC712DA51CF80010364F /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
+		AF49DC732DA51CF80010364F /* RatingValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingValue.swift; sourceTree = "<group>"; };
+		AF49DC752DA51CF80010364F /* Class.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Class.swift; sourceTree = "<group>"; };
+		AF49DC762DA51CF80010364F /* Rating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rating.swift; sourceTree = "<group>"; };
+		AF49DC772DA51CF80010364F /* SeatingPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeatingPosition.swift; sourceTree = "<group>"; };
+		AF49DC782DA51CF80010364F /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
+		AF49DC792DA51CF80010364F /* Student.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Student.swift; sourceTree = "<group>"; };
+		AF49DC7B2DA51CF80010364F /* ClassRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassRepository.swift; sourceTree = "<group>"; };
+		AF49DC7C2DA51CF80010364F /* RatingRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingRepository.swift; sourceTree = "<group>"; };
+		AF49DC7D2DA51CF80010364F /* RepositoryImplementation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryImplementation.swift; sourceTree = "<group>"; };
+		AF49DC7E2DA51CF80010364F /* SeatingRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeatingRepository.swift; sourceTree = "<group>"; };
+		AF49DC7F2DA51CF80010364F /* StudentRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentRepository.swift; sourceTree = "<group>"; };
+		AF49DC812DA51CF80010364F /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
+		AF49DC822DA51CF80010364F /* StudentStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentStatusManager.swift; sourceTree = "<group>"; };
+		AF49DC852DA51CF80010364F /* ArchiveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveViewModel.swift; sourceTree = "<group>"; };
+		AF49DC872DA51CF80010364F /* ArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveView.swift; sourceTree = "<group>"; };
+		AF49DC8A2DA51CF80010364F /* AlertType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertType.swift; sourceTree = "<group>"; };
+		AF49DC8B2DA51CF80010364F /* ClassSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionView.swift; sourceTree = "<group>"; };
+		AF49DC8C2DA51CF80010364F /* CompactClassListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactClassListView.swift; sourceTree = "<group>"; };
+		AF49DC8D2DA51CF80010364F /* CompactUnifiedClassSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactUnifiedClassSelectionView.swift; sourceTree = "<group>"; };
+		AF49DC8E2DA51CF80010364F /* InfoDialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoDialogView.swift; sourceTree = "<group>"; };
+		AF49DC902DA51CF80010364F /* ColumnMappingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColumnMappingView.swift; sourceTree = "<group>"; };
+		AF49DC912DA51CF80010364F /* ImportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportManager.swift; sourceTree = "<group>"; };
+		AF49DC952DA51CF80010364F /* ResultsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsViewModel.swift; sourceTree = "<group>"; };
+		AF49DC962DA51CF80010364F /* ResultsViewModel.swift.old */ = {isa = PBXFileReference; lastKnownFileType = text; path = ResultsViewModel.swift.old; sourceTree = "<group>"; };
+		AF49DC982DA51CF80010364F /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
+		AF49DC9C2DA51CF80010364F /* EnhancedSeatingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedSeatingViewModel.swift; sourceTree = "<group>"; };
+		AF49DC9D2DA51CF80010364F /* EnhancedSeatingViewModel.swift.old */ = {isa = PBXFileReference; lastKnownFileType = text; path = EnhancedSeatingViewModel.swift.old; sourceTree = "<group>"; };
+		AF49DC9F2DA51CF80010364F /* SP_Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SP_Components.swift; sourceTree = "<group>"; };
+		AF49DCA12DA51CF80010364F /* EnhancedSeatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedSeatingView.swift; sourceTree = "<group>"; };
+		AF49DCA42DA51CF80010364F /* StudentsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentsViewModel.swift; sourceTree = "<group>"; };
+		AF49DCA62DA51CF80010364F /* StudentsRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentsRow.swift; sourceTree = "<group>"; };
+		AF49DCA82DA51CF80010364F /* AddStudentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddStudentView.swift; sourceTree = "<group>"; };
+		AF49DCA92DA51CF80010364F /* ClassChangeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassChangeView.swift; sourceTree = "<group>"; };
+		AF49DCAA2DA51CF80010364F /* EditStudentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditStudentView.swift; sourceTree = "<group>"; };
+		AF49DCAB2DA51CF80010364F /* MultiSelectActionBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiSelectActionBar.swift; sourceTree = "<group>"; };
+		AF49DCAC2DA51CF80010364F /* StudentMultiSelectOperationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentMultiSelectOperationsView.swift; sourceTree = "<group>"; };
+		AF49DCAD2DA51CF80010364F /* StudentsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentsListView.swift; sourceTree = "<group>"; };
+		AF49DCB02DA51CF80010364F /* TimetableViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimetableViewModel.swift; sourceTree = "<group>"; };
+		AF49DCB22DA51CF80010364F /* GridComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridComponent.swift; sourceTree = "<group>"; };
+		AF49DCB42DA51CF80010364F /* AddClassView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddClassView.swift; sourceTree = "<group>"; };
+		AF49DCB52DA51CF80010364F /* ClassesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassesView.swift; sourceTree = "<group>"; };
+		AF49DCB62DA51CF80010364F /* EditClassView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditClassView.swift; sourceTree = "<group>"; };
+		AF49DCEE2DA51D930010364F /* hero4App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hero4App.swift; sourceTree = "<group>"; };
+		AF49DCF02DA51E210010364F /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		AFF0D3DA2DA517F300E3C4C4 /* hero4.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = hero4.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		AFF0D3DC2DA517F300E3C4C4 /* hero4 */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = hero4;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AFF0D3D72DA517F300E3C4C4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFCCF1A72DA56D72008E3568 /* CoreUtilities in Frameworks */,
+				AFCCF1AA2DA56EA6008E3568 /* CorePackage in Frameworks */,
+				AFF0D3EA2DA518BF00E3C4C4 /* GRDB in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AF49DC6A2DA51CF80010364F /* App */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCEE2DA51D930010364F /* hero4App.swift */,
+				AF49DC672DA51CF80010364F /* AppState.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		AF49DC6E2DA51CF80010364F /* Migrations */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC6D2DA51CF80010364F /* DatabaseMigrations.swift */,
+			);
+			path = Migrations;
+			sourceTree = "<group>";
+		};
+		AF49DC722DA51CF80010364F /* Database */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC6E2DA51CF80010364F /* Migrations */,
+				AF49DC6F2DA51CF80010364F /* AppDatabase.swift */,
+				AF49DC702DA51CF80010364F /* BackupManager.swift */,
+				AF49DC712DA51CF80010364F /* GRDBManager.swift */,
+			);
+			path = Database;
+			sourceTree = "<group>";
+		};
+		AF49DC742DA51CF80010364F /* Enums */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC732DA51CF80010364F /* RatingValue.swift */,
+			);
+			path = Enums;
+			sourceTree = "<group>";
+		};
+		AF49DC7A2DA51CF80010364F /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC742DA51CF80010364F /* Enums */,
+				AF49DC752DA51CF80010364F /* Class.swift */,
+				AF49DC762DA51CF80010364F /* Rating.swift */,
+				AF49DC772DA51CF80010364F /* SeatingPosition.swift */,
+				AF49DC782DA51CF80010364F /* SharedTypes.swift */,
+				AF49DC792DA51CF80010364F /* Student.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AF49DC802DA51CF80010364F /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC7B2DA51CF80010364F /* ClassRepository.swift */,
+				AF49DC7C2DA51CF80010364F /* RatingRepository.swift */,
+				AF49DC7D2DA51CF80010364F /* RepositoryImplementation.swift */,
+				AF49DC7E2DA51CF80010364F /* SeatingRepository.swift */,
+				AF49DC7F2DA51CF80010364F /* StudentRepository.swift */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		AF49DC832DA51CF80010364F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC812DA51CF80010364F /* DataStore.swift */,
+				AF49DC822DA51CF80010364F /* StudentStatusManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		AF49DC842DA51CF80010364F /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC722DA51CF80010364F /* Database */,
+				AF49DC7A2DA51CF80010364F /* Models */,
+				AF49DC802DA51CF80010364F /* Repositories */,
+				AF49DC832DA51CF80010364F /* Services */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		AF49DC862DA51CF80010364F /* Viewmodels */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC852DA51CF80010364F /* ArchiveViewModel.swift */,
+			);
+			path = Viewmodels;
+			sourceTree = "<group>";
+		};
+		AF49DC882DA51CF80010364F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC872DA51CF80010364F /* ArchiveView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AF49DC892DA51CF80010364F /* Archive */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC862DA51CF80010364F /* Viewmodels */,
+				AF49DC882DA51CF80010364F /* Views */,
+			);
+			path = Archive;
+			sourceTree = "<group>";
+		};
+		AF49DC8F2DA51CF80010364F /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC8A2DA51CF80010364F /* AlertType.swift */,
+				AF49DC8B2DA51CF80010364F /* ClassSelectionView.swift */,
+				AF49DC8C2DA51CF80010364F /* CompactClassListView.swift */,
+				AF49DC8D2DA51CF80010364F /* CompactUnifiedClassSelectionView.swift */,
+				AF49DC8E2DA51CF80010364F /* InfoDialogView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		AF49DC922DA51CF80010364F /* Import */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC902DA51CF80010364F /* ColumnMappingView.swift */,
+				AF49DC912DA51CF80010364F /* ImportManager.swift */,
+			);
+			path = Import;
+			sourceTree = "<group>";
+		};
+		AF49DC932DA51CF80010364F /* Loading */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Loading;
+			sourceTree = "<group>";
+		};
+		AF49DC942DA51CF80010364F /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC8F2DA51CF80010364F /* Components */,
+				AF49DC922DA51CF80010364F /* Import */,
+				AF49DC932DA51CF80010364F /* Loading */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		AF49DC972DA51CF80010364F /* Viewmodels */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC952DA51CF80010364F /* ResultsViewModel.swift */,
+				AF49DC962DA51CF80010364F /* ResultsViewModel.swift.old */,
+			);
+			path = Viewmodels;
+			sourceTree = "<group>";
+		};
+		AF49DC992DA51CF80010364F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC982DA51CF80010364F /* ResultsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AF49DC9A2DA51CF80010364F /* Results */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC972DA51CF80010364F /* Viewmodels */,
+				AF49DC992DA51CF80010364F /* Views */,
+			);
+			path = Results;
+			sourceTree = "<group>";
+		};
+		AF49DC9B2DA51CF80010364F /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		AF49DC9E2DA51CF80010364F /* Viewmodels */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC9C2DA51CF80010364F /* EnhancedSeatingViewModel.swift */,
+				AF49DC9D2DA51CF80010364F /* EnhancedSeatingViewModel.swift.old */,
+			);
+			path = Viewmodels;
+			sourceTree = "<group>";
+		};
+		AF49DCA02DA51CF80010364F /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC9F2DA51CF80010364F /* SP_Components.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		AF49DCA22DA51CF80010364F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCA02DA51CF80010364F /* Components */,
+				AF49DCA12DA51CF80010364F /* EnhancedSeatingView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AF49DCA32DA51CF80010364F /* SeatingPlan */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC9B2DA51CF80010364F /* Utils */,
+				AF49DC9E2DA51CF80010364F /* Viewmodels */,
+				AF49DCA22DA51CF80010364F /* Views */,
+			);
+			path = SeatingPlan;
+			sourceTree = "<group>";
+		};
+		AF49DCA52DA51CF80010364F /* Viewmodels */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCA42DA51CF80010364F /* StudentsViewModel.swift */,
+			);
+			path = Viewmodels;
+			sourceTree = "<group>";
+		};
+		AF49DCA72DA51CF80010364F /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCA62DA51CF80010364F /* StudentsRow.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		AF49DCAE2DA51CF80010364F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCA72DA51CF80010364F /* Components */,
+				AF49DCA82DA51CF80010364F /* AddStudentView.swift */,
+				AF49DCA92DA51CF80010364F /* ClassChangeView.swift */,
+				AF49DCAA2DA51CF80010364F /* EditStudentView.swift */,
+				AF49DCAB2DA51CF80010364F /* MultiSelectActionBar.swift */,
+				AF49DCAC2DA51CF80010364F /* StudentMultiSelectOperationsView.swift */,
+				AF49DCAD2DA51CF80010364F /* StudentsListView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AF49DCAF2DA51CF80010364F /* Students */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCA52DA51CF80010364F /* Viewmodels */,
+				AF49DCAE2DA51CF80010364F /* Views */,
+			);
+			path = Students;
+			sourceTree = "<group>";
+		};
+		AF49DCB12DA51CF80010364F /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCB02DA51CF80010364F /* TimetableViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		AF49DCB32DA51CF80010364F /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCB22DA51CF80010364F /* GridComponent.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		AF49DCB72DA51CF80010364F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCB32DA51CF80010364F /* Components */,
+				AF49DCB42DA51CF80010364F /* AddClassView.swift */,
+				AF49DCB52DA51CF80010364F /* ClassesView.swift */,
+				AF49DCB62DA51CF80010364F /* EditClassView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AF49DCB82DA51CF80010364F /* Timetable */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCB12DA51CF80010364F /* ViewModels */,
+				AF49DCB72DA51CF80010364F /* Views */,
+			);
+			path = Timetable;
+			sourceTree = "<group>";
+		};
+		AF49DCB92DA51CF80010364F /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DC892DA51CF80010364F /* Archive */,
+				AF49DC942DA51CF80010364F /* Common */,
+				AF49DC9A2DA51CF80010364F /* Results */,
+				AF49DCA32DA51CF80010364F /* SeatingPlan */,
+				AF49DCAF2DA51CF80010364F /* Students */,
+				AF49DCB82DA51CF80010364F /* Timetable */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		AF49DCF12DA51E210010364F /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				AF49DCF02DA51E210010364F /* MainTabView.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		AFCCF1A82DA56EA6008E3568 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AFF0D3D12DA517F300E3C4C4 = {
+			isa = PBXGroup;
+			children = (
+				AF49DCF12DA51E210010364F /* Navigation */,
+				AF49DC6A2DA51CF80010364F /* App */,
+				AF49DC6B2DA51CF80010364F /* CorePackage */,
+				AF49DC6C2DA51CF80010364F /* CoreUtilities */,
+				AF49DC842DA51CF80010364F /* Data */,
+				AF49DCB92DA51CF80010364F /* Features */,
+				AFF0D3DC2DA517F300E3C4C4 /* hero4 */,
+				AFCCF1A82DA56EA6008E3568 /* Frameworks */,
+				AFF0D3DB2DA517F300E3C4C4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AFF0D3DB2DA517F300E3C4C4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AFF0D3DA2DA517F300E3C4C4 /* hero4.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AFF0D3D92DA517F300E3C4C4 /* hero4 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFF0D3E52DA517F400E3C4C4 /* Build configuration list for PBXNativeTarget "hero4" */;
+			buildPhases = (
+				AFF0D3D62DA517F300E3C4C4 /* Sources */,
+				AFF0D3D72DA517F300E3C4C4 /* Frameworks */,
+				AFF0D3D82DA517F300E3C4C4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF49DCF62DA524E30010364F /* PBXTargetDependency */,
+				AF49DCF42DA520190010364F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AFF0D3DC2DA517F300E3C4C4 /* hero4 */,
+			);
+			name = hero4;
+			packageProductDependencies = (
+				AFF0D3E92DA518BF00E3C4C4 /* GRDB */,
+				AFCCF1A62DA56D72008E3568 /* CoreUtilities */,
+				AFCCF1A92DA56EA6008E3568 /* CorePackage */,
+			);
+			productName = hero4;
+			productReference = AFF0D3DA2DA517F300E3C4C4 /* hero4.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AFF0D3D22DA517F300E3C4C4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1630;
+				LastUpgradeCheck = 1630;
+				TargetAttributes = {
+					AFF0D3D92DA517F300E3C4C4 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+				};
+			};
+			buildConfigurationList = AFF0D3D52DA517F300E3C4C4 /* Build configuration list for PBXProject "hero4" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AFF0D3D12DA517F300E3C4C4;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AFF0D3E82DA518BF00E3C4C4 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				AFCCF1A52DA56D72008E3568 /* XCLocalSwiftPackageReference "CoreUtilities" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AFF0D3DB2DA517F300E3C4C4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AFF0D3D92DA517F300E3C4C4 /* hero4 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AFF0D3D82DA517F300E3C4C4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF49DCEC2DA51CF80010364F /* EnhancedSeatingViewModel.swift.old in Resources */,
+				AF49DCED2DA51CF80010364F /* ResultsViewModel.swift.old in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AFF0D3D62DA517F300E3C4C4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF49DCBC2DA51CF80010364F /* StudentsListView.swift in Sources */,
+				AF49DCBD2DA51CF80010364F /* ResultsViewModel.swift in Sources */,
+				AF49DCBE2DA51CF80010364F /* ArchiveView.swift in Sources */,
+				AF49DCBF2DA51CF80010364F /* RatingValue.swift in Sources */,
+				AF49DCC02DA51CF80010364F /* DataStore.swift in Sources */,
+				AF49DCC22DA51CF80010364F /* RepositoryImplementation.swift in Sources */,
+				AF49DCC32DA51CF80010364F /* TimetableViewModel.swift in Sources */,
+				AF49DCC42DA51CF80010364F /* EnhancedSeatingViewModel.swift in Sources */,
+				AF49DCC52DA51CF80010364F /* CompactClassListView.swift in Sources */,
+				AF49DCC62DA51CF80010364F /* AppState.swift in Sources */,
+				AF49DCC72DA51CF80010364F /* StudentRepository.swift in Sources */,
+				AF49DCC82DA51CF80010364F /* BackupManager.swift in Sources */,
+				AF49DCC92DA51CF80010364F /* ArchiveViewModel.swift in Sources */,
+				AF49DCCA2DA51CF80010364F /* EditClassView.swift in Sources */,
+				AF49DCCB2DA51CF80010364F /* StudentStatusManager.swift in Sources */,
+				AF49DCCC2DA51CF80010364F /* InfoDialogView.swift in Sources */,
+				AF49DCCD2DA51CF80010364F /* Rating.swift in Sources */,
+				AF49DCCE2DA51CF80010364F /* ClassesView.swift in Sources */,
+				AF49DCCF2DA51CF80010364F /* ColumnMappingView.swift in Sources */,
+				AF49DCD02DA51CF80010364F /* RatingRepository.swift in Sources */,
+				AF49DCD12DA51CF80010364F /* AddStudentView.swift in Sources */,
+				AF49DCD22DA51CF80010364F /* EditStudentView.swift in Sources */,
+				AF49DCEF2DA51D930010364F /* hero4App.swift in Sources */,
+				AF49DCD32DA51CF80010364F /* Student.swift in Sources */,
+				AF49DCD42DA51CF80010364F /* SeatingRepository.swift in Sources */,
+				AF49DCD52DA51CF80010364F /* CompactUnifiedClassSelectionView.swift in Sources */,
+				AF49DCD62DA51CF80010364F /* DatabaseMigrations.swift in Sources */,
+				AF49DCD72DA51CF80010364F /* AppDatabase.swift in Sources */,
+				AF49DCD82DA51CF80010364F /* GridComponent.swift in Sources */,
+				AF49DCDA2DA51CF80010364F /* ClassChangeView.swift in Sources */,
+				AF49DCDB2DA51CF80010364F /* StudentsRow.swift in Sources */,
+				AF49DCDC2DA51CF80010364F /* SP_Components.swift in Sources */,
+				AF49DCDD2DA51CF80010364F /* AddClassView.swift in Sources */,
+				AF49DCDE2DA51CF80010364F /* AlertType.swift in Sources */,
+				AF49DCF22DA51E210010364F /* MainTabView.swift in Sources */,
+				AF49DCDF2DA51CF80010364F /* EnhancedSeatingView.swift in Sources */,
+				AF49DCE12DA51CF80010364F /* GRDBManager.swift in Sources */,
+				AF49DCE22DA51CF80010364F /* ResultsView.swift in Sources */,
+				AF49DCE32DA51CF80010364F /* StudentMultiSelectOperationsView.swift in Sources */,
+				AF49DCE42DA51CF80010364F /* MultiSelectActionBar.swift in Sources */,
+				AF49DCE52DA51CF80010364F /* ClassRepository.swift in Sources */,
+				AF49DCE62DA51CF80010364F /* Class.swift in Sources */,
+				AF49DCE72DA51CF80010364F /* SeatingPosition.swift in Sources */,
+				AF49DCE82DA51CF80010364F /* SharedTypes.swift in Sources */,
+				AF49DCE92DA51CF80010364F /* ImportManager.swift in Sources */,
+				AF49DCEA2DA51CF80010364F /* StudentsViewModel.swift in Sources */,
+				AF49DCEB2DA51CF80010364F /* ClassSelectionView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AF49DCF42DA520190010364F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = AF49DCF32DA520190010364F /* CorePackage */;
+		};
+		AF49DCF62DA524E30010364F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = AF49DCF52DA524E30010364F /* CoreUtilities */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AFF0D3E32DA517F400E3C4C4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AFF0D3E42DA517F400E3C4C4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AFF0D3E62DA517F400E3C4C4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = teccolino.hero4;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AFF0D3E72DA517F400E3C4C4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = teccolino.hero4;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AFF0D3D52DA517F300E3C4C4 /* Build configuration list for PBXProject "hero4" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFF0D3E32DA517F400E3C4C4 /* Debug */,
+				AFF0D3E42DA517F400E3C4C4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFF0D3E52DA517F400E3C4C4 /* Build configuration list for PBXNativeTarget "hero4" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFF0D3E62DA517F400E3C4C4 /* Debug */,
+				AFF0D3E72DA517F400E3C4C4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		AFCCF1A52DA56D72008E3568 /* XCLocalSwiftPackageReference "CoreUtilities" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = CoreUtilities;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AFF0D3E82DA518BF00E3C4C4 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AF49DCF32DA520190010364F /* CorePackage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CorePackage;
+		};
+		AF49DCF52DA524E30010364F /* CoreUtilities */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CoreUtilities;
+		};
+		AFCCF1A62DA56D72008E3568 /* CoreUtilities */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CoreUtilities;
+		};
+		AFCCF1A92DA56EA6008E3568 /* CorePackage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CorePackage;
+		};
+		AFF0D3E92DA518BF00E3C4C4 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AFF0D3E82DA518BF00E3C4C4 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = AFF0D3D22DA517F300E3C4C4 /* Project object */;
+}
