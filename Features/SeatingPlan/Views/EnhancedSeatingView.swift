@@ -1,6 +1,10 @@
 import SwiftUI
-// Import the centralized color definitions from ColorExtensions.swift directly
-// until proper module system is set up
+import Foundation
+import Combine
+import GRDB
+
+// Custom type definitions
+// ... existing code ...
 
 struct EnhancedSeatingView: View {
     @StateObject private var viewModel = EnhancedSeatingViewModel()
@@ -20,6 +24,7 @@ struct EnhancedSeatingView: View {
 
     init(selectedTab: Binding<Int>) {
         self._selectedTab = selectedTab
+        self._cardSize = State(initialValue: CGSize(width: 140, height: 90))
     }
 
     var body: some View {
@@ -132,6 +137,11 @@ struct EnhancedSeatingView: View {
             .sheet(isPresented: $showClassPicker) {
                 SeatingClassPicker(viewModel: viewModel)
             }
+            .navigationBarTitle("Sitzplan", displayMode: .inline)
+            .navigationBarHidden(true)
+            .navigationViewStyle(StackNavigationViewStyle())
+            .edgesIgnoringSafeArea(.all)
+            .statusBar(hidden: isFullscreen)
             .onAppear {
                 // Lade verfügbare Klassen
                 viewModel.loadClasses()
@@ -141,26 +151,11 @@ struct EnhancedSeatingView: View {
 
                 // Prüfe, ob eine Klasse für den Sitzplan ausgewählt wurde
                 checkForSelectedClass()
-
-                // Direkt prüfen, ob die Schüleranordnung initialisiert werden sollte
-                // Kein Delay mehr, damit bei schnellem Tab-Wechsel keine parallelen Operationen stattfinden
-                if !viewModel.students.isEmpty {
-                    // Prüfen, ob bereits benutzerdefinierte Positionen existieren
-                    let hasCustomPositions = viewModel.seatingPositions.contains { $0.isCustomPosition }
-                    let hasAnyPositions = !viewModel.seatingPositions.isEmpty
-                    
-                    // Nur wenn keine Positionen oder keine benutzerdefinierten Positionen existieren
-                    if !hasAnyPositions || (!hasCustomPositions && !viewModel.isArrangingStudents) {
-                        viewModel.arrangeStudentsInCorner()
-                    }
-                }
             }
             .onChange(of: geometry.size) { oldSize, newSize in
                 adjustForScreenSize(newSize)
             }
         }
-        .navigationBarTitle("Sitzplan", displayMode: .inline)
-        .navigationBarHidden(true)
     }
 
     // Helper-Methoden
@@ -170,11 +165,21 @@ struct EnhancedSeatingView: View {
     }
 
     private func adaptiveCardSize(for size: CGSize) -> CGSize {
-        // Für iPhone eine kleinere Kachelgröße
-        let isSmallScreen = horizontalSizeClass == .compact || size.width < 600
-        let width: CGFloat = isSmallScreen ? 100 : 140
-        let height: CGFloat = isSmallScreen ? 70 : 90
-        return CGSize(width: width, height: height)
+        // Für iPad Pro 11" und größer
+        if size.width >= 1024 {
+            return CGSize(width: 180, height: 120)
+        }
+        // Für iPad 10.2" und iPad Air
+        else if size.width >= 768 {
+            return CGSize(width: 160, height: 100)
+        }
+        // Für iPhone und kleinere iPad-Modelle
+        else {
+            let isSmallScreen = horizontalSizeClass == .compact || size.width < 600
+            let width: CGFloat = isSmallScreen ? 100 : 140
+            let height: CGFloat = isSmallScreen ? 70 : 90
+            return CGSize(width: width, height: height)
+        }
     }
 
     private func checkForSelectedClass() {
@@ -717,10 +722,10 @@ struct StudentCard: View {
             // Bewertungsbuttons - direkt unter dem Namen
             if !editMode {
                 HStack(spacing: isCompactLayout ? 0 : 1) {
-                    ratingButton("++", .doublePlus)
-                    ratingButton("+", .plus)
-                    ratingButton("-", .minus)
-                    ratingButton("--", .doubleMinus)
+                    ratingButton("++", .excellent)
+                    ratingButton("+", .good)
+                    ratingButton("-", .fair)
+                    ratingButton("--", .poor)
                 }
                 .padding(.vertical, 2)
                 .opacity(isAbsent ? 0.5 : 1.0)
@@ -784,16 +789,16 @@ struct StudentCard: View {
         let baseColor: Color
         let iconName: String
         switch value {
-        case .doublePlus:
+        case .excellent:
             baseColor = .green
             iconName = "hand.thumbsup.fill"
-        case .plus:
+        case .good:
             baseColor = .green.opacity(0.7)
             iconName = "hand.thumbsup"
-        case .minus:
-            baseColor = .red.opacity(0.7)
-            iconName = "hand.thumbsdown"
-        case .doubleMinus:
+        case .fair:
+            baseColor = .yellow.opacity(0.7)
+            iconName = "hand.thumbsup"
+        case .poor:
             baseColor = .red
             iconName = "hand.thumbsdown.fill"
         }

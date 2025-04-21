@@ -94,12 +94,10 @@ extension Class: TableRecord, FetchableRecord, PersistableRecord {
     // Beim Laden aus der Datenbank
     init(row dbRow: Row) {
         guard let idString = dbRow[Columns.id] as? String,
-              let uuid = UUID(uuidString: idString) else {
-            fatalError("Ungültige UUID in Datenbank: \(dbRow[Columns.id] ?? "nil")")
+        let uuid = UUID(uuidString: idString) else {
+        fatalError("Ungültige UUID in Datenbank: \(dbRow[Columns.id] ?? "nil")")
         }
         self.id = uuid
-        self.id = uuid
-        self.id = UUID(uuidString: dbRow[Columns.id]) ?? UUID()
         self.name = dbRow[Columns.name]
         self.note = dbRow[Columns.note]
         self.row = dbRow[Columns.row]    // Jetzt eindeutig

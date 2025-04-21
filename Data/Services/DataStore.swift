@@ -59,9 +59,9 @@ class DataStore: ObservableObject {
 
         // Aktualisiert: Gibt die ID der neuen Klasse zurück, damit wir in addSampleData() verfolgen können, welche Klassen neu sind
         @discardableResult
-        func addClass(_ class: Class) -> UUID? {
+        func addClass(_ classObj: Class) -> UUID? {
             do {
-                let updatedClass = try dbManager.saveClass(`class`)
+                let updatedClass = try dbManager.saveClass(classObj)
                 classes.append(updatedClass)
                 print("DEBUG DataStore: Klasse \(updatedClass.name) hinzugefügt")
                 objectWillChange.send()
@@ -72,9 +72,9 @@ class DataStore: ObservableObject {
             }
         }
 
-        func updateClass(_ class: Class) {
+        func updateClass(_ classObj: Class) {
             do {
-                let updatedClass = try dbManager.saveClass(`class`)
+                let updatedClass = try dbManager.saveClass(classObj)
                 if let index = classes.firstIndex(where: { $0.id == updatedClass.id }) {
                     classes[index] = updatedClass
                     print("DEBUG DataStore: Klasse \(updatedClass.name) aktualisiert")
@@ -139,8 +139,8 @@ class DataStore: ObservableObject {
             }
         }
 
-        func archiveClass(_ class: Class) {
-            var updatedClass = `class`
+        func archiveClass(_ classObj: Class) {
+            var updatedClass = classObj
             updatedClass.isArchived = true
             updateClass(updatedClass)
         }
@@ -452,7 +452,7 @@ class DataStore: ObservableObject {
                 // Sicherstellen, dass die Bewertung ein Schuljahr hat
                 var ratingToSave = rating
                 if ratingToSave.schoolYear.isEmpty {
-                    ratingToSave.schoolYear = currentSchoolYear()
+                    ratingToSave.schoolYear = getCurrentSchoolYear()
                 }
 
                 let savedRating = try dbManager.saveRating(ratingToSave)
@@ -461,6 +461,24 @@ class DataStore: ObservableObject {
                 objectWillChange.send()
             } catch {
                 print("ERROR DataStore: Fehler beim Hinzufügen der Bewertung: \(error)")
+            }
+        }
+        
+        // Hilfsfunktion zur Bestimmung des aktuellen Schuljahres
+        private func getCurrentSchoolYear() -> String {
+            let calendar = Calendar.current
+            let currentDate = Date()
+            let year = calendar.component(.year, from: currentDate)
+            let month = calendar.component(.month, from: currentDate)
+            
+            // Wenn wir im ersten Halbjahr sind (August-Dezember), nutzen wir Jahr/Jahr+1
+            // z.B. 2024/2025 für August-Dezember 2024
+            if month >= 8 {
+                return "\(year)/\(year+1)"
+            } else {
+                // Für Januar-Juli nutzen wir Jahr-1/Jahr
+                // z.B. 2023/2024 für Januar-Juli 2024
+                return "\(year-1)/\(year)"
             }
         }
 
@@ -587,6 +605,11 @@ class DataStore: ObservableObject {
                         newSampleClassIds.append(newClassId!)
                     }
                 }
+            }
+            
+            // Optional: Speichern des Migrationsstatus, wenn beispieldaten hinzugefügt wurden
+            if !newSampleClassIds.isEmpty {
+                UserDefaults.standard.set(true, forKey: "hasSampleData")
             }
 
             // Nur zu den neu erstellten Beispielklassen Schüler hinzufügen

@@ -13,10 +13,15 @@ struct ClassSelectionView: View {
     let onClassSelected: (UUID) -> Void // Callback für die Auswahl
     var onCancel: (() -> Void)? = nil  // Neue optionale onCancel-Funktion
     @State private var errorMessage: String? = nil  // Für Fehleranzeige
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
+    
+    // iPad-specific layout constants
+    private let iPadMinWidth: CGFloat = 400
+    private let iPadMaxWidth: CGFloat = 600
+    private let iPadMinHeight: CGFloat = 500
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 // Fehleranzeige hinzufügen
                 if let error = errorMessage {
@@ -47,6 +52,7 @@ struct ClassSelectionView: View {
                     }) {
                         HStack {
                             Text(classItem.name)
+                                .font(.headline)
                             Spacer()
                             if let note = classItem.note, !note.isEmpty {
                                 Text(note)
@@ -54,8 +60,11 @@ struct ClassSelectionView: View {
                                     .foregroundColor(.gray)
                             }
                         }
+                        .padding(.vertical, 8)
                     }
+                    .listRowBackground(Color.clear)
                 }
+                .listStyle(.insetGrouped)
 
                 // Abbrechen-Button hinzufügen, wenn onCancel bereitgestellt wird
                 if onCancel != nil {
@@ -67,13 +76,18 @@ struct ClassSelectionView: View {
                 }
             }
             .navigationTitle("Klasse auswählen")
-            .navigationBarItems(trailing: Button("Schließen") {
-                if let cancel = onCancel {
-                    cancel()
-                } else {
-                    presentationMode.wrappedValue.dismiss()
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Schließen") {
+                        if let cancel = onCancel {
+                            cancel()
+                        } else {
+                            dismiss()
+                        }
+                    }
                 }
-            })
+            }
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ClassSelectionError"))) { notification in
                 if let message = notification.userInfo?["message"] as? String {
                     errorMessage = message
@@ -87,9 +101,9 @@ struct ClassSelectionView: View {
                 // Beim Erscheinen des Modals auch den Fehler zurücksetzen
                 errorMessage = nil
             }
-            .navigationViewStyle(StackNavigationViewStyle()) // Erzwinge Vollbildmodus
-            .frame(minWidth: 320, minHeight: 400) // Minimale Größe sicherstellen
-
         }
+        .frame(minWidth: iPadMinWidth, maxWidth: iPadMaxWidth, minHeight: iPadMinHeight)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }

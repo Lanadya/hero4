@@ -1,0 +1,57 @@
+[Mon Apr 21 12:30:10 CEST 2025] GIT: Starte Git-Push für hero4_old...
+[Mon Apr 21 12:30:10 CEST 2025] GIT: Ungesicherte Änderungen gefunden. Führe automatischen Commit durch...
+ M App/AppState.swift
+ M App/hero4App.swift
+ D Core/Common/ModuleDescriptor.swift
+ D Core/Common/README.md
+ D Core/Common/SharedTypes.swift
+ D Core/Extensions/ColorExtensions.swift
+ D Core/Extensions/DataExtensions.swift
+ D Core/Extensions/ViewExtensions.swift
+ D Core/Resources/Assets.xcassets/AccentColor.colorset/Contents.json
+ D Core/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json
+ D Core/Resources/Assets.xcassets/Contents.json
+ D Core/Utils/Constants.swift
+ D Core/Utils/Utils.swift
+ M Data/Database/AppDatabase.swift
+ M Data/Models/Class.swift
+ M Data/Models/Rating.swift
+ M Data/Models/SharedTypes.swift
+ M Data/Repositories/ClassRepository.swift
+ M Data/Repositories/RatingRepository.swift
+ M Data/Repositories/RepositoryImplementation.swift
+ M Data/Repositories/SeatingRepository.swift
+ M Data/Repositories/StudentRepository.swift
+ M Data/Services/DataStore.swift
+ M Features/Archive/Viewmodels/ArchiveViewModel.swift
+ M Features/Common/Components/ClassSelectionView.swift
+ M Features/Common/Import/ImportManager.swift
+ M Features/Results/Viewmodels/ResultsViewModel.swift
+ M Features/Results/Views/ResultsView.swift
+ M Features/SeatingPlan/Viewmodels/EnhancedSeatingViewModel.swift
+ M Features/SeatingPlan/Views/EnhancedSeatingView.swift
+ M Features/Students/Viewmodels/StudentsViewModel.swift
+ M Features/Students/Views/StudentsListView.swift
+ M Features/Timetable/ViewModels/TimetableViewModel.swift
+ M Features/Timetable/Views/Components/GridComponent.swift
+ M Navigation/MainTabView.swift
+ M hero4.xcodeproj/project.pbxproj
+ M hero4.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+ M hero4.xcodeproj/project.xcworkspace/xcuserdata/ninaklee.xcuserdatad/UserInterfaceState.xcuserstate
+ M hero4.xcodeproj/xcshareddata/xcschemes/hero4.xcscheme
+ M hero4.xcodeproj/xcuserdata/ninaklee.xcuserdatad/xcschemes/xcschememanagement.plist
+?? Core/.gitignore
+?? Core/Package.swift
+?? Core/Sources/
+?? Core/Tests/
+?? CorePackage/
+?? CoreUtilities/
+?? Data/Models/Enums/
+?? Features/Results/Viewmodels/ResultsViewModel.swift.old
+?? Features/SeatingPlan/Viewmodels/EnhancedSeatingViewModel.swift.old
+?? Scripts/
+?? hero
+?? hero4.xcodeproj.backup/
+?? hero4.xcodeproj/project.pbxproj.backup
+?? hero4.xcodeproj/project.pbxproj.damaged
+?? hero4/hero4-Bridging-Header.h

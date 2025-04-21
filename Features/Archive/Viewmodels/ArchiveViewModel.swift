@@ -3,6 +3,8 @@
 import Foundation
 import Combine
 
+private var isInitialSetup = true
+
 class ArchiveViewModel: ObservableObject {
     // Veröffentlichte Variablen für die View
 
@@ -15,4 +17,9 @@ class ArchiveViewModel: ObservableObject {
     }
 
     // MARK: - Funktionalität hinzufügen
+
+
+
+
+
 }

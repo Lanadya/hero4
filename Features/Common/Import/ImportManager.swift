@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
+import Combine
 
 // ================ LOCAL TYPE DEFINITIONS ================
 // IMPORTANT: These are strictly local to this file
@@ -74,6 +75,8 @@ enum IM_ImportError: Error, LocalizedError {
         }
     }
 }
+
+@MainActor
 class ImportManager: ObservableObject {
     @Published var selectedFileType: IM_FileImportType = .csv
     @Published var showFileImporter = false
@@ -95,8 +98,9 @@ class ImportManager: ObservableObject {
     @Published var importedCount = 0
     @Published var failedCount = 0
 
-    let dataStore = DataStore.shared
-    var selectedClassId: UUID
+    private let dataStore = DataStore.shared
+    private let selectedClassId: UUID
+    private var cancellables = Set<AnyCancellable>()
 
     init(classId: UUID) {
         self.selectedClassId = classId
@@ -105,38 +109,37 @@ class ImportManager: ObservableObject {
     func processSelectedFile(_ url: URL) {
         isProcessing = true
 
-        // Sicheren Zugriff auf die Datei anfordern
-        guard url.startAccessingSecurityScopedResource() else {
-            displayError(.accessDenied)
-            isProcessing = false
-            return
-        }
+        Task {
+            do {
+                // Sicheren Zugriff auf die Datei anfordern
+                guard url.startAccessingSecurityScopedResource() else {
+                    throw IM_ImportError.accessDenied
+                }
 
-        // Stelle sicher, dass wir den Zugriff wieder freigeben, wenn wir fertig sind
-        defer {
-            url.stopAccessingSecurityScopedResource()
-        }
+                defer {
+                    url.stopAccessingSecurityScopedResource()
+                }
 
-        do {
-            let fileData = try Data(contentsOf: url)
+                let fileData = try Data(contentsOf: url)
 
-            switch selectedFileType {
-            case .csv:
-                try processCSVData(fileData)
-            case .excel:
-                try processExcelData(fileData)
+                switch selectedFileType {
+                case .csv:
+                    try await processCSVData(fileData)
+                case .excel:
+                    try await processExcelData(fileData)
+                }
+
+            } catch let importError as IM_ImportError {
+                displayError(importError)
+            } catch {
+                displayError(.unknownError(error))
             }
 
-        } catch let importError as IM_ImportError {
-            displayError(importError)
-        } catch {
-            displayError(.unknownError(error))
+            isProcessing = false
         }
-
-        isProcessing = false
     }
 
-    private func processCSVData(_ data: Data) throws {
+    private func processCSVData(_ data: Data) async throws {
         guard let content = String(data: data, encoding: .utf8) else {
             throw IM_ImportError.invalidFile
         }
@@ -173,7 +176,7 @@ class ImportManager: ObservableObject {
         autoMapColumns()
     }
 
-    private func processExcelData(_ data: Data) throws {
+    private func processExcelData(_ data: Data) async throws {
         // In einer echten App würden wir hier eine Excel-Bibliothek verwenden
         // Da dies eine Demo ist, werfen wir eine Fehlermeldung
         throw IM_ImportError.parseError("Excel-Import wird in einer späteren Version implementiert.")
@@ -315,5 +318,9 @@ class ImportManager: ObservableObject {
     private func displayError(_ error: IM_ImportError) {
         self.error = error
         self.showError = true
+    }
+
+    deinit {
+        cancellables.removeAll()
     }
 }

@@ -4,6 +4,10 @@ struct ResultsView: View {
     @StateObject private var viewModel = ResultsViewModel()
     @State private var searchText = ""
     @State private var showClassPicker = false
+    @State private var isShowingEmergencyOverride = false
+    
+    // Radikale Lösung: Timer, der den Zustand regelmäßig prüft
+    let checkTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
         NavigationView {
@@ -13,8 +17,21 @@ struct ResultsView: View {
 
                 if viewModel.selectedClass == nil {
                     classSelectionPrompt
-                } else if viewModel.isLoading {
+                } else if viewModel.isLoading && !isShowingEmergencyOverride {
                     ProgressView("Lade Bewertungen...")
+                        .onReceive(checkTimer) { _ in
+                            // Nach 3 Sekunden automatisch den Ladeindikator verbergen
+                            if viewModel.loadingStartTime != nil {
+                                let loadingDuration = Date().timeIntervalSince(viewModel.loadingStartTime!)
+                                if loadingDuration > 3.0 {
+                                    isShowingEmergencyOverride = true
+                                    print("EMERGENCY: Loading indicator timed out after \(loadingDuration) seconds")
+                                    
+                                    // Force-Reset the loading state in ViewModel as well
+                                    viewModel.forceResetLoadingState()
+                                }
+                            }
+                        }
                 } else if viewModel.students.isEmpty {
                     emptyStudentsView
                 } else {
@@ -29,7 +46,19 @@ struct ResultsView: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
-            viewModel.loadData()
+            // Zurücksetzen beim Erscheinen
+            isShowingEmergencyOverride = false
+            viewModel.isLoading = false  // Force-Reset any existing loading state
+            viewModel.loadingStartTime = nil
+            
+            // Erst nach kurzer Verzögerung Daten laden, um UI-Threading-Konflikte zu vermeiden
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.loadData()
+            }
+        }
+        .onDisappear {
+            // Beim Verschwinden immer den Ladezustand zurücksetzen
+            viewModel.forceResetLoadingState()
         }
     }
 
@@ -320,10 +349,11 @@ struct RatingCell: View {
 
             // Wenn nicht abwesend, Bewertungsoptionen anzeigen
             if rating?.isAbsent != true {
-                buttons.append(.default(Text("++")) { onRatingChanged(.doublePlus) })
-                buttons.append(.default(Text("+")) { onRatingChanged(.plus) })
-                buttons.append(.default(Text("-")) { onRatingChanged(.minus) })
-                buttons.append(.default(Text("--")) { onRatingChanged(.doubleMinus) })
+                buttons.append(.default(Text("Excellent")) { onRatingChanged(.excellent) })
+                buttons.append(.default(Text("Good")) { onRatingChanged(.good) })
+                buttons.append(.default(Text("Fair")) { onRatingChanged(.fair) })
+                buttons.append(.default(Text("Poor")) { onRatingChanged(.poor) })
+                buttons.append(.default(Text("Very Poor")) { onRatingChanged(.veryPoor) })
                 buttons.append(.default(Text("Keine Bewertung")) { onRatingChanged(nil) })
             }
 
@@ -350,10 +380,11 @@ struct RatingCell: View {
     // Farbe für die Bewertung
     private func ratingColor(for value: RatingValue) -> Color {
         switch value {
-        case .doublePlus: return .green
-        case .plus: return Color.green.opacity(0.7)
-        case .minus: return Color.red.opacity(0.7)
-        case .doubleMinus: return .red
+        case .excellent: return .green
+        case .good: return Color.green.opacity(0.7)
+        case .fair: return Color.yellow
+        case .poor: return Color.red.opacity(0.7)
+        case .veryPoor: return .red
         }
     }
 }

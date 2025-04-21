@@ -1,0 +1,155 @@
+#!/bin/bash
+
+# Command hub für hero4_old
+# Version: 1.0.0 (2025-04-21)
+# Generiert vom globalen Backup-System-Setup
+
+SCRIPT_DIR="$(dirname "$0")/Scripts"
+PROJECT_DIR="$(dirname "$0")"
+
+# Farben für bessere Lesbarkeit
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Hilfefunktion
+show_help() {
+    echo -e "${YELLOW}hero4_old Projekt - Command Hub${NC}"
+    echo -e "${BLUE}Verwendung:${NC} ./hero [befehl] [optionen]"
+    echo ""
+    echo -e "${GREEN}Verfügbare Befehle:${NC}"
+    echo -e "  ${YELLOW}status${NC}      - Status der aktuellen Arbeit anzeigen"
+    echo -e "  ${YELLOW}update${NC}      - Status aktualisieren"
+    echo -e "                ./hero update -q \"Kurze Beschreibung\" für schnelles Update"
+    echo -e "  ${YELLOW}milestone${NC}   - Meilenstein dokumentieren"
+    echo -e "                ./hero milestone \"Titel\" [Fortschritt]"
+    echo -e "  ${YELLOW}snapshot${NC}    - Manuellen Status-Snapshot erstellen"
+    echo -e "  ${YELLOW}backup${NC}      - Manuelles Projekt-Backup erstellen"
+    echo -e "  ${YELLOW}push${NC}        - Git-Push durchführen"
+    echo -e "                ./hero push \"Commit-Nachricht\""
+    echo -e "  ${YELLOW}fix-backup${NC}  - Backup-System reparieren"
+    echo -e "  ${YELLOW}handover${NC}    - KI-Übergabedokument erstellen"
+    echo -e "  ${YELLOW}ki-start${NC}    - KI-Schnellstartinformationen anzeigen"
+    echo -e "  ${YELLOW}help${NC}        - Diese Hilfe anzeigen"
+    echo ""
+}
+
+# Prüfe, ob die Skripte ausführbar sind
+check_script_executable() {
+    local script="$1"
+    if [ ! -x "$script" ]; then
+        echo -e "${RED}Fehler: $(basename "$script") ist nicht ausführbar.${NC}"
+        echo -e "Führe aus: ${YELLOW}chmod +x $script${NC}"
+        chmod +x "$script" 2>/dev/null
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}Berechtigung erfolgreich gesetzt!${NC}"
+        else
+            echo -e "${RED}Konnte Berechtigung nicht setzen. Bitte manuell ausführen:${NC}"
+            echo -e "chmod +x $script"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# Hauptprogramm
+case "$1" in
+    status)
+        if [ -f "$PROJECT_DIR/Dokumentation/CURRENT_WORK.md" ]; then
+            cat "$PROJECT_DIR/Dokumentation/CURRENT_WORK.md"
+        else
+            echo -e "${RED}Keine Status-Datei gefunden.${NC}"
+        fi
+        ;;
+    
+    update)
+        shift
+        if check_script_executable "$SCRIPT_DIR/update_current_work.sh"; then
+            "$SCRIPT_DIR/update_current_work.sh" "$@"
+        fi
+        ;;
+    
+    milestone)
+        shift
+        if check_script_executable "$SCRIPT_DIR/record_milestone.sh"; then
+            "$SCRIPT_DIR/record_milestone.sh" "$@"
+        fi
+        ;;
+    
+    snapshot)
+        if check_script_executable "$SCRIPT_DIR/auto_status_snapshot.sh"; then
+            "$SCRIPT_DIR/auto_status_snapshot.sh" "$PROJECT_DIR"
+            echo -e "${GREEN}Status-Snapshot manuell erstellt.${NC}"
+        fi
+        ;;
+    
+    backup)
+        if check_script_executable "$SCRIPT_DIR/autosave_project.sh"; then
+            "$SCRIPT_DIR/autosave_project.sh" "$PROJECT_DIR"
+            echo -e "${GREEN}Projekt-Backup manuell erstellt.${NC}"
+        fi
+        ;;
+    
+    push)
+        shift
+        message="$@"
+        if [ -z "$message" ]; then
+            message="Manueller Commit über hero-Kommando"
+        fi
+        
+        # Ins Projektverzeichnis wechseln
+        cd "$PROJECT_DIR"
+        
+        # Git-Operationen durchführen
+        git add .
+        git commit -m "$message"
+        git push
+        
+        echo -e "${GREEN}Git-Push erfolgreich durchgeführt.${NC}"
+        ;;
+    
+    fix-backup)
+        echo -e "${YELLOW}Repariere Backup-System...${NC}"
+        
+        find "$SCRIPT_DIR" -name "*.sh" -type f -exec chmod +x {} \;
+        
+        echo -e "${GREEN}Alle Skripte sind jetzt ausführbar.${NC}"
+        echo -e "${YELLOW}Testen der Backup-Komponenten:${NC}"
+        
+        echo -e "1. Status-Snapshot testen..."
+        "$SCRIPT_DIR/auto_status_snapshot.sh" "$PROJECT_DIR"
+        
+        echo -e "2. Auto-Git-Push testen..."
+        "$SCRIPT_DIR/auto_git_push.sh" "$PROJECT_DIR"
+        
+        echo -e "3. Projekt-Backup testen..."
+        "$SCRIPT_DIR/autosave_project.sh" "$PROJECT_DIR"
+        
+        echo -e "${GREEN}Backup-System repariert und getestet!${NC}"
+        ;;
+    
+    handover)
+        shift
+        if check_script_executable "$SCRIPT_DIR/ki_handover.sh"; then
+            "$SCRIPT_DIR/ki_handover.sh" "$@"
+        fi
+        ;;
+    
+    ki-start)
+        if check_script_executable "$SCRIPT_DIR/ki-start.sh"; then
+            "$SCRIPT_DIR/ki-start.sh"
+        fi
+        ;;
+    
+    help|--help|-h|"")
+        show_help
+        ;;
+    
+    *)
+        echo -e "${RED}Unbekannter Befehl: $1${NC}"
+        show_help
+        ;;
+esac

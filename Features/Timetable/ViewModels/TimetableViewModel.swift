@@ -1,3 +1,6 @@
+
+
+
 import Foundation
 import Combine
 
@@ -10,18 +13,20 @@ class TimetableViewModel: ObservableObject {
 
     private let dataStore = DataStore.shared
     private var cancellables = Set<AnyCancellable>()
+    private var isInitialSetup = true
 
     init() {
-        // Beobachte Änderungen im DataStore
-        dataStore.$classes
-            .receive(on: RunLoop.main)
-            .sink { [weak self] classes in
-                let activeClasses = classes.filter { !$0.isArchived }
-                self?.classes = activeClasses
-                print("DEBUG ViewModel: classes wurden aktualisiert, Anzahl: \(activeClasses.count)")
-            }
-            .store(in: &cancellables)
-    }
+           dataStore.$classes
+               .receive(on: RunLoop.main)
+               .removeDuplicates() // 🔥 Verhindert unnötige Updates
+               .sink { [weak self] classes in
+                   let activeClasses = classes.filter { !$0.isArchived }
+                   if self?.classes != activeClasses { // Nur bei Änderungen updaten
+                       self?.classes = activeClasses
+                   }
+               }
+               .store(in: &cancellables)
+       }
     func loadClasses() {
         print("DEBUG ViewModel: loadClasses() aufgerufen")
         dataStore.loadClasses()

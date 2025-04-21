@@ -1,13 +1,13 @@
 {
-  "originHash" : "a2e1f797c9244a1fbb9c8078b4822ce59f6820514a41b06cdba812ce63eb4c4a",
+  "originHash" : "b9d454c518cb11ca70106d97c1086ffddef67f8a4584a6a38eb55b51144e1809",
   "pins" : [
     {
       "identity" : "grdb.swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/groue/GRDB.swift.git",
       "state" : {
-        "branch" : "master",
-        "revision" : "52b7b7bd26821c67f1c26b5e248fd6bcac4903a7"
+        "revision" : "2cf6c756e1e5ef6901ebae16576a7e4e4b834622",
+        "version" : "6.29.3"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+        "revision" : "f99ae8aa18f0cf0d53481901f88a0991dc3bd4a2",
+        "version" : "601.0.1"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-testing",
       "state" : {
-        "revision" : "18c42c19cac3fafd61cab1156d4088664b7424ae",
-        "version" : "6.0.3"
+        "revision" : "43b6f88e2f2712e0f2a97e6acc75b55f22234299",
+        "version" : "6.1.0"
       }
     }
   ],

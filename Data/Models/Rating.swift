@@ -71,8 +71,17 @@ extension Rating: TableRecord, FetchableRecord, PersistableRecord {
         self.studentId = UUID(uuidString: row[Columns.studentId]) ?? UUID()
         self.classId = UUID(uuidString: row[Columns.classId]) ?? UUID()
         self.date = row[Columns.date]
-        if let valueInt = row[Columns.value] as Int? {
-            self.value = RatingValue(rawValue: valueInt)
+        if let valueStr = row[Columns.value] as String? {
+            self.value = RatingValue(rawValue: valueStr)
+        } else if let valueInt = row[Columns.value] as Int? {
+            // Handle legacy integer values
+            switch valueInt {
+            case 1: self.value = .excellent
+            case 2: self.value = .good
+            case 3: self.value = .fair
+            case 4: self.value = .poor
+            default: self.value = nil
+            }
         } else {
             self.value = nil
         }

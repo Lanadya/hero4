@@ -1,28 +1,31 @@
 import Foundation
 
 // Bewertungstypen für die gesamte App
-enum RatingValue: Int, Codable {
-    case doublePlus = 1
-    case plus = 2
-    case minus = 3
-    case doubleMinus = 4
+enum RatingValue: String, Codable, CaseIterable {
+    case excellent = "excellent"
+    case good = "good"
+    case fair = "fair"
+    case poor = "poor"
+    case veryPoor = "veryPoor"
 
     var stringValue: String {
         switch self {
-        case .doublePlus: return "++"
-        case .plus: return "+"
-        case .minus: return "-"
-        case .doubleMinus: return "--"
+        case .excellent: return "excellent"
+        case .good: return "good"
+        case .fair: return "fair"
+        case .poor: return "poor"
+        case .veryPoor: return "veryPoor"
         }
     }
 
     // Diese Eigenschaft hinzufügen
         var numericValue: Double {
             switch self {
-            case .doublePlus: return 1.0  // Beste Note
-            case .plus: return 2.0
-            case .minus: return 3.0
-            case .doubleMinus: return 4.0  // Schlechteste Note
+            case .excellent: return 1.0  // Beste Note
+            case .good: return 2.0
+            case .fair: return 3.0
+            case .poor: return 4.0  // Schlechteste Note
+            case .veryPoor: return 5.0  // Schlechteste Note
             }
         }
 }

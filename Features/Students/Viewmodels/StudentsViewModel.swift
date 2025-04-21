@@ -26,6 +26,7 @@ class StudentsViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var studentStatusManager = StudentStatusManager.shared
     private var statusCancellables = Set<AnyCancellable>()
+    private var isInitialSetup = true
 
     struct SearchResult: Identifiable {
         var id: UUID { student.id }
@@ -54,6 +55,20 @@ class StudentsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // NEU: Observer für AppState hinzufügen
+        AppState.shared.$selectedClassId
+            .receive(on: RunLoop.main)
+            .sink { [weak self] classId in
+                guard let self = self else { return }
+
+                // Nur aktualisieren, wenn sich die ID unterscheidet und nicht nil ist
+                if self.selectedClassId != classId && classId != nil {
+                    print("DEBUG StudentsViewModel: AppState class selection changed to \(classId?.uuidString ?? "none")")
+                    self.selectClass(id: classId!)
+                }
+            }
+            .store(in: &cancellables)
+
         // Klassen laden
         loadClasses()
 
@@ -61,6 +76,7 @@ class StudentsViewModel: ObservableObject {
         if let initialClassId = initialClassId {
             self.selectClass(id: initialClassId)
         }
+        observeAppState() // 🔥 Hinzufügen
     }
 
     var classes: [Class] {
@@ -69,6 +85,19 @@ class StudentsViewModel: ObservableObject {
             .filter { !$0.isArchived }
             .sorted { ($0.row, $0.column) < ($1.row, $1.column) }
     }
+
+    // 🔥 Neuer Observer mit Debounce:
+        private func observeAppState() {
+            AppState.shared.$selectedClassId
+                .debounce(for: 0.1, scheduler: RunLoop.main) // Verhindert Flut von Updates
+                .sink { [weak self] newId in
+                    guard let self = self,
+                          newId != self.selectedClassId,
+                          newId != nil else { return }
+                    self.selectClass(id: newId!)
+                }
+                .store(in: &cancellables)
+        }
 
     // MARK: - Class Operations
 
@@ -86,18 +115,22 @@ class StudentsViewModel: ObservableObject {
         }
     }
 
-    func selectClass(id: UUID) {
-        // Klasse auswählen und Schüler laden
-        selectedClassId = id
-        selectedClass = dataStore.getClass(id: id)
-        print("DEBUG StudentsViewModel: Klasse ausgewählt: \(selectedClass?.name ?? "unbekannt")")
-        
-        // Bei Klassenwechsel den Filter zurücksetzen
-        searchText = ""
-        
-        // Schüler für die ausgewählte Klasse laden
-        loadStudentsForSelectedClass()
-    }
+    // 🔥 Optimierte selectClass-Methode:
+        func selectClass(id: UUID) {
+            guard selectedClassId != id else { return }
+
+            selectedClassId = id
+            selectedClass = dataStore.getClass(id: id)
+            print("DEBUG: Klasse ausgewählt: \(selectedClass?.name ?? "unbekannt")")
+
+            // 🔥 Nur AppState updaten, wenn diese ViewModel die Quelle der Änderung ist
+            if AppState.shared.selectedClassId != id {
+                AppState.shared.setSelectedClass(id, origin: self)
+            }
+
+            searchText = ""
+            loadStudentsForSelectedClass()
+        }
 
     // MARK: - Student Operations
 

@@ -1,14 +1,26 @@
 import Foundation
 import GRDB
 
-class StudentRepository {
+// Protokoll für StudentRepository-Schnittstelle
+protocol StudentRepositoryProtocol {
+    func getStudents() -> [Student]
+    func getStudentsForClass(classId: UUID, includeArchived: Bool) -> [Student]
+    func addStudent(_ student: Student) -> Student
+    func updateStudent(_ student: Student) -> Bool
+    func deleteStudent(id: UUID) -> Bool
+    func getStudent(id: UUID) -> Student?
+    func archiveStudent(_ student: Student) -> Bool
+}
+
+// Direkte GRDB-Implementierung des StudentRepository
+class GRDBStudentRepository: StudentRepositoryProtocol {
     private let database: AppDatabase
 
     init(database: AppDatabase = .shared) {
         self.database = database
     }
 
-    func getAllStudents() -> [Student] { // Name geändert für Konsistenz
+    func getStudents() -> [Student] {
         do {
             return try database.read { db in
                 try Student.fetchAll(db)
@@ -18,21 +30,75 @@ class StudentRepository {
             return []
         }
     }
-    func addStudent(_ student: Student) throws {
-        try database.write { db in
-            try student.insert(db)
+    
+    func getStudentsForClass(classId: UUID, includeArchived: Bool = false) -> [Student] {
+        do {
+            return try database.read { db in
+                var query = Student.filter(Student.Columns.classId == classId.uuidString)
+                
+                if !includeArchived {
+                    query = query.filter(Student.Columns.isArchived == false)
+                }
+                
+                return try query.fetchAll(db)
+            }
+        } catch {
+            print("ERROR: Fehler beim Laden der Studenten für Klasse: \(error)")
+            return []
+        }
+    }
+    
+    func addStudent(_ student: Student) -> Student {
+        do {
+            var newStudent = student
+            try database.write { db in
+                try newStudent.save(db)
+            }
+            return newStudent
+        } catch {
+            print("ERROR: Fehler beim Hinzufügen des Studenten: \(error)")
+            return student // Rückgabe des ursprünglichen Objekts im Fehlerfall
         }
     }
 
-    func updateStudent(_ student: Student) throws {
-        try database.write { db in
-            try student.update(db)
+    func updateStudent(_ student: Student) -> Bool {
+        do {
+            try database.write { db in
+                try student.update(db)
+            }
+            return true
+        } catch {
+            print("ERROR: Fehler beim Aktualisieren des Studenten: \(error)")
+            return false
         }
     }
 
-    func deleteStudent(id: UUID) throws {
-        try database.write { db in
-            try Student.filter(Student.Columns.id == id.uuidString).deleteAll(db)
+    func deleteStudent(id: UUID) -> Bool {
+        do {
+            try database.write { db in
+                try Student.filter(Student.Columns.id == id.uuidString).deleteAll(db)
+            }
+            return true
+        } catch {
+            print("ERROR: Fehler beim Löschen des Studenten: \(error)")
+            return false
         }
+    }
+    
+    func getStudent(id: UUID) -> Student? {
+        do {
+            return try database.read { db in
+                try Student.filter(Student.Columns.id == id.uuidString).fetchOne(db)
+            }
+        } catch {
+            print("ERROR: Fehler beim Laden des Studenten: \(error)")
+            return nil
+        }
+    }
+    
+    func archiveStudent(_ student: Student) -> Bool {
+        var modifiedStudent = student
+        modifiedStudent.isArchived = true
+        return updateStudent(modifiedStudent)
     }
 }

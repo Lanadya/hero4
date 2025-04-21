@@ -146,13 +146,17 @@ struct AppDatabase {
         try db.execute(sql: "CREATE INDEX rating_composite_idx ON rating(studentId, classId, date)")
     }
 
-    /// Ausführung einer Datenbanktransaktion
+    /// Ausführung einer Datenbanktransaktion mit Timeout
     func write<T>(_ updates: (Database) throws -> T) throws -> T {
-        try dbWriter.write(updates)
+        // Schreiboperationen zum Datenbank-Writer weiterleiten
+        // (Timeout wird bereits in der DB-Konfiguration beim Erstellen gesetzt)
+        return try dbWriter.write(updates)
     }
 
-    /// Ausführung einer Datenbankabfrage
+    /// Ausführung einer Datenbankabfrage mit Timeout
     func read<T>(_ value: (Database) throws -> T) throws -> T {
-        try dbWriter.read(value)
+        // Leseoperationen zum Datenbank-Writer weiterleiten
+        // (Timeout wird bereits in der DB-Konfiguration beim Erstellen gesetzt)
+        return try dbWriter.read(value)
     }
 }

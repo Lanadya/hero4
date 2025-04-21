@@ -1,14 +1,26 @@
 import GRDB
 import Foundation
 
-class ClassRepository {
+/// Protokoll für ClassRepository
+protocol ClassRepositoryProtocol {
+    func getClasses() -> [Class]
+    func addClass(_ classObj: Class) -> Class?
+    func updateClass(_ classObj: Class) -> Class?
+    func deleteClass(id: UUID) -> Bool
+    func getClass(id: UUID) -> Class?
+    func getClassAt(row: Int, column: Int) -> Class?
+    func archiveClass(_ classObj: Class) -> Bool
+}
+
+// Implementierung für direkten GRDB-Zugriff
+class GRDBClassRepository: ClassRepositoryProtocol {
     private let dbQueue: DatabaseQueue
 
     init(dbQueue: DatabaseQueue) {
         self.dbQueue = dbQueue
     }
 
-    func getAllClasses() -> [Class] {
+    func getClasses() -> [Class] {
         do {
             return try dbQueue.read { db in
                 try Class.fetchAll(db)
@@ -41,73 +53,49 @@ class ClassRepository {
         }
     }
 
-    func addClass(_ cls: Class) throws {
-        try dbQueue.write { db in
-            try cls.insert(db)
+    func addClass(_ classObj: Class) -> Class? {
+        do {
+            var newClass = classObj
+            try dbQueue.write { db in
+                try newClass.save(db)
+            }
+            return newClass
+        } catch {
+            print("Fehler beim Hinzufügen der Klasse: \(error)")
+            return nil
         }
     }
 
-    func updateClass(_ cls: Class) throws {
-        try dbQueue.write { db in
-            try cls.update(db)
+    func updateClass(_ classObj: Class) -> Class? {
+        do {
+            var updatedClass = classObj
+            try dbQueue.write { db in
+                try updatedClass.update(db)
+            }
+            return updatedClass
+        } catch {
+            print("Fehler beim Aktualisieren der Klasse: \(error)")
+            return nil
         }
     }
 
-    func deleteClass(id: UUID) throws {
-        try dbQueue.write { db in
-            try Class.filter(Column("id") == id.uuidString).deleteAll(db)
+    func deleteClass(id: UUID) -> Bool {
+        do {
+            try dbQueue.write { db in
+                try Class.filter(Column("id") == id.uuidString).deleteAll(db)
+            }
+            return true
+        } catch {
+            print("Fehler beim Löschen der Klasse: \(error)")
+            return false
         }
     }
-
-    func deleteAll() throws {
-        try dbQueue.write { db in
-            try Class.deleteAll(db)
-        }
+    
+    func archiveClass(_ classObj: Class) -> Bool {
+        var archivedClass = classObj
+        archivedClass.isArchived = true
+        return updateClass(archivedClass) != nil
     }
 }
 
-//import Foundation
-//import GRDB
-//
-//class ClassRepository {
-//    private let dbQueue: DatabaseQueue
-//
-//    init(dbQueue: DatabaseQueue) {
-//        self.dbQueue = dbQueue
-//    }
-//
-//    // Alle Klassen abrufen
-//    func getAllClasses() throws -> [Class] {
-//        try dbQueue.read { db in
-//            try Class.fetchAll(db)
-//        }
-//    }
-//
-//    // Eine Klasse hinzufügen
-//    func addClass(_ cls: Class) throws {
-//        try dbQueue.inTransaction { db in
-//            try cls.insert(db)
-//            return .commit
-//        }
-//    }
-//
-////    func addClass(_ class: Class) throws {
-////        try dbQueue.write { db in
-////            try `class`.insert(db)
-////        }
-////    }
-//
-//    // Eine Klasse aktualisieren
-//    func updateClass(_ class: Class) throws {
-//        try dbQueue.write { db in
-//            try `class`.update(db)
-//        }
-//    }
-//
-//    // Eine Klasse löschen
-//    func deleteClass(id: UUID) throws {
-//        try dbQueue.write { db in
-//            try Class.filter(Class.Columns.id == id.uuidString).deleteAll(db)
-//        }
-//    }
-//}
+// Auskommentierter Duplikatcode wurde entfernt zur Verbesserung der Code-Wartbarkeit

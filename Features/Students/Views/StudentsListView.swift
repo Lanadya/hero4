@@ -134,7 +134,7 @@ struct StudentsListView: View {
                                 showEditStudentModal: $showEditStudentModal,
                                 onSelectStudent: selectStudentForDetail
                             )
-                            .frame(width: 250)
+                            .frame(width: min(300, geometry.size.width * 0.3))
                             .background(Color(.systemGroupedBackground))
 
                         // Right side: Student list or selected details
